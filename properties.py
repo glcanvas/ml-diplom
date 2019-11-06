@@ -17,7 +17,7 @@ field_train = 'train'
 image_size = 224
 num_workers = 5
 
-
+labels_number = len(classes) # 5
 train_size = 200
 test_size = 100
 batch_size = 8

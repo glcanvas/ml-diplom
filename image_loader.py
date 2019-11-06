@@ -12,7 +12,7 @@ prefix = 'ISIC_'
 attribute = '_attribute_'
 
 composite = transforms.Compose([
-    transforms.Resize(image_size),
+    transforms.Scale((image_size, image_size)),
     transforms.ToTensor(),
 ])
 
@@ -115,16 +115,38 @@ def remove_empty_mask(cell: dict):
     return cell
 
 
+def apply_resize(cell: dict):
+    scale = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.Scale((image_size, image_size)),
+        transforms.ToTensor()
+    ])
+    for c in classes:
+        cell[c] = scale(cell[c])
+    cell[field_train] = scale(cell[field_train])
+    return cell
+
+
 class CustomDataset(torch.utils.data.dataset.Dataset):
+    """
+    data -- list with dict of result load_tensors
+    """
 
     def __init__(self, data: list):
         self.data = data
+        self.inputs = [i[field_train] for i in data]
+        self.labels = [self.__item_to_tensor(i) for i in data]
 
     def __len__(self):
-        return len(self.data)
+        return len(self.inputs)
 
     def __getitem__(self, item):
-        return self.data[item]
+        return self.inputs[item], self.labels[item]
 
-    def __iter__(self):
-        return iter(self.data)
+    @staticmethod
+    def __item_to_tensor(d: dict) -> torch.Tensor:
+        t = torch.tensor([0 for _ in classes])
+        for idx, cl in enumerate(classes):
+            if cl in d:
+                t[idx] = 1
+        return t
