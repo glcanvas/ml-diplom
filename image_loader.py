@@ -68,7 +68,6 @@ def split_set(values: list, test_size: int, validate_size: int):
 def map_cell(cell: dict):
     for i in classes:
         cell[i] = composite(Image.open(cell[i]))
-        cell[i] = cell[i].to
     cell[field_train] = composite(Image.open(cell[field_train]))
     return cell
 
