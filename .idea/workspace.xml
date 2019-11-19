@@ -4,8 +4,6 @@
     <list default="true" id="a93987b7-8eb4-4a3a-9d9d-1f2ca3625fff" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/image_loader.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_loader.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/notebooks/init.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/init.ipynb" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -114,7 +112,7 @@
       <workItem from="1574089202479" duration="263000" />
       <workItem from="1574089474962" duration="8673000" />
       <workItem from="1574112478989" duration="2059000" />
-      <workItem from="1574149230006" duration="3871000" />
+      <workItem from="1574149230006" duration="4863000" />
     </task>
     <task id="LOCAL-00001" summary="fix `to` in cell">
       <created>1573410520201</created>
@@ -123,7 +121,14 @@
       <option name="project" value="LOCAL" />
       <updated>1573410520201</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="implementation image loader">
+      <created>1574154690466</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1574154690467</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -144,25 +149,16 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="fix `to` in cell" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix `to` in cell" />
+    <MESSAGE value="implementation image loader" />
+    <option name="LAST_COMMIT_MESSAGE" value="implementation image loader" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/image_loader.py</url>
-          <line>141</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/image_loader.py</url>
-          <line>108</line>
-          <option name="timeStamp" value="2" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/image_loader.py</url>
-          <line>109</line>
-          <option name="timeStamp" value="4" />
+          <line>56</line>
+          <option name="timeStamp" value="5" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -176,6 +172,9 @@
     <watches-manager>
       <configuration name="init">
         <watch expression="graph.edges[(prev, current)]" language="Jupyter" />
+      </configuration>
+      <configuration name="PythonConfigurationType">
+        <watch expression="list(os.walk(absolute_path))" language="Python" />
       </configuration>
     </watches-manager>
   </component>

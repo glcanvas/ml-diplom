@@ -130,9 +130,23 @@ class DatasetLoader:
 
 
 class ImageDataset(torch.utils.data.Dataset):
+    """
+    data_set is result of execution DatasetLoader.load_tensors()
+    """
 
-    def __init__(self):
-        pass
+    def __init__(self, data_set):
+        self.data_set = data_set
+
+    def __len__(self):
+        return len(self.data_set)
+
+    def __getitem__(self, item):
+        dct = self.data_set[item]
+        input_data = dct[input_attribute]
+        target_data = dict()
+        for i in labels_attributes:
+            target_data[i] = dct[i]
+        return input_data, target_data
 
 
 if __name__ == "__main__":
