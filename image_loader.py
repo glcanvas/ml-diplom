@@ -34,6 +34,10 @@ class DatasetLoader:
     Load ISIC files as images and cache them, or load from cache files
     """
 
+    @staticmethod
+    def initial():
+        return DatasetLoader(data_inputs_path, data_labels_path, cache_data_inputs_path, cache_data_labels_path)
+
     def __init__(self, input_path: str = None, target_path: str = None, cache_input_path: str = None,
                  cache_target_path: str = None, image_suffixes: list = ['.jpg', '.png', cached_extension]):
         self.input_path = input_path
@@ -146,7 +150,16 @@ class ImageDataset(torch.utils.data.Dataset):
         target_data = dict()
         for i in labels_attributes:
             target_data[i] = dct[i]
+        target_data = self.__cache_targets(target_data)
         return input_data, target_data
+
+    @staticmethod
+    def __cache_targets(dct: dict):
+        for i in labels_attributes:
+            ill_tag = i + '_value'
+            if ill_tag not in dct:
+                dct[ill_tag] = True if dct[i].sum().item() > 0 else False
+        return dct
 
 
 if __name__ == "__main__":

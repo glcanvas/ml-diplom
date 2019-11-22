@@ -2,8 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a93987b7-8eb4-4a3a-9d9d-1f2ca3625fff" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/gain.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/gain1.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/image_loader.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_loader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/init.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/init.ipynb" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -63,7 +66,29 @@
       </list>
     </option>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Python.gain">
+    <configuration name="gain" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="ml-diplom" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/gain1.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="image_loader" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -88,6 +113,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.gain" />
         <item itemvalue="Python.image_loader" />
       </list>
     </recent_temporary>
@@ -112,7 +138,10 @@
       <workItem from="1574089202479" duration="263000" />
       <workItem from="1574089474962" duration="8673000" />
       <workItem from="1574112478989" duration="2059000" />
-      <workItem from="1574149230006" duration="4863000" />
+      <workItem from="1574149230006" duration="5491000" />
+      <workItem from="1574185831075" duration="7542000" />
+      <workItem from="1574241528263" duration="23074000" />
+      <workItem from="1574417115858" duration="459000" />
     </task>
     <task id="LOCAL-00001" summary="fix `to` in cell">
       <created>1573410520201</created>
@@ -128,7 +157,14 @@
       <option name="project" value="LOCAL" />
       <updated>1574154690467</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="data set impl">
+      <created>1574155490610</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1574155490610</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -150,17 +186,11 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="fix `to` in cell" />
     <MESSAGE value="implementation image loader" />
-    <option name="LAST_COMMIT_MESSAGE" value="implementation image loader" />
+    <MESSAGE value="data set impl" />
+    <option name="LAST_COMMIT_MESSAGE" value="data set impl" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/image_loader.py</url>
-          <line>56</line>
-          <option name="timeStamp" value="5" />
-        </line-breakpoint>
-      </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
           <properties notifyOnTerminate="true" exception="BaseException">
@@ -171,7 +201,9 @@
     </breakpoint-manager>
     <watches-manager>
       <configuration name="init">
-        <watch expression="graph.edges[(prev, current)]" language="Jupyter" />
+        <watch expression="i_star.shape" language="Jupyter" />
+        <watch expression="to_3_dim_image(mask_label_data)" language="Jupyter" />
+        <watch expression="i_start" language="Jupyter" />
       </configuration>
       <configuration name="PythonConfigurationType">
         <watch expression="list(os.walk(absolute_path))" language="Python" />
@@ -180,5 +212,6 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/ml_diplom$image_loader.coverage" NAME="image_loader Coverage Results" MODIFIED="1574154657305" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/ml_diplom$gain.coverage" NAME="gain Coverage Results" MODIFIED="1574269876478" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
