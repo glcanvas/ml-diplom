@@ -139,19 +139,30 @@ class ImageDataset(torch.utils.data.Dataset):
     """
 
     def __init__(self, data_set):
-        self.data_set = data_set
+        self.data_set = self.__prepare_data(data_set)
 
     def __len__(self):
         return len(self.data_set)
 
     def __getitem__(self, item):
-        dct = self.data_set[item]
-        input_data = dct[input_attribute]
-        target_data = dict()
-        for i in labels_attributes:
-            target_data[i] = dct[i]
-        target_data = self.__cache_targets(target_data)
-        return input_data, target_data
+        return self.data_set[item]
+
+    @staticmethod
+    def __prepare_data(data: list):
+        result = []
+        for item in range(0, len(data)):
+            dct = data[item]
+            input_data = torch.tensor([dct[input_attribute].tolist()] * 5)
+            target_data = dict()
+            for i in labels_attributes:
+                target_data[i] = dct[i]
+            target_data = ImageDataset.__cache_targets(target_data)
+            # tensor of input data
+            # tensor of segments
+            # tensor of labels answer
+            segm, labl = ImageDataset.split_targets(target_data)
+            result.append((input_data, segm, labl))
+        return result
 
     @staticmethod
     def __cache_targets(dct: dict):
@@ -161,12 +172,24 @@ class ImageDataset(torch.utils.data.Dataset):
                 dct[ill_tag] = True if dct[i].sum().item() > 0 else False
         return dct
 
+    @staticmethod
+    def split_targets(dct: dict):
+        segments = []
+        labels = []
+        for i in labels_attributes:
+            segments.append(dct[i].tolist())
+            ill_tag = i + '_value'
+            labels_value = 1 if dct[ill_tag] else 0
+            labels.append(labels_value)
+        return torch.tensor(segments), torch.tensor([labels] * 5).float()
+
+
+from torch.utils.data.dataloader import DataLoader
 
 if __name__ == "__main__":
-    dl = DatasetLoader(data_inputs_path, data_labels_path, cache_data_inputs_path, cache_data_labels_path)
-    # dl.save_images_to_tensors()
-    res = dl.load_tensors(0, 10)
-    print(res)
-    # l = dl.merge_data()
-    # for i in l:
-    #    print(i)
+    loader = DatasetLoader.initial()
+    train = loader.load_tensors(0, 100)
+    test = loader.load_tensors(100, 150)
+    train_set = DataLoader(ImageDataset(train), batch_size=1, shuffle=True, num_workers=4)
+    for i in train_set:
+        print(len(i[0]))
