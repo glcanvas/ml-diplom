@@ -132,7 +132,7 @@ class GAIN:
         loss_cl = self.loss_cl(output_classification, label_data)
 
         # her we has output_classification, classification_loss, a_c
-        t_a_c, i_star = self.__mask_image(input_image_data, a_c)
+        a_c, t_a_c, i_star = self.__mask_image(input_image_data, a_c)
 
         # here we want decrease weights, which are'nt marked by previous model as segment-importanse 
         output_am = model(i_star)
@@ -155,7 +155,7 @@ class GAIN:
         t_a_c = F.sigmoid(self.omega * (a_c - self.sigma))
         # Eq 3
         masked_image = data_image - (data_image * t_a_c)
-        return t_a_c, masked_image
+        return a_c, t_a_c, masked_image
 
     @staticmethod
     def register_model_params(model):
