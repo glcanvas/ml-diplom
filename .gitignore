@@ -3,3 +3,4 @@
 __pycache__
 model_processing/__pycache__
 models/__pycache__
+*.pyc
