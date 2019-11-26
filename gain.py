@@ -73,7 +73,7 @@ class GAIN:
                     labels = labels[0].to(self.device)
                     segments = segments[0].to(self.device)
 
-                    loss_total, loss_cl, loss_am, loss_e, a_c, i_star = self.forward(self.model, inputs,
+                    loss_total, loss_cl, loss_am, loss_e, _, _, _ = self.forward(self.model, inputs,
                                                                                              segments, labels)
                     loss_total.backward()
                     # self.optimizer.step()
@@ -132,7 +132,7 @@ class GAIN:
         loss_cl = self.loss_cl(output_classification, label_data)
 
         # her we has output_classification, classification_loss, a_c
-        _, i_star = self.__mask_image(input_image_data, a_c)
+        t_a_c, i_star = self.__mask_image(input_image_data, a_c)
 
         # here we want decrease weights, which are'nt marked by previous model as segment-importanse 
         output_am = model(i_star)
@@ -142,7 +142,7 @@ class GAIN:
         loss_e = ((mask_label_data - a_c) ** 2).sum() / (sum(mask_label_data.shape))
         loss_total = loss_cl + self.weight_am * loss_am + self.weight_e * loss_e
 
-        return loss_total, loss_cl, loss_am, loss_e, a_c, i_star
+        return loss_total, loss_cl, loss_am, loss_e, a_c, t_a_c, i_star
 
     def __mask_image(self, data_image, a_c):
         # Eq 4
@@ -155,7 +155,7 @@ class GAIN:
         t_a_c = F.sigmoid(self.omega * (a_c - self.sigma))
         # Eq 3
         masked_image = data_image - (data_image * t_a_c)
-        return a_c, masked_image
+        return t_a_c, masked_image
 
     @staticmethod
     def register_model_params(model):
