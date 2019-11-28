@@ -68,10 +68,10 @@ class GAIN:
                 loss_am_sum = 0
                 loss_segments_sum = 0
                 total_loss_sum = 0
-                for inputs, segments, labels in data_loader:
-                    inputs = inputs[0].to(self.device)
-                    labels = labels[0].to(self.device)
-                    segments = segments[0].to(self.device)
+                for inputs, segments, labels, _ in data_loader:
+                    inputs = inputs.to(self.device)
+                    labels = labels.to(self.device)
+                    segments = segments.to(self.device)
 
                     loss_total, loss_cl, loss_am, loss_e, _, _, _ = self.forward(self.model, inputs,
                                                                                              segments, labels)
@@ -132,7 +132,7 @@ class GAIN:
         loss_cl = self.loss_cl(output_classification, label_data)
 
         # her we has output_classification, classification_loss, a_c
-        a_c, t_a_c, i_star = self.__mask_image(input_image_data, a_c)
+        _, t_a_c, i_star = self.__mask_image(input_image_data, a_c)
 
         # here we want decrease weights, which are'nt marked by previous model as segment-importanse 
         output_am = model(i_star)

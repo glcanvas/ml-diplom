@@ -3,30 +3,12 @@ import torch
 import torch.utils.data.dataset
 from torchvision import transforms
 from PIL import Image
-
-prefix = 'ISIC_'
-attribute = '_attribute_'
-image_size = 224
-data_inputs_path = "/home/nikita/PycharmProjects/ISIC2018_Task1-2_Training_Input"
-data_labels_path = "/home/nikita/PycharmProjects/ISIC2018_Task2_Training_GroundTruth_v3"
-
-cache_data_inputs_path = "/home/nikita/PycharmProjects/ISIC2018_Task1-2_Training_Input/cached"
-cache_data_labels_path = "/home/nikita/PycharmProjects/ISIC2018_Task2_Training_GroundTruth_v3/cached"
+import property as P
 
 composite = transforms.Compose([
-    transforms.Scale((image_size, image_size)),
+    transforms.Scale((P.image_size, P.image_size)),
     transforms.ToTensor(),
 ])
-
-labels_attributes = [
-    'streaks',
-    'negative_network',
-    'milia_like_cyst',
-    'globules',
-    'pigment_network'
-]
-input_attribute = 'input'
-cached_extension = '.torch'
 
 
 class DatasetLoader:
@@ -36,10 +18,10 @@ class DatasetLoader:
 
     @staticmethod
     def initial():
-        return DatasetLoader(data_inputs_path, data_labels_path, cache_data_inputs_path, cache_data_labels_path)
+        return DatasetLoader(P.data_inputs_path, P.data_labels_path, P.cache_data_inputs_path, P.cache_data_labels_path)
 
     def __init__(self, input_path: str = None, target_path: str = None, cache_input_path: str = None,
-                 cache_target_path: str = None, image_suffixes: list = ['.jpg', '.png', cached_extension]):
+                 cache_target_path: str = None, image_suffixes: list = ['.jpg', '.png', P.cached_extension]):
         self.input_path = input_path
         self.target_path = target_path
         self.image_suffixes = image_suffixes
@@ -63,7 +45,7 @@ class DatasetLoader:
 
     def __get_target_image_list(self, target_path) -> list:
         targets = self.__get_id_value(target_path)
-        targets = list(map(lambda x: (x[0].split(attribute)[0], x[0].split(attribute)[1], x[1]), targets))
+        targets = list(map(lambda x: (x[0].split(P.attribute)[0], x[0].split(P.attribute)[1], x[1]), targets))
         reduced = dict()
         for identifier, label, path in targets:
             if identifier in reduced:
@@ -82,7 +64,7 @@ class DatasetLoader:
         def composite_zips(x):
             inp = x[0]
             tar = x[1]
-            tar[input_attribute] = inp[1]
+            tar[P.input_attribute] = inp[1]
             return tar
 
         return list(map(composite_zips, zip(inputs, targets)))
@@ -92,8 +74,8 @@ class DatasetLoader:
         for _, _, f in os.walk(absolute_path):
             for file in f:
                 for suffix in self.image_suffixes:
-                    if file.endswith(suffix) and file.startswith(prefix):
-                        identifier = file.split(suffix)[0].split(prefix)[1]
+                    if file.endswith(suffix) and file.startswith(P.prefix):
+                        identifier = file.split(suffix)[0].split(P.prefix)[1]
                         arrays.append((identifier, os.path.join(absolute_path, file)))
         return arrays
 
@@ -101,9 +83,9 @@ class DatasetLoader:
         data = self.__merge_data(self.input_path, self.target_path)
         data_len = len(data)
         for idx, dct in enumerate(data):
-            for item in labels_attributes:
+            for item in P.labels_attributes:
                 self.__save_torch(dct, item, self.cache_target_path)
-            self.__save_torch(dct, input_attribute, self.cache_input_path)
+            self.__save_torch(dct, P.input_attribute, self.cache_input_path)
             print("=" * 10)
             print("save: {} of {} elements".format(idx, data_len))
         print("all saved successfully")
@@ -119,9 +101,9 @@ class DatasetLoader:
             if lower_bound <= idx < upper_bound:
                 torch_dict = dict()
                 torch_dict['id'] = dct['id']
-                for item in labels_attributes:
+                for item in P.labels_attributes:
                     torch_dict[item] = torch.load(dct[item])
-                torch_dict[input_attribute] = torch.load(dct[input_attribute])
+                torch_dict[P.input_attribute] = torch.load(dct[P.input_attribute])
                 result.append(torch_dict)
 
         return result
@@ -129,7 +111,7 @@ class DatasetLoader:
     @staticmethod
     def __save_torch(dct, item, path):
         composited_image = composite(Image.open(dct[item]))
-        name = os.path.basename(dct[item])[:-4] + cached_extension
+        name = os.path.basename(dct[item])[:-4] + P.cached_extension
         torch.save(composited_image, os.path.join(path, name))
 
 
@@ -152,21 +134,21 @@ class ImageDataset(torch.utils.data.Dataset):
         result = []
         for item in range(0, len(data)):
             dct = data[item]
-            input_data = torch.tensor([dct[input_attribute].tolist()] * 5)
+            input_data = dct[P.input_attribute]
             target_data = dict()
-            for i in labels_attributes:
+            for i in P.labels_attributes:
                 target_data[i] = dct[i]
             target_data = ImageDataset.__cache_targets(target_data)
             # tensor of input data
             # tensor of segments
             # tensor of labels answer
-            segm, labl = ImageDataset.split_targets(target_data)
-            result.append((input_data, segm, labl))
+            segm, labl, trust_segment = ImageDataset.split_targets(target_data)
+            result.append((input_data, segm, labl, trust_segment))
         return result
 
     @staticmethod
     def __cache_targets(dct: dict):
-        for i in labels_attributes:
+        for i in P.labels_attributes:
             ill_tag = i + '_value'
             if ill_tag not in dct:
                 dct[ill_tag] = True if dct[i].sum().item() > 0 else False
@@ -176,12 +158,32 @@ class ImageDataset(torch.utils.data.Dataset):
     def split_targets(dct: dict):
         segments = []
         labels = []
-        for i in labels_attributes:
-            segments.append(dct[i].tolist())
+        trusted = []
+        for i in P.labels_attributes:
+            segments.append(dct[i].to('cpu'))
+            trusted.append(dct[i].tolist())
             ill_tag = i + '_value'
             labels_value = 1 if dct[ill_tag] else 0
             labels.append(labels_value)
-        return torch.tensor(segments), torch.tensor([labels] * 5).float()
+        return ImageDataset.colorize_label(segments), torch.tensor(labels).float(), torch.tensor(trusted)
+
+    @staticmethod
+    def colorize_label(tensors: list) -> torch.Tensor:
+        """
+        :param tensors: list of tensors: 5 x 1 x 224 x 224 corresponded P.labels_attributes order
+        :return: painted tensor: 1 x 224 x 224
+        """
+        result = torch.zeros((1, 224, 224))
+        for color_idx, color in enumerate(tensors):
+            result = torch.max(result, color * P.labels_attributes_weight[color_idx])
+        # the same
+        # for color_idx, color in enumerate(tensor):
+        #    for k_idx, k in enumerate(color):
+        #        for i_idx, i in enumerate(k):
+        #            for j_idx, j in enumerate(i):
+        #                result[k_idx][i_idx][j_idx] = tensor[color_idx][k_idx][i_idx][j_idx] * \
+        #                                              P.labels_attributes_weight[color_idx]
+        return result
 
 
 from torch.utils.data.dataloader import DataLoader
@@ -190,6 +192,6 @@ if __name__ == "__main__":
     loader = DatasetLoader.initial()
     train = loader.load_tensors(0, 100)
     test = loader.load_tensors(100, 150)
-    train_set = DataLoader(ImageDataset(train), batch_size=1, shuffle=True, num_workers=4)
-    for i in train_set:
-        print(len(i[0]))
+    train_set = DataLoader(ImageDataset(train), batch_size=10, shuffle=True, num_workers=4)
+    for i, j, k, l in train_set:
+        print(l.shape)
