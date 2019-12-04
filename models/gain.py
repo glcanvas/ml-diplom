@@ -9,7 +9,12 @@ class GAIN(nn.Module):
     def __init__(self, grad_layer, num_classes):
         super(GAIN, self).__init__()
         self.model = alexnet(pretrained=True)
-        # print(self.model)
+        # self.model = self.model.cuda()
+
+        num_features = self.model.classifier[6].in_features
+        self.model.classifier[6] = nn.Linear(num_features, num_classes)
+
+
         self.grad_layer = grad_layer
 
         self.num_classes = num_classes
@@ -77,7 +82,7 @@ class GAIN(nn.Module):
                 pred = F.softmax(logits).argmax(dim=1)
                 labels_ohe = self._to_ohe(pred).cuda()
             else:
-                labels_ohe = self._to_ohe(labels).cuda()
+                labels_ohe = self._to_ohe(labels).cpu() ### CUDA HERE WAS
 
             gradient = logits * labels_ohe
             grad_logits = (logits * labels_ohe).sum()  # BS x num_classes
