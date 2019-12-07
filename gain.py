@@ -11,6 +11,18 @@ def scalar(tensor):
     return tensor.data.cpu().item()
 
 
+def reduce_boundaries(boundaries: int):
+    # assume BSx1x224x224
+    zeros = torch.zeros((1, 1, 224, 224))
+    for bs in zeros:
+        for chanel in bs:
+            for idx_i in range(0, 224):
+                for idx_j in range(0, 224):
+                    if idx_i < boundaries or idx_i + boundaries >= 224 or idx_j < boundaries or idx_j + boundaries >= 224:
+                        chanel[idx_i][idx_j] = -10000
+    return zeros
+
+
 class AttentionGAIN:
     # 28
     def __init__(self, gradient_layer_name="features.10", weights=None, epoch=0, gpu=False, alpha=1, omega=10,
@@ -57,6 +69,7 @@ class AttentionGAIN:
         self.epoch = epoch
 
         self.epochs_trained = 0
+        self.minus_mask = reduce_boundaries(10)
 
     def _register_hooks(self, layer_name):
         # this wires up a hook that stores both the activation and gradient of the conv layer we are interested in
@@ -154,7 +167,7 @@ class AttentionGAIN:
             # loss_am_sum += scalar(loss_am)
             acc_cl_sum += scalar(acc_cl)
 
-            visualize.visualize(images[0], I_star[0], A_c[0], torch.tensor([mask.tolist()]), segments[0],
+            visualize.visualize(images[0], I_star[0], A_c[0], mask[0], segments[0],
                                 self.epochs_trained)
 
         test_size = len(rds['test'])
@@ -192,7 +205,7 @@ class AttentionGAIN:
         gcam_min = gcam.min()
         gcam_max = gcam.max()
         scaled_gcam = (gcam - gcam_min) / (gcam_max - gcam_min)
-        mask = F.sigmoid(self.omega * (scaled_gcam - self.sigma)).squeeze()
+        mask = F.sigmoid(self.omega * (scaled_gcam - self.sigma))
         masked_image = image - (image * mask)
         return masked_image, mask
 
@@ -205,16 +218,17 @@ class AttentionGAIN:
         # TODO this currently doesn't support batching, maybe add that
         I_star, mask = self._mask_image(gcam, data)
 
-        #output_am = self.model(I_star)
+        # output_am = self.model(I_star)
 
         # Eq 5
         # loss_am = F.sigmoid(output_am) * label
         # loss_am = loss_am.sum() / label.sum().type(self.tensor_source.FloatTensor)
-        ones = torch.ones((1, 1, 224, 224))
-        loss_e = ((mask - segment * 25) @ (mask - segment * 25)).sum()
+
+        updated_segment_mask = segment * 50 + self.minus_mask
+        loss_e = ((mask - updated_segment_mask) @ (mask - updated_segment_mask)).sum()
 
         # Eq 6
-        total_loss = loss_cl + loss_e * 100 # + self.alpha * loss_am
+        total_loss = loss_cl + loss_e * 100  # + self.alpha * loss_am
 
         cl_acc = output_cl_softmax.max(dim=1)[1] == label.max(dim=1)[1]
         cl_acc = cl_acc.type(self.tensor_source.FloatTensor).mean()
