@@ -12,9 +12,9 @@ cache_data_inputs_path = "/home/nikita/PycharmProjects/ISIC2018_Task1-2_Training
 cache_data_labels_path = "/home/nikita/PycharmProjects/ISIC2018_Task2_Training_GroundTruth_v3/cached"
 
 labels_attributes = [
-    # 'streaks',
-    # 'negative_network',
-    # 'milia_like_cyst',
-    # 'globules',
+    'streaks',
+    'negative_network',
+    'milia_like_cyst',
+    'globules',
     'pigment_network'
 ]

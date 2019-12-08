@@ -163,14 +163,20 @@ class ImageDataset(torch.utils.data.Dataset):
     @staticmethod
     def split_targets(dct: dict):
         segments = None
+        # not exist ill, exist ill
         labels = []
         trusted = None
-        for i in P.labels_attributes:
+        for idx, i in enumerate(P.labels_attributes):
             segments = dct[i]
             trusted = dct[i]
             ill_tag = i + '_value'
-            labels_value = 1 if dct[ill_tag] else 0
-            labels.append(labels_value)
+            a = [0 for _ in range(len(P.labels_attributes) + 1)]
+            if dct[ill_tag]:
+                a[idx + 1] = 1
+                labels.append(a)
+            else:
+                a[0] = 1
+                labels.append(a)
         return segments, torch.tensor(labels).float(), trusted
 
 

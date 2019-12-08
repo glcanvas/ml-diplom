@@ -25,7 +25,7 @@ def reduce_boundaries(boundaries: int):
 
 class AttentionGAIN:
     # 28
-    def __init__(self, gradient_layer_name="features.10", weights=None, epoch=0, gpu=False, alpha=1, omega=10,
+    def __init__(self, gradient_layer_name="features.28", weights=None, epoch=0, gpu=False, alpha=1, omega=10,
                  sigma=0.5):
         # validation
         if not gradient_layer_name:
@@ -36,7 +36,7 @@ class AttentionGAIN:
 
         # define model
         # self.model_type = model_type
-        self.model = m.alexnet(pretrained=True)
+        self.model = m.vgg16(pretrained=True)
         # models.get_model(self.model_type, len(labels), batch_norm=batch_norm, num_channels=input_channels)
         num_features = self.model.classifier[6].in_features
         self.model.classifier[6] = nn.Linear(num_features, 1)
@@ -151,7 +151,7 @@ class AttentionGAIN:
 
     def test(self, rds):
 
-        self.model = m.alexnet()
+        self.model = m.vgg16()
         num_features = self.model.classifier[6].in_features
         self.model.classifier[6] = nn.Linear(num_features, 1)
 
