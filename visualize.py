@@ -38,8 +38,10 @@ def visualize(image: torch.Tensor, i_start: torch.Tensor, a_c: torch.Tensor, mas
     # a_c[a_c > 0] = 1
     mask = to_3_dim_image(mask)
     # mask[mask > 0] = 1
-    imgs = make_grid([image, i_start, to_3_dim_image(a_c), to_3_dim_image(mask), to_3_dim_image(segment)],
-                     padding=50).detach().numpy()
+
+    images = [image, i_start, to_3_dim_image(a_c), to_3_dim_image(mask), to_3_dim_image(segment)]
+    images = list(map(lambda x: x.cpu(), images))
+    imgs = make_grid(images, padding=50).detach().numpy()
     plt.imshow(np.transpose(imgs, (1, 2, 0)))
     plt.figure()
     plt.show()

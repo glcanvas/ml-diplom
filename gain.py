@@ -13,7 +13,7 @@ def scalar(tensor):
 
 def reduce_boundaries(boundaries: int):
     # assume BSx1x224x224
-    zeros = torch.zeros((1, 1, 224, 224))
+    zeros = torch.zeros((10, 1, 224, 224))
     for bs in zeros:
         for chanel in bs:
             for idx_i in range(0, 224):
@@ -49,9 +49,11 @@ class AttentionGAIN:
         elif epoch > 0:
             raise ValueError('epoch_offset > 0, but no weights were supplied')
 
+        self.minus_mask = reduce_boundaries(8)
         if self.gpu:
             self.model = self.model.cuda()
             self.tensor_source = torch.cuda
+            self.minus_mask = self.minus_mask.cuda()
         else:
             self.tensor_source = torch
 
@@ -69,7 +71,6 @@ class AttentionGAIN:
         self.epoch = epoch
 
         self.epochs_trained = 0
-        self.minus_mask = reduce_boundaries(10)
 
     def _register_hooks(self, layer_name):
         # this wires up a hook that stores both the activation and gradient of the conv layer we are interested in
@@ -100,7 +101,7 @@ class AttentionGAIN:
         # TODO dynamic optimizer selection
         # self._check_dataset_compatability(rds)
         self.best_weights = copy.deepcopy(self.model.state_dict())
-        best_loss = 1e15
+        best_loss = 1e40
 
         pretrain_finished = False
         opt = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
@@ -116,6 +117,11 @@ class AttentionGAIN:
             print_prefix = None
             # train
             for images, segments, labels, _ in rds['train']:
+
+                if self.gpu:
+                    images = images.cuda()
+                    segments = segments.cuda()
+                    labels = labels.cuda()
                 total_loss, loss_cl, loss_am, loss_e, probs, acc_cl, _, _, _ = self.forward(images, labels, segments)
                 total_loss_sum += scalar(total_loss)
                 loss_cl_sum += scalar(loss_cl)
@@ -152,6 +158,9 @@ class AttentionGAIN:
         self.model.load_state_dict(self.best_weights)
         self.model.eval()
 
+        if self.gpu:
+            self.model = self.model.cuda()
+
         # test
         loss_cl_sum = 0
         loss_am_sum = 0
@@ -159,6 +168,10 @@ class AttentionGAIN:
         total_loss_sum = 0
         for images, segments, labels, trust_image in rds['test']:
             # test
+            if self.gpu:
+                images = images.cuda()
+                segments = segments.cuda()
+                labels = labels.cuda()
             total_loss, loss_cl, loss_am, loss_e, prob, acc_cl, A_c, I_star, mask = self.forward(images, labels,
                                                                                                  segments)
 
@@ -184,18 +197,23 @@ class AttentionGAIN:
 
         # Eq 1
         grad = self._last_grad
-        w_c = F.avg_pool2d(grad, (grad.shape[-2], grad.shape[-1]), 1)
-        w_c_new_shape = (w_c.shape[0] * w_c.shape[1], w_c.shape[2], w_c.shape[3])
-        w_c = w_c.view(w_c_new_shape).unsqueeze(0)
+        # w_c = F.avg_pool2d(grad, (grad.shape[-2], grad.shape[-1]), 1)
+        # w_c_new_shape = (1, w_c.shape[0] * w_c.shape[1], w_c.shape[2], w_c.shape[3])
+        # w_c = w_c.view(w_c_new_shape).unsqueeze(0)
 
         # Eq 2
         # TODO this doesn't support batching
-        weights = self._last_activation
-        weights_new_shape = (weights.shape[0] * weights.shape[1], weights.shape[2], weights.shape[3])
-        weights = weights.view(weights_new_shape).unsqueeze(0)
+        # weights = self._last_activation
+        # weights_new_shape = (1, weights.shape[0] * weights.shape[1], weights.shape[2], weights.shape[3])
+        # weights = weights.view(weights_new_shape).unsqueeze(0)
 
-        gcam = F.relu(F.conv2d(weights, w_c))
-        A_c = F.upsample(gcam, size=data.size()[2:], mode='bilinear')
+        self._last_grad = self._last_grad  # weights
+        self._last_activation = F.adaptive_avg_pool2d(self._last_activation, 1)  # fl
+        A_c = torch.mul(self._last_activation, self._last_grad).sum(dim=1, keepdim=True)
+        A_c = F.relu(A_c)
+        A_c = F.upsample_bilinear(A_c, size=data.size()[2:])
+        # gcam = F.relu(F.conv2d(weights, w_c))
+        # A_c = F.upsample(gcam, size=data.size()[2:], mode='bilinear')
 
         loss_cl = self.loss_cl(output_cl, label)
 
@@ -247,3 +265,10 @@ class AttentionGAIN:
         label = torch.autograd.Variable(label)
         segments = torch.autograd.Variable(segments)
         return data, label, segments
+
+
+"""
+gcam.shape = {Size} torch.Size([10, 1, 224, 224])
+image.shape = {Size} torch.Size([10, 3, 224, 224])
+hmmm need proof that
+"""

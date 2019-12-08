@@ -15,6 +15,7 @@ composite = transforms.Compose([
 ])
 """
 
+
 class DatasetLoader:
     """
     Load ISIC files as images and cache them, or load from cache files
@@ -107,7 +108,8 @@ class DatasetLoader:
                 torch_dict['id'] = dct['id']
                 for item in P.labels_attributes:
                     torch_dict[item] = torch.load(dct[item])
-                torch_dict[P.input_attribute] = torch.load(dct[P.input_attribute]) # normalization(torch.load(dct[P.input_attribute]))
+                torch_dict[P.input_attribute] = torch.load(
+                    dct[P.input_attribute])  # normalization(torch.load(dct[P.input_attribute]))
                 result.append(torch_dict)
 
         return result
