@@ -22,6 +22,6 @@ if __name__ == "__main__":
     # a = torch.tensor([[0.5, 0.25, 0.10, 0.15], [0.1, 0.25, 0.5, 0.15]])
     # print(F.softmax(a, dim=1).max(dim=1))
 
-    clf.train(train_set, 100, 10)
+    clf.train(train_set, test_set, 100, 10, 1)
     #    gain_model.train(rds, 100)
     #    gain_model.test(rds)
