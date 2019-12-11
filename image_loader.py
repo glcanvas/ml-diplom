@@ -170,13 +170,10 @@ class ImageDataset(torch.utils.data.Dataset):
             segments = dct[i]
             trusted = dct[i]
             ill_tag = i + '_value'
-            a = [0 for _ in range(len(P.labels_attributes) + 1)]
             if dct[ill_tag]:
-                a[idx + 1] = 1
-                labels.append(a)
+                labels.extend([0, 1])
             else:
-                a[0] = 1
-                labels.append(a)
+                labels.extend([1, 0])
         return segments, torch.tensor(labels).float(), trusted
 
 

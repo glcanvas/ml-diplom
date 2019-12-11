@@ -3,7 +3,6 @@ import torch.nn.functional as F
 import torchvision.models as m
 import torch.nn as nn
 import visualize
-import time
 import copy
 
 
@@ -236,13 +235,13 @@ class AttentionGAIN:
         # TODO this currently doesn't support batching, maybe add that
         I_star, mask = self._mask_image(gcam, data)
 
-        # output_am = self.model(I_star)
+        output_am = self.model(I_star)
 
         # Eq 5
-        # loss_am = F.sigmoid(output_am) * label
-        # loss_am = loss_am.sum() / label.sum().type(self.tensor_source.FloatTensor)
+        loss_am = F.sigmoid(output_am) * label
+        loss_am = loss_am.sum() / label.sum().type(self.tensor_source.FloatTensor)
 
-        updated_segment_mask = segment * 50 + self.minus_mask
+        updated_segment_mask = segment * self.omega + self.minus_mask + loss_am * self.alpha
         loss_e = ((mask - updated_segment_mask) @ (mask - updated_segment_mask)).sum()
 
         # Eq 6
@@ -265,10 +264,3 @@ class AttentionGAIN:
         label = torch.autograd.Variable(label)
         segments = torch.autograd.Variable(segments)
         return data, label, segments
-
-
-"""
-gcam.shape = {Size} torch.Size([10, 1, 224, 224])
-image.shape = {Size} torch.Size([10, 3, 224, 224])
-hmmm need proof that
-"""

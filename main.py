@@ -1,13 +1,14 @@
+import torch
 import gain
 import image_loader as il
 from torch.utils.data import DataLoader
 import classifier
-import torch
 import torch.nn.functional as F
 import torch.nn as nn
 
+
 # gain_model = gain.AttentionGAIN(gpu=True)
-clf = classifier.Classifier(6, gpu=True)
+clf = classifier.Classifier(5, gpu=True)
 
 loader = il.DatasetLoader.initial()
 train = loader.load_tensors(0, 50)
@@ -25,3 +26,10 @@ if __name__ == "__main__":
     clf.train(train_set, test_set, 100, 10, 1)
     #    gain_model.train(rds, 100)
     #    gain_model.test(rds)
+    """
+    t = torch.tensor([[10, 2, 3, 4, 5, 6, 7, 8, 9, 10], [11, 21, 34, 44, 45, 76, 17, 38, 49, 10]])
+    x = t.view((2, 5, 2))
+    print(t)
+    print(x)
+    print(x.max(dim=2))
+    """
