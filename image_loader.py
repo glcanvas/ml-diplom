@@ -124,6 +124,12 @@ class DatasetLoader:
 class ImageDataset(torch.utils.data.Dataset):
     """
     data_set is result of execution DatasetLoader.load_tensors()
+
+    возвращается кортеж:
+    (исходная картинка| 5 сегмент. масок| 10 элментов для заболевани)
+
+    i -- если 1 то нет заболевания
+    i + 1 --  если 1 то есть заболевание
     """
 
     def __init__(self, data_set):
@@ -148,8 +154,8 @@ class ImageDataset(torch.utils.data.Dataset):
             # tensor of input data
             # tensor of segments
             # tensor of labels answer
-            segm, labl, trust_segment = ImageDataset.split_targets(target_data)
-            result.append((input_data, segm, labl, trust_segment))
+            segm, labl = ImageDataset.split_targets(target_data)
+            result.append((input_data, segm, labl))
         return result
 
     @staticmethod
@@ -162,19 +168,19 @@ class ImageDataset(torch.utils.data.Dataset):
 
     @staticmethod
     def split_targets(dct: dict):
-        segments = None
+        segments = []
         # not exist ill, exist ill
         labels = []
-        trusted = None
+        # trusted = None
         for idx, i in enumerate(P.labels_attributes):
-            segments = dct[i]
-            trusted = dct[i]
+            segments.append(dct[i].tolist())
+            # trusted = dct[i]
             ill_tag = i + '_value'
             if dct[ill_tag]:
                 labels.extend([0, 1])
             else:
                 labels.extend([1, 0])
-        return segments, torch.tensor(labels).float(), trusted
+        return torch.tensor(segments).float(), torch.tensor(labels).float()
 
 
 from torch.utils.data.dataloader import DataLoader

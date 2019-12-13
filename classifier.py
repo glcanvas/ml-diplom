@@ -61,7 +61,7 @@ class Classifier:
         for epoch in range(1, epochs + 1):
             total_loss_cl = 0
             total_cl_acc = 0
-            for images, _, labels, _ in train_data_set:
+            for images, _, labels in train_data_set:
                 if self.gpu:
                     images, labels = send_to_gpu(images, labels)
                 images, labels = wrap_to_variable(images, labels)
@@ -100,7 +100,7 @@ class Classifier:
     def test(self, test_data_set, batch_size: int):
         test_total_loss_cl = 0
         test_total_cl_acc = 0
-        for images, _, labels, _ in test_data_set:
+        for images, _, labels in test_data_set:
             if self.gpu:
                 images, labels = send_to_gpu(images, labels)
             images, labels = wrap_to_variable(images, labels)
