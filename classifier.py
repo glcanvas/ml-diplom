@@ -5,8 +5,11 @@ classify dataset
 import torch
 import torch.nn.functional as F
 import torchvision.models as m
+import property as P
 import torch.nn as nn
 import copy
+from datetime import datetime
+import os
 
 
 def scalar(tensor):
@@ -50,7 +53,8 @@ class Classifier:
         else:
             self.tensor_source = torch
 
-    def train(self, train_data_set, test_data_set, epochs, train_batch_size: int, test_batch_size: int,
+    def train(self, test_each_epochs: int, train_data_set, test_data_set, epochs, train_batch_size: int,
+              test_batch_size: int,
               learning_rate=1e-6):
 
         optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
@@ -87,15 +91,16 @@ class Classifier:
                 self.best_weights = copy.deepcopy(self.model.state_dict())
 
             train_size = len(train_data_set)
-            print('%i of %i EPOCHS, TEST Loss_CL: %f, Accuracy_CL: %f%%' %
-                  (epoch, epochs, total_loss_cl / train_size, (total_cl_acc / train_size) * 100.0))
-            if epoch % 10 == 0:
+            text = '%i of %i EPOCHS, TEST Loss_CL: %f, Accuracy_CL: %f%%' % (epoch, epochs, total_loss_cl / train_size, (total_cl_acc / train_size) * 100.0)
+            print(text)
+            P.write_to_log(text)
+            if epoch % test_each_epochs == 0:
                 test_loss, _ = self.test(test_data_set, test_batch_size)
                 if best_test_accuracy is None or test_loss < best_test_accuracy:
                     best_test_accuracy = test_loss
                     self.best_test_weights = copy.deepcopy(self.model.state_dict())
-        # self.save_model(self.best_test_weights, "classifier_test_weights.torch")
-        # self.save_model(self.best_weights, "classifier_train_weights.torch")
+        self.save_model(self.best_test_weights, "classifier_test_weights")
+        self.save_model(self.best_weights, "classifier_train_weights")
 
     def test(self, test_data_set, batch_size: int):
         test_total_loss_cl = 0
@@ -120,16 +125,24 @@ class Classifier:
 
         test_total_loss_cl /= test_size
         test_total_cl_acc = (test_total_cl_acc / test_size) * 100.0
-        print('TRAIN Loss_CL: %f, Accuracy_CL: %f%%' % (test_total_loss_cl, test_total_cl_acc))
+        text = 'TRAIN Loss_CL: %f, Accuracy_CL: %f%%' % (test_total_loss_cl, test_total_cl_acc)
+        print(text)
+        P.write_to_log(text)
 
         return test_total_loss_cl, test_total_cl_acc
 
-    def save_model(self, weights, name="classifier-model.torch"):
+    def save_model(self, weights, name="classifier-model"):
         try:
-            torch.save(weights, "./weights/" + name)
+            name = name + datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S') + ".torch"
+            saved_dir = os.path.join(P.base_data_dir, 'classifier_weights')
+            os.makedirs(saved_dir, exist_ok=True)
+            saved_file = os.path.join(saved_dir, name)
+            torch.save(weights, saved_file)
             print("Save model: {}".format(name))
+            P.write_to_log("Save model: {}".format(name))
         except Exception as e:
             print("Can't save model: {}".format(name), e)
+            P.write_to_log("Can't save model: {}".format(name), e)
 
     def __calculate_accuracy(self, output_cl, class_label, batch_size, loss_cl, total_loss_cl, total_cl_acc):
         output_cl = output_cl.view((batch_size, self.classes // 2, 2))

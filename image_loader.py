@@ -36,10 +36,12 @@ class DatasetLoader:
             cache_input_path = os.path.join(input_path, "cached")
             os.makedirs(cache_input_path, exist_ok=True)
             print("created cache input dir: {}".format(cache_input_path))
+            P.write_to_log("created cache input dir: {}".format(cache_input_path))
         if cache_target_path is None:
             cache_target_path = os.path.join(target_path, "cached")
             os.makedirs(cache_target_path, exist_ok=True)
             print("created cache target dir: {}".format(cache_target_path))
+            P.write_to_log("created cache target dir: {}".format(cache_target_path))
         self.cache_input_path = cache_input_path
         self.cache_target_path = cache_target_path
 
@@ -93,7 +95,10 @@ class DatasetLoader:
             self.__save_torch(dct, P.input_attribute, self.cache_input_path)
             print("=" * 10)
             print("save: {} of {} elements".format(idx, data_len))
+            P.write_to_log("=" * 10)
+            P.write_to_log("save: {} of {} elements".format(idx, data_len))
         print("all saved successfully")
+        P.write_to_log("all saved successfully")
 
     def load_tensors(self, lower_bound=None, upper_bound=None):
         data = self.__merge_data(self.cache_input_path, self.cache_target_path)
@@ -111,7 +116,8 @@ class DatasetLoader:
                 torch_dict[P.input_attribute] = torch.load(
                     dct[P.input_attribute])  # normalization(torch.load(dct[P.input_attribute]))
                 result.append(torch_dict)
-
+                print("left:{}, current:{}, right:{} processed".format(lower_bound, idx, upper_bound))
+                P.write_to_log("left:{}, current:{}, right:{} processed".format(lower_bound, idx, upper_bound))
         return result
 
     @staticmethod
@@ -183,12 +189,20 @@ class ImageDataset(torch.utils.data.Dataset):
         return torch.tensor(segments).float(), torch.tensor(labels).float()
 
 
-from torch.utils.data.dataloader import DataLoader
+def create_torch_tensors():
+    loader = DatasetLoader(P.data_inputs_path, P.data_labels_path)
+    loader.save_images_to_tensors()
+
+
+# from torch.utils.data.dataloader import DataLoader
 
 if __name__ == "__main__":
-    loader = DatasetLoader.initial()
-    train = loader.load_tensors(0, 100)
-    test = loader.load_tensors(100, 150)
-    train_set = DataLoader(ImageDataset(train), batch_size=10, shuffle=True, num_workers=4)
-    for i, j, k, l in train_set:
-        print(l.shape)
+    create_torch_tensors()
+    # loader = DatasetLoader.initial()
+    # train = loader.load_tensors(0, 100)
+    # test = loader.load_tensors(100, 150)
+    # train_set = DataLoader(ImageDataset(train), batch_size=10, shuffle=True, num_workers=4)
+    # for i, j, k, l in train_set:
+    #    print(l.shape)
+    # loader = DatasetLoader(P.data_inputs_path, P.data_labels_path)
+    # loader.save_images_to_tensors()

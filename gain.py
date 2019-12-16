@@ -155,6 +155,7 @@ class AttentionGAIN:
                     #    loss_cl.backward()
 
                     opt.step()
+                    # torch.cuda.empty_cache()
 
             if i % 5 == 0:
                 self.test(rds['test'], 1)
