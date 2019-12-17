@@ -23,6 +23,13 @@ def send_to_gpu(*args) -> tuple:
     return (*result,)
 
 
+def send_to_cpu(*args) -> tuple:
+    result = []
+    for i in args:
+        result.append(i.cpu())
+    return (*result,)
+
+
 def wrap_to_variable(*args) -> tuple:
     result = []
     for i in args:
@@ -53,9 +60,7 @@ class Classifier:
         else:
             self.tensor_source = torch
 
-    def train(self, test_each_epochs: int, train_data_set, test_data_set, epochs, train_batch_size: int,
-              test_batch_size: int,
-              learning_rate=1e-6):
+    def train(self, test_each_epochs: int, train_data_set, test_data_set, epochs, learning_rate=1e-6):
 
         optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
         self.model.train()
@@ -70,7 +75,7 @@ class Classifier:
                     images, labels = send_to_gpu(images, labels)
                 images, labels = wrap_to_variable(images, labels)
                 class_label = labels
-
+                train_batch_size = labels.shape[0]
                 self.model.zero_grad()
                 output_cl = self.model(images)
 
@@ -85,24 +90,26 @@ class Classifier:
                 total_loss_cl, total_cl_acc = self.__calculate_accuracy(output_cl, class_label,
                                                                         train_batch_size, loss_cl,
                                                                         total_loss_cl, total_cl_acc)
-
+                torch.cuda.empty_cache()
+                send_to_cpu(images, labels)
             if best_accuracy is None or total_loss_cl < best_accuracy:
                 best_accuracy = total_loss_cl
                 self.best_weights = copy.deepcopy(self.model.state_dict())
 
             train_size = len(train_data_set)
-            text = '%i of %i EPOCHS, TEST Loss_CL: %f, Accuracy_CL: %f%%' % (epoch, epochs, total_loss_cl / train_size, (total_cl_acc / train_size) * 100.0)
+            text = '%i of %i EPOCHS, TEST Loss_CL: %f, Accuracy_CL: %f%%' % (
+            epoch, epochs, total_loss_cl / train_size, (total_cl_acc / train_size) * 100.0)
             print(text)
             P.write_to_log(text)
             if epoch % test_each_epochs == 0:
-                test_loss, _ = self.test(test_data_set, test_batch_size)
+                test_loss, _ = self.test(test_data_set)
                 if best_test_accuracy is None or test_loss < best_test_accuracy:
                     best_test_accuracy = test_loss
                     self.best_test_weights = copy.deepcopy(self.model.state_dict())
         self.save_model(self.best_test_weights, "classifier_test_weights")
         self.save_model(self.best_weights, "classifier_train_weights")
 
-    def test(self, test_data_set, batch_size: int):
+    def test(self, test_data_set):
         test_total_loss_cl = 0
         test_total_cl_acc = 0
         for images, _, labels in test_data_set:
@@ -110,7 +117,7 @@ class Classifier:
                 images, labels = send_to_gpu(images, labels)
             images, labels = wrap_to_variable(images, labels)
             class_label = labels
-
+            batch_size = labels.shape[0]
             output_cl = self.model(images)
 
             grad_target = output_cl * class_label
