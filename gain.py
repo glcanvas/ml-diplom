@@ -8,6 +8,8 @@ import property as P
 from datetime import datetime
 import os
 
+EPS = 1e-10
+
 
 def scalar(tensor):
     return tensor.data.cpu().item()
@@ -209,7 +211,7 @@ class AttentionGAIN:
             _, output_cl_softmax_indexes = F.softmax(output_cl, dim=2).max(dim=2)
             cl_acc = torch.eq(output_cl_softmax_indexes, label_indexes).sum()
 
-            test_total_loss_cl += scalar(loss_cl.sum()) / (batch_size)
+            test_total_loss_cl += scalar(loss_cl.sum()) / batch_size
             test_total_cl_acc += scalar(cl_acc.sum() / (labels.sum()))
 
         test_size = len(test_data_set)
@@ -226,8 +228,10 @@ class AttentionGAIN:
         output_cl = self.model(data)
         # тут раньше была сумма, но не думаю что она нужна в данном случае
         grad_target = output_cl * label
-        grad_target[ill_index * 2].backward(gradient=label * output_cl, retain_graph=True)
-        grad_target[ill_index * 2 + 1].backward(gradient=label * output_cl, retain_graph=True)
+        grad_target[:, ill_index * 2].backward(gradient=label[:, ill_index * 2] * output_cl[:, ill_index * 2],
+                                               retain_graph=True)
+        grad_target[:, ill_index * 2 + 1].backward(gradient=label[:, ill_index * 2] * output_cl[:, ill_index * 2],
+                                                   retain_graph=True)
 
         self.model.zero_grad()
 
@@ -258,7 +262,7 @@ class AttentionGAIN:
     def _mask_image(self, gcam, image):
         gcam_min = gcam.min()
         gcam_max = gcam.max()
-        scaled_gcam = (gcam - gcam_min) / (gcam_max - gcam_min)
+        scaled_gcam = (gcam - gcam_min) / (gcam_max - gcam_min + EPS)
         mask = F.sigmoid(self.omega * (scaled_gcam - self.sigma))
         masked_image = image - (image * mask)
         return masked_image, mask
@@ -294,7 +298,7 @@ class AttentionGAIN:
         _, label_indexes = class_label.max(dim=2)
         _, output_cl_softmax_indexes = F.softmax(output_cl, dim=2).max(dim=2)
         cl_acc = torch.eq(output_cl_softmax_indexes, label_indexes).sum()
-        cl_acc = cl_acc.sum() / (class_label.sum())
+        cl_acc = cl_acc.sum() / (class_label.sum() + EPS)
 
         #                       loss_am
         return total_loss, loss_cl, 0, loss_e, output_cl_softmax, cl_acc, gcam, I_star, mask
