@@ -100,17 +100,25 @@ class DatasetLoader:
         print("all saved successfully")
         P.write_to_log("all saved successfully")
 
-    def load_tensors(self, lower_bound=None, upper_bound=None):
+    def load_tensors(self, lower_bound=None, upper_bound=None, load_first_segments: int = 10 ** 20):
         data = self.__merge_data(self.cache_input_path, self.cache_target_path)
         data_len = len(data)
         lower_bound = 0 if lower_bound is None else lower_bound
         upper_bound = data_len if upper_bound is None else upper_bound
         result = []
 
+        loads = 0
         for idx, dct in enumerate(data):
             if lower_bound <= idx < upper_bound:
                 torch_dict = dict()
                 torch_dict['id'] = dct['id']
+                # здесь как обсуждалось
+                # я помечу только первые N сегментов как существующие, остальные при загрузке
+                # я заменю  НА ПУСТЫЕ МАТРИЦЫ
+                torch_dict['is_segments'] = False
+                if loads < load_first_segments:
+                    torch_dict['is_segments'] = True
+                    loads += 1
                 for item in P.labels_attributes:
                     torch_dict[item] = torch.load(dct[item])
                 torch_dict[P.input_attribute] = torch.load(
@@ -161,6 +169,9 @@ class ImageDataset(torch.utils.data.Dataset):
             # tensor of segments
             # tensor of labels answer
             segm, labl = ImageDataset.split_targets(target_data)
+            # ЗАМЕНЯЮ НА ПУСТЫЕ МАТРИЦЫ!
+            if not dct['is_segments']:
+                segm = torch.zeros([5, 1, 224, 224]).float()
             result.append((input_data, segm, labl))
         return result
 

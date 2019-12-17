@@ -2,17 +2,20 @@ import torch
 import torch.nn.functional as F
 import torchvision.models as m
 import torch.nn as nn
-import visualize
+# import visualize
 import copy
+import property as P
+from datetime import datetime
+import os
 
 
 def scalar(tensor):
     return tensor.data.cpu().item()
 
 
-def reduce_boundaries(boundaries: int):
+def reduce_boundaries(boundaries: int, batch_size=10):
     # assume BSx1x224x224
-    zeros = torch.zeros((10, 1, 224, 224))
+    zeros = torch.zeros((batch_size, 1, 224, 224))
     for bs in zeros:
         for chanel in bs:
             for idx_i in range(0, 224):
@@ -24,7 +27,8 @@ def reduce_boundaries(boundaries: int):
 
 class AttentionGAIN:
     # 28
-    def __init__(self, classes: int, gradient_layer_name="features.28", weights=None, epoch=0, gpu=False, alpha=1,
+    def __init__(self, description: str, classes: int, gradient_layer_name="features.28", weights=None, epoch=0,
+                 gpu=False, alpha=1,
                  omega=10,
                  sigma=0.5):
         # validation
@@ -33,13 +37,11 @@ class AttentionGAIN:
 
         # set gpu options
         self.gpu = gpu
+        self.description = description
 
         # здесь * 2 так как каждой метке соответсвует бинарное значение -- да, нет в самом деле я сделал так для
         # классификации так как сделать по другому не знаю
         self.classes = classes * 2
-
-        # будет установленио в train
-        self.train_batch_size = None
 
         # define model
         self.model = m.vgg16(pretrained=True)
@@ -47,6 +49,7 @@ class AttentionGAIN:
         self.model.classifier[6] = nn.Linear(num_features, self.classes)
 
         self.best_weights = None
+        self.best_test_weights = None
 
         if weights:
             self.model.load_state_dict(weights)
@@ -98,47 +101,50 @@ class AttentionGAIN:
         if not gradient_layer_found:
             raise AttributeError('Gradient layer %s not found in the internal model' % layer_name)
 
-    def forward(self, data, label, segments, ill_index: int):
+    def forward(self, data, label, segments, train_batch_size: int, ill_index: int):
         data, label, segments = self._convert_data_and_label(data, label, segments)
-        return self._forward(data, label, segments, ill_index)
+        return self._forward(data, label, segments, train_batch_size, ill_index)
 
-    def train(self, rds, epochs, train_batch_size, learning_rate=1e-6):
+    def train(self, rds, epochs, test_each_epochs: int, learning_rate=1e-6):
 
-        self.train_batch_size = train_batch_size
         self.best_weights = copy.deepcopy(self.model.state_dict())
-        best_loss = 1e40
+        best_loss = None
+        best_test_loss = None
 
         # pretrain_finished = False
         opt = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
         for i in range(self.epoch, epochs, 1):
             self.epoch = i
-            # pretrain_finished = pretrain_finished or i > pretrain_epochs
+
             loss_cl_sum = 0
             loss_am_sum = 0
             acc_cl_sum = 0
             total_loss_sum = 0
             loss_e_sum = 0
-            print_prefix = None
+
             # train
             # segments.shape = torch.Size([10, 5, 1, 224, 224])
             # segments[:, i] = [10, 1,224,224] -- i-ое заболевание
             # labels.shape = [10, 10]
             # images.shape = torch.Size([10, 3, 224, 224])
             for images, segments, labels in rds['train']:
-
                 # здесь деление на 2 по понятным причинам
                 # переберу все заболевания и буду брать градиент по i * 2 и i * 2 + 1
                 # возможно стоит сделать 10 картинок и если заболевания нет -- то пустую маску
                 for ill_index in range(0, self.classes // 2):
 
+                    train_batch_size = images.shape[0]
+                    self.minus_mask = reduce_boundaries(8, train_batch_size)
                     if self.gpu:
                         images = images.cuda()  # bs x 3 x 224 x 224
                         segments = segments.cuda()  # bs x 1 x 224 x 224
                         labels = labels.cuda()  # bs x 10
+                        self.minus_mask = self.minus_mask.cuda()
+
                     #                 loss_am
                     total_loss, loss_cl, _, loss_e, probs, acc_cl, _, _, _ = self.forward(images, labels,
                                                                                           segments[:, ill_index],
-                                                                                          ill_index)
+                                                                                          train_batch_size, ill_index)
                     total_loss_sum += scalar(total_loss)
                     loss_cl_sum += scalar(loss_cl)
                     # loss_am_sum += scalar(loss_am)
@@ -155,28 +161,36 @@ class AttentionGAIN:
                     #    loss_cl.backward()
 
                     opt.step()
-                    # torch.cuda.empty_cache()
-
-            if i % 5 == 0:
-                self.test(rds['test'], 1)
+                    torch.cuda.empty_cache()
 
             train_size = len(rds['train']) * self.classes // 2
             last_acc = acc_cl_sum / train_size
-            print('%s Epoch %i, Loss_CL: %f, Loss_AM: %f, Loss E: %f, Loss Total: %f, Accuracy_CL: %f%%' %
-                  (print_prefix, (i + 1), loss_cl_sum / (train_size * self.classes // 2),
-                   loss_am_sum / train_size, loss_e_sum / train_size,
-                   total_loss_sum / train_size, last_acc * 100.0))
-            if total_loss_sum < best_loss:
+            text = 'TRAIN Epoch %i, Loss_CL: %f, Loss_AM: %f, Loss E: %f, Loss Total: %f, Accuracy_CL: %f%%' % (
+                (i + 1), loss_cl_sum / (train_size * self.classes // 2),
+                loss_am_sum / train_size, loss_e_sum / train_size,
+                total_loss_sum / train_size, last_acc * 100.0)
+            print(text)
+            P.write_to_log(text)
+
+            if (i + 1) % test_each_epochs == 0:
+                test_loss, _ = self.test(rds['test'])
+                if best_test_loss is None or test_loss < best_test_loss:
+                    best_test_loss = test_loss
+                    self.best_test_weights = copy.deepcopy(self.model.state_dict())
+
+            if best_loss is None or total_loss_sum < best_loss:
                 best_loss = total_loss_sum
                 self.best_weights = copy.deepcopy(self.model.state_dict())
         self.epochs_trained = epochs
-        # torch.save(self.best_weights, "./weights" + str(time.time_ns()))
+        self.save_model(self.best_test_weights, "gain_test_weights")
+        self.save_model(self.best_weights, "gain_train_weights")
 
     # тестирование взять с классификатора
-    def test(self, test_data_set, batch_size: int):
+    def test(self, test_data_set):
         test_total_loss_cl = 0
         test_total_cl_acc = 0
         for images, _, labels in test_data_set:
+            batch_size = images.shape[0]
             if self.gpu:
                 # images, labels = send_to_gpu(images, labels)
                 images = images.cuda()
@@ -188,10 +202,6 @@ class AttentionGAIN:
             grad_target.backward(gradient=labels * output_cl, retain_graph=True)
 
             loss_cl = self.loss_cl(output_cl, labels)
-
-            # test_total_loss_cl, test_total_cl_acc = self.__calculate_accuracy(output_cl, labels, batch_size,
-            #                                                                   loss_cl, test_total_loss_cl,
-            #                                                                  test_total_cl_acc)
 
             output_cl = output_cl.view((batch_size, self.classes // 2, 2))
             labels = labels.view(batch_size, self.classes // 2, 2)
@@ -206,7 +216,9 @@ class AttentionGAIN:
 
         test_total_loss_cl /= test_size
         test_total_cl_acc = (test_total_cl_acc / test_size) * 100.0
-        print('TEST Loss_CL: %f, Accuracy_CL: %f%%' % (test_total_loss_cl, test_total_cl_acc))
+        text = 'TEST Loss_CL: %f, Accuracy_CL: %f%%' % (test_total_loss_cl, test_total_cl_acc)
+        P.write_to_log(text)
+        print(text)
 
         return test_total_loss_cl, test_total_cl_acc
 
@@ -251,7 +263,7 @@ class AttentionGAIN:
         masked_image = image - (image * mask)
         return masked_image, mask
 
-    def _forward(self, data, label, segment, ill_index: int):
+    def _forward(self, data, label, segment, train_batch_size: int, ill_index: int):
         # TODO normalize elsewhere, this feels wrong (вроде здесь ок)
         output_cl, loss_cl, gcam = self._attention_map_forward(data, label, ill_index)
         output_cl_softmax = F.softmax(output_cl, dim=1)
@@ -277,8 +289,8 @@ class AttentionGAIN:
         # cl_acc = cl_acc.type(self.tensor_source.FloatTensor).mean()
         # считаю здесь ТОЛЬКО ТОЧНОСТЬ
         # может софтмакс надо брать по dim=1 пока точность неочень
-        output_cl = output_cl.view((self.train_batch_size, self.classes // 2, 2))
-        class_label = label.view(self.train_batch_size, self.classes // 2, 2)
+        output_cl = output_cl.view((train_batch_size, self.classes // 2, 2))
+        class_label = label.view(train_batch_size, self.classes // 2, 2)
         _, label_indexes = class_label.max(dim=2)
         _, output_cl_softmax_indexes = F.softmax(output_cl, dim=2).max(dim=2)
         cl_acc = torch.eq(output_cl_softmax_indexes, label_indexes).sum()
@@ -298,3 +310,16 @@ class AttentionGAIN:
         label = torch.autograd.Variable(label)
         segments = torch.autograd.Variable(segments)
         return data, label, segments
+
+    def save_model(self, weights, name="gain-model"):
+        try:
+            name = name + self.description + "_date-" + datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S') + ".torch"
+            saved_dir = os.path.join(P.base_data_dir, 'gain_weights')
+            os.makedirs(saved_dir, exist_ok=True)
+            saved_file = os.path.join(saved_dir, name)
+            torch.save(weights, saved_file)
+            print("Save model: {}".format(name))
+            P.write_to_log("Save model: {}".format(name))
+        except Exception as e:
+            print("Can't save model: {}".format(name), e)
+            P.write_to_log("Can't save model: {}".format(name), e)
