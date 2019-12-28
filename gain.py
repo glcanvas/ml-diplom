@@ -27,16 +27,22 @@ def reduce_boundaries(boundaries: int, batch_size=10, huge: int = -10000):
 
 class AttentionGAIN:
     # 28
-    def __init__(self, description: str, classes: int, gradient_layer_name="features.28", weights=None, epoch=0,
-                 gpu=False, alpha=1,
+    def __init__(self, description: str, classes: int, gradient_layer_name="features.28", weights=None,
+                 gpu=False,
+                 device=0,
+                 loss_classifier=None,
+                 alpha=1,
                  omega=10,
                  sigma=0.5):
         # validation
         if not gradient_layer_name:
             raise ValueError('Missing required argument gradient_layer_name')
+        if gpu and device is None:
+            raise ValueError('Missing required argument device, but gpu enable')
 
         # set gpu options
         self.gpu = gpu
+        self.device = device
         self.description = description
 
         # здесь * 2 так как каждой метке соответсвует бинарное значение -- да, нет в самом деле я сделал так для
@@ -51,17 +57,18 @@ class AttentionGAIN:
         self.best_weights = None
         self.best_test_weights = None
 
+        # define loss classifier for classifier path
+        if loss_classifier is None:
+            self.loss_classifier = torch.nn.BCEWithLogitsLoss()
+
         if weights:
             self.model.load_state_dict(weights)
-            self.epoch = epoch
-        elif epoch > 0:
-            raise ValueError('epoch_offset > 0, but no weights were supplied')
 
         self.minus_mask = reduce_boundaries(8)
         if self.gpu:
-            self.model = self.model.cuda()
+            self.model = self.model.cuda(self.device)
             self.tensor_source = torch.cuda
-            self.minus_mask = self.minus_mask.cuda()
+            self.minus_mask = self.minus_mask.cuda(self.device)
         else:
             self.tensor_source = torch
 
@@ -72,11 +79,10 @@ class AttentionGAIN:
         # TODO make this configurable
         self.loss_cl = torch.nn.BCEWithLogitsLoss()
 
-        # misc. parameters
+        # misc parameters
         self.omega = omega
         self.sigma = sigma
         self.alpha = alpha
-        self.epoch = epoch
 
         self.epochs_trained = 0
 
@@ -113,13 +119,12 @@ class AttentionGAIN:
 
         # pretrain_finished = False
         opt = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
-        for i in range(self.epoch, epochs, 1):
-            self.epoch = i
+        for i in range(0, epochs, 1):
 
             loss_cl_sum = 0
             loss_am_sum = 0
             acc_cl_sum = 0
-            total_loss_sum = 0
+            loss_sum = 0
             loss_e_sum = 0
 
             # train
@@ -127,48 +132,37 @@ class AttentionGAIN:
             # segments[:, i] = [10, 1,224,224] -- i-ое заболевание
             # labels.shape = [10, 10]
             # images.shape = torch.Size([10, 3, 224, 224])
+
+            with_segments_elements = 0
+            without_segments_elements = 0
             for images, segments, labels in rds['train']:
-                # здесь деление на 2 по понятным причинам
-                # переберу все заболевания и буду брать градиент по i * 2 и i * 2 + 1
-                # возможно стоит сделать 10 картинок и если заболевания нет -- то пустую маску
-                for ill_index in range(0, self.classes // 2):
 
-                    train_batch_size = images.shape[0]
-                    self.minus_mask = reduce_boundaries(8, train_batch_size)
-                    if self.gpu:
-                        images = images.cuda()  # bs x 3 x 224 x 224
-                        segments = segments.cuda()  # bs x 1 x 224 x 224
-                        labels = labels.cuda()  # bs x 10
-                        self.minus_mask = self.minus_mask.cuda()
-
-                    #                 loss_am
-                    total_loss, loss_cl, _, loss_e, probs, acc_cl, _, _, _ = self.forward(images, labels,
-                                                                                          segments[:, ill_index],
-                                                                                          train_batch_size, ill_index)
-                    total_loss_sum += scalar(total_loss)
-                    loss_cl_sum += scalar(loss_cl)
-                    # loss_am_sum += scalar(loss_am)
-                    acc_cl_sum += scalar(acc_cl)
-                    loss_e_sum += scalar(loss_e)
-
-                    # возможно здесь стоит сначала предобучить на классификацию но пока не буду
-                    # Backprop selectively based on pretraining/training
-                    # if pretrain_finished:
-                    #    print_prefix = 'TRAIN'
-                    total_loss.backward()
-                    # else:
-                    #    print_prefix = 'PRETRAIN'
-                    #    loss_cl.backward()
-
-                    opt.step()
-                    torch.cuda.empty_cache()
+                # при инициализации я доверюсь, что входные параметны корректны
+                # если встретил None значит сегментов нет и надо применять классификацию
+                # иначе применять gain
+                if len(segments.shape) == 1:
+                    without_segments_elements += images.shape[0]
+                    loss_cl_sum, acc_cl_sum = self.__train_classifier_branch(images, labels, opt, loss_cl_sum,
+                                                                             acc_cl_sum)
+                else:
+                    # тренирую здесь с использованием сегментов
+                    with_segments_elements += images.shape[0]
+                    loss_sum, loss_cl_sum, loss_am_sum, acc_cl_sum, loss_e_sum = self.__train_gain_branch(images,
+                                                                                                          segments,
+                                                                                                          labels,
+                                                                                                          opt,
+                                                                                                          loss_sum,
+                                                                                                          loss_cl_sum,
+                                                                                                          loss_am_sum,
+                                                                                                          acc_cl_sum,
+                                                                                                          loss_e_sum)
 
             train_size = len(rds['train']) * self.classes // 2
             last_acc = acc_cl_sum / train_size
             text = 'TRAIN Epoch %i, Loss_CL: %f, Loss_AM: %f, Loss E: %f, Loss Total: %f, Accuracy_CL: %f%%' % (
                 (i + 1), loss_cl_sum / (train_size * self.classes // 2),
-                loss_am_sum / train_size, loss_e_sum / train_size,
-                total_loss_sum / train_size, last_acc * 100.0)
+                loss_am_sum / (with_segments_elements + 1), loss_e_sum / (with_segments_elements + 1),
+                loss_sum / (with_segments_elements + 1), last_acc * 100.0)
             print(text)
             P.write_to_log(text)
 
@@ -178,14 +172,77 @@ class AttentionGAIN:
                     best_test_loss = test_loss
                     self.best_test_weights = copy.deepcopy(self.model.state_dict())
 
-            if best_loss is None or total_loss_sum < best_loss:
-                best_loss = total_loss_sum
+            if best_loss is None or loss_sum < best_loss:
+                best_loss = loss_sum
                 self.best_weights = copy.deepcopy(self.model.state_dict())
         self.epochs_trained = epochs
         self.save_model(self.best_test_weights, "gain_test_weights")
         self.save_model(self.best_weights, "gain_train_weights")
 
-    # тестирование взять с классификатора
+    def __train_gain_branch(self, images, segments, labels,
+                            optimizer, loss_sum, loss_cl_sum, am_sum, acc_cl_sum, e_sum):
+
+        train_batch_size = images.shape[0]
+        self.minus_mask = reduce_boundaries(8, train_batch_size)
+        if self.gpu:
+            images = images.cuda(self.device)  # bs x 3 x 224 x 224
+            segments = segments.cuda(self.device)  # bs x 1 x 224 x 224
+            labels = labels.cuda(self.device)  # bs x 10
+            self.minus_mask = self.minus_mask.cuda(self.device)
+
+        # здесь деление на 2 по понятным причинам
+        # переберу все заболевания и буду брать градиент по i * 2 и i * 2 + 1
+        # возможно стоит сделать 10 картинок и если заболевания нет -- то пустую маску
+        for ill_index in range(0, self.classes // 2):
+            total_loss, loss_cl, loss_am, loss_e, probs, acc_cl, _, _, _ = self.forward(images, labels,
+                                                                                        segments[:, ill_index],
+                                                                                        train_batch_size, ill_index)
+            loss_sum += scalar(total_loss)
+            loss_cl_sum += scalar(loss_cl)
+            am_sum += scalar(loss_am)
+            acc_cl_sum += scalar(acc_cl)
+            e_sum += scalar(loss_e)
+
+            # возможно здесь стоит сначала предобучить на классификацию но пока не буду
+            # Backprop selectively based on pretraining/training
+            # if pretrain_finished:
+            #    print_prefix = 'TRAIN'
+            total_loss.backward()
+            # else:
+            #    print_prefix = 'PRETRAIN'
+            #    loss_cl.backward()
+            optimizer.step()
+            torch.cuda.empty_cache()
+        return loss_sum, loss_cl_sum, am_sum, acc_cl_sum, e_sum
+
+    def __train_classifier_branch(self, images, labels, optimizer, loss_cl_sum, acc_cl_sum):
+        if self.gpu:
+            images = images.cuda(self.device)  # bs x 3 x 224 x 224
+            labels = labels.cuda(self.device)  # bs x 10
+        output_cl = self.model(images)
+        loss_cl = self.loss_classifier(output_cl, labels)
+
+        loss_cl.backward()
+        optimizer.step()
+        self.model.zero_grad()
+
+        batch_size = images.shape[0]
+
+        # copy-paste from gain.py 346
+        output_cl = output_cl.view((batch_size, self.classes // 2, 2))
+        class_label = labels.view(batch_size, self.classes // 2, 2)
+        _, label_indexes = class_label.max(dim=2)
+        _, output_cl_softmax_indexes = F.softmax(output_cl, dim=2).max(dim=2)
+        cl_acc = torch.eq(output_cl_softmax_indexes, label_indexes).sum()
+        cl_acc = cl_acc.sum() / (class_label.sum() + EPS)
+
+        # accumulate information
+        acc_cl_sum += scalar(cl_acc)
+        loss_cl_sum += scalar(loss_cl)
+
+        return loss_cl_sum, acc_cl_sum
+
+    # тестирование взять с классификатора(взял)
     def test(self, test_data_set):
         test_total_loss_cl = 0
         test_total_cl_acc = 0
@@ -193,13 +250,14 @@ class AttentionGAIN:
             batch_size = images.shape[0]
             if self.gpu:
                 # images, labels = send_to_gpu(images, labels)
-                images = images.cuda()
-                labels = labels.cuda()
+                images = images.cuda(self.device)
+                labels = labels.cuda(self.device)
 
             output_cl = self.model(images)
 
-            grad_target = output_cl * labels
-            grad_target.backward(gradient=labels * output_cl, retain_graph=True)
+            # лишние вычисления
+            # grad_target = output_cl * labels
+            # grad_target.backward(gradient=labels * output_cl, retain_graph=True)
 
             loss_cl = self.loss_cl(output_cl, labels)
 
@@ -226,10 +284,8 @@ class AttentionGAIN:
         output_cl = self.model(data)
         # тут раньше была сумма, но не думаю что она нужна в данном случае
         grad_target = output_cl * label
-        grad_target[:, ill_index * 2].backward(gradient=label[:, ill_index * 2] * output_cl[:, ill_index * 2],
-                                               retain_graph=True)
-        grad_target[:, ill_index * 2 + 1].backward(gradient=label[:, ill_index * 2] * output_cl[:, ill_index * 2],
-                                                   retain_graph=True)
+        grad_target[:, ill_index * 2].backward(gradient=label[:, ill_index * 2], retain_graph=True)
+        grad_target[:, ill_index * 2 + 1].backward(gradient=label[:, ill_index * 2 + 1], retain_graph=True)
 
         self.model.zero_grad()
 
@@ -276,9 +332,10 @@ class AttentionGAIN:
 
         # output_am = self.model(I_star)
 
-        # убрал здесть это из-за недостатка памяти
+        # убрал здесть это из-за недостатка памяти, возвращать на сервере!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # Eq 5
         # loss_am = F.sigmoid(output_am) * label
+        loss_am = torch.tensor([0])
         # loss_am = loss_am.sum() / label.sum().type(self.tensor_source.FloatTensor)
 
         updated_segment_mask = segment * self.omega + self.minus_mask  # + loss_am * self.alpha
@@ -298,19 +355,18 @@ class AttentionGAIN:
         cl_acc = torch.eq(output_cl_softmax_indexes, label_indexes).sum()
         cl_acc = cl_acc.sum() / (class_label.sum() + EPS)
 
-        #                       loss_am
-        return total_loss, loss_cl, 0, loss_e, output_cl_softmax, cl_acc, gcam, I_star, mask
+        return total_loss, loss_cl, loss_am, loss_e, output_cl_softmax, cl_acc, gcam, I_star, mask
 
     def _convert_data_and_label(self, data, label, segments):
         # converts our data and label over to variables, gpu optional
         if self.gpu:
-            data = data.cuda()
-            label = label.cuda()
-            segments = segments.cuda()
+            data = data.cuda(self.device)
+            label = label.cuda(self.device)
+            segments = segments.cuda(self.device)
 
-        data = torch.autograd.Variable(data)
-        label = torch.autograd.Variable(label)
-        segments = torch.autograd.Variable(segments)
+        # data = torch.autograd.Variable(data)
+        # label = torch.autograd.Variable(label)
+        # segments = torch.autograd.Variable(segments)
         return data, label, segments
 
     def save_model(self, weights, name="gain-model"):

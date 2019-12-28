@@ -55,4 +55,6 @@ def parse_input_commands():
     parser.add_argument("--test_left")
     parser.add_argument("--test_right")
     parser.add_argument("--description", default="_DEF_DESCRIPTION_")
+    parser.add_argument("--gpu", default=0)
+    parser.add_argument("--segments", default=10 ** 10)
     return parser

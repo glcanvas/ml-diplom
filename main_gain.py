@@ -2,24 +2,39 @@ import image_loader as il
 from torch.utils.data import DataLoader
 import gain
 import property as P
+import sys
+import torch
 
 if __name__ == "__main__":
+    parsed = P.parse_input_commands().parse_args(sys.argv[1:])
+    gpu = int(parsed.gpu)
+    description = parsed.description
+    train_left = int(parsed.train_left)
+    train_right = int(parsed.train_right)
+    test_left = int(parsed.test_left)
+    test_right = int(parsed.test_right)
+    train_segments_count = int(parsed.segments)
+
+    if train_segments_count % 10 != 0:
+        raise ValueError("train_segments_count must be multiple of 10")
+
+    P.initialize_log_name("gain_" + description)
+
     try:
-        gain = gain.AttentionGAIN("all-segments-exists", 5, gpu=False)
+        gain = gain.AttentionGAIN(description, 5, gpu=True, device=gpu)
 
         loader = il.DatasetLoader.initial()
-        train = loader.load_tensors(0, 13, 2000)
-        test = loader.load_tensors(21, 24)
+        train = loader.load_tensors(train_left, train_right, train_segments_count)
+        test = loader.load_tensors(test_left, test_right)
 
-        train_set = DataLoader(il.ImageDataset(train), batch_size=10, shuffle=False, num_workers=0)
-        test_set = DataLoader(il.ImageDataset(test), batch_size=10, shuffle=True, num_workers=0)
+        # здесь важно что train_set не мешается, так как сначала идут картинки с сегментами затем просто картинки
+        # так же train_segments_count должно быть кратно 10 !
+        train_set = DataLoader(il.ImageDataset(train), batch_size=10)
+        test_set = DataLoader(il.ImageDataset(test), batch_size=10, shuffle=True)
 
         gain.train({'train': train_set, 'test': test_set}, 100, 4)
     except BaseException as e:
-        g = e
-        print("AAAAA", e, type(e) )
-        P.write_to_log("AAAAAAAA!!!!", e, type(e))
-    finally:
-        print("QQQQQQ")
-        P.write_to_log("QQQQQQQQ")
-    raise g
+        print("EXCEPTION", e)
+        print(type(e))
+        P.write_to_log("EXCEPTION", e, type(e))
+        raise e

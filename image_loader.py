@@ -169,9 +169,9 @@ class ImageDataset(torch.utils.data.Dataset):
             # tensor of segments
             # tensor of labels answer
             segm, labl = ImageDataset.split_targets(target_data)
-            # ЗАМЕНЯЮ НА ПУСТЫЕ МАТРИЦЫ!
+            # ничего не загружаю
             if not dct['is_segments']:
-                segm = torch.zeros([5, 1, 224, 224]).float()
+                segm = -1 # torch.zeros([5, 1, 224, 224]).float()
             result.append((input_data, segm, labl))
         return result
 
