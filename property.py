@@ -19,7 +19,13 @@ cache_data_labels_path = base_data_dir + "/ISIC2018_Task2_Training_GroundTruth_v
 
 log_path = base_data_dir + "/logs"
 
-current_log_name = "log{}.txt".format(datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S'))
+current_log_name = None
+
+
+def initialize_log_name(value: str):
+    global current_log_name
+    current_log_name = "log{}___{}.txt".format(datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S'), value)
+
 
 labels_attributes = [
     'streaks',
