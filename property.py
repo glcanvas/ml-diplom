@@ -1,5 +1,7 @@
 import os
 from datetime import datetime
+import sys
+import argparse
 
 prefix = 'ISIC_'
 attribute = '_attribute_'
@@ -38,3 +40,13 @@ def write_to_log(*args):
             log_file.flush()
     except Exception as e:
         print("Exception while write log", e)
+
+
+def parse_input_commands():
+    parser = argparse.ArgumentParser(description="Classifier/gain args")
+    parser.add_argument("--train_left", default=0)
+    parser.add_argument("--train_right")
+    parser.add_argument("--test_left")
+    parser.add_argument("--test_right")
+    parser.add_argument("--description", default="_DEF_DESCRIPTION_")
+    return parser

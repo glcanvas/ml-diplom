@@ -15,15 +15,13 @@ def scalar(tensor):
     return tensor.data.cpu().item()
 
 
-def reduce_boundaries(boundaries: int, batch_size=10):
+def reduce_boundaries(boundaries: int, batch_size=10, huge: int = -10000):
     # assume BSx1x224x224
     zeros = torch.zeros((batch_size, 1, 224, 224))
-    for bs in zeros:
-        for chanel in bs:
-            for idx_i in range(0, 224):
-                for idx_j in range(0, 224):
-                    if idx_i < boundaries or idx_i + boundaries >= 224 or idx_j < boundaries or idx_j + boundaries >= 224:
-                        chanel[idx_i][idx_j] = -10000
+    zeros[:, :, 0:boundaries, :] = huge
+    zeros[:, :, 224 - boundaries:224, :] = huge
+    zeros[:, :, :, 0:boundaries] = huge
+    zeros[:, :, :, 224 - boundaries:224] = huge
     return zeros
 
 

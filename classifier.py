@@ -30,17 +30,11 @@ def send_to_cpu(*args) -> tuple:
     return (*result,)
 
 
-def wrap_to_variable(*args) -> tuple:
-    result = []
-    for i in args:
-        result.append(torch.autograd.Variable(i))
-    return (*result,)
-
-
 class Classifier:
 
-    def __init__(self, classes: int, gpu=False, loss_classifier=None):
+    def __init__(self, description: str, classes: int, gpu=False, loss_classifier=None):
         self.gpu = gpu
+        self.description = description
         # здесь * 2 так как каждой метке соответсвует бинарное значение -- да, нет в самом деле я сделал так для
         # классификации так как сделать по другому не знаю
         self.classes = classes * 2
@@ -64,8 +58,8 @@ class Classifier:
 
         optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
         self.model.train()
-        best_accuracy = None
-        best_test_accuracy = None
+        best_loss = None
+        best_test_loss = None
 
         for epoch in range(1, epochs + 1):
             total_loss_cl = 0
@@ -73,14 +67,15 @@ class Classifier:
             for images, _, labels in train_data_set:
                 if self.gpu:
                     images, labels = send_to_gpu(images, labels)
-                images, labels = wrap_to_variable(images, labels)
+                # images, labels = wrap_to_variable(images, labels)
                 class_label = labels
                 train_batch_size = labels.shape[0]
                 self.model.zero_grad()
                 output_cl = self.model(images)
 
-                grad_target = output_cl * class_label
-                grad_target.backward(gradient=class_label * output_cl, retain_graph=True)
+                # grad_target = output_cl * class_label
+                # gradient=class_label * output_cl, retain_graph=True
+                # grad_target.backward()
 
                 loss_cl = self.loss_classifier(output_cl, class_label)
 
@@ -92,19 +87,19 @@ class Classifier:
                                                                         total_loss_cl, total_cl_acc)
                 torch.cuda.empty_cache()
                 send_to_cpu(images, labels)
-            if best_accuracy is None or total_loss_cl < best_accuracy:
-                best_accuracy = total_loss_cl
+            if best_loss is None or total_loss_cl < best_loss:
+                best_loss = total_loss_cl
                 self.best_weights = copy.deepcopy(self.model.state_dict())
 
             train_size = len(train_data_set)
-            text = '%i of %i EPOCHS, TEST Loss_CL: %f, Accuracy_CL: %f%%' % (
-            epoch, epochs, total_loss_cl / train_size, (total_cl_acc / train_size) * 100.0)
+            text = 'TRAIN %i of %i EPOCHS, Train Loss_CL: %f, Accuracy_CL: %f%%' % (
+                epoch, epochs, total_loss_cl / train_size, (total_cl_acc / train_size) * 100.0)
             print(text)
             P.write_to_log(text)
             if epoch % test_each_epochs == 0:
                 test_loss, _ = self.test(test_data_set)
-                if best_test_accuracy is None or test_loss < best_test_accuracy:
-                    best_test_accuracy = test_loss
+                if best_test_loss is None or test_loss < best_test_loss:
+                    best_test_loss = test_loss
                     self.best_test_weights = copy.deepcopy(self.model.state_dict())
         self.save_model(self.best_test_weights, "classifier_test_weights")
         self.save_model(self.best_weights, "classifier_train_weights")
@@ -115,7 +110,7 @@ class Classifier:
         for images, _, labels in test_data_set:
             if self.gpu:
                 images, labels = send_to_gpu(images, labels)
-            images, labels = wrap_to_variable(images, labels)
+            # images, labels = wrap_to_variable(images, labels)
             class_label = labels
             batch_size = labels.shape[0]
             output_cl = self.model(images)
@@ -132,7 +127,7 @@ class Classifier:
 
         test_total_loss_cl /= test_size
         test_total_cl_acc = (test_total_cl_acc / test_size) * 100.0
-        text = 'TRAIN Loss_CL: %f, Accuracy_CL: %f%%' % (test_total_loss_cl, test_total_cl_acc)
+        text = 'TEST Loss_CL: %f, Accuracy_CL: %f%%' % (test_total_loss_cl, test_total_cl_acc)
         print(text)
         P.write_to_log(text)
 
@@ -140,7 +135,7 @@ class Classifier:
 
     def save_model(self, weights, name="classifier-model"):
         try:
-            name = name + datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S') + ".torch"
+            name = name + self.description + datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S') + ".torch"
             saved_dir = os.path.join(P.base_data_dir, 'classifier_weights')
             os.makedirs(saved_dir, exist_ok=True)
             saved_file = os.path.join(saved_dir, name)

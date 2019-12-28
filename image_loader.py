@@ -7,13 +7,13 @@ import property as P
 
 composite = transforms.Compose([
     transforms.Scale((P.image_size, P.image_size)),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
     transforms.ToTensor(),
 ])
 
-"""normalization = transforms.Compose([
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+normalization = transforms.Compose([
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
-"""
 
 
 class DatasetLoader:
@@ -121,8 +121,8 @@ class DatasetLoader:
                     loads += 1
                 for item in P.labels_attributes:
                     torch_dict[item] = torch.load(dct[item])
-                torch_dict[P.input_attribute] = torch.load(
-                    dct[P.input_attribute])  # normalization(torch.load(dct[P.input_attribute]))
+                torch_dict[P.input_attribute] = normalization(torch.load(dct[P.input_attribute]))
+                # normalization(torch.load(dct[P.input_attribute]))
                 result.append(torch_dict)
                 print("left:{}, current:{}, right:{} processed".format(lower_bound, idx, upper_bound))
                 P.write_to_log("left:{}, current:{}, right:{} processed".format(lower_bound, idx, upper_bound))
@@ -185,19 +185,19 @@ class ImageDataset(torch.utils.data.Dataset):
 
     @staticmethod
     def split_targets(dct: dict):
-        segments = []
+        segments = None
         # not exist ill, exist ill
         labels = []
         # trusted = None
         for idx, i in enumerate(P.labels_attributes):
-            segments.append(dct[i].tolist())
+            segments = dct[i] if segments is None else torch.cat((segments, dct[i]), 0)
             # trusted = dct[i]
             ill_tag = i + '_value'
             if dct[ill_tag]:
                 labels.extend([0, 1])
             else:
                 labels.extend([1, 0])
-        return torch.tensor(segments).float(), torch.tensor(labels).float()
+        return segments, torch.tensor(labels).float()
 
 
 def create_torch_tensors():
