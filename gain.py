@@ -2,7 +2,6 @@ import torch
 import torch.nn.functional as F
 import torchvision.models as m
 import torch.nn as nn
-# import visualize
 import copy
 import property as P
 from datetime import datetime
@@ -31,6 +30,7 @@ class AttentionGAIN:
                  gpu=False,
                  device=0,
                  loss_classifier=None,
+                 usage_am_loss=False,
                  alpha=1,
                  omega=10,
                  sigma=0.5):
@@ -44,7 +44,7 @@ class AttentionGAIN:
         self.gpu = gpu
         self.device = device
         self.description = description
-
+        self.usage_am_loss = usage_am_loss
         # здесь * 2 так как каждой метке соответсвует бинарное значение -- да, нет в самом деле я сделал так для
         # классификации так как сделать по другому не знаю
         self.classes = classes * 2
@@ -58,8 +58,9 @@ class AttentionGAIN:
         self.best_test_weights = None
 
         # define loss classifier for classifier path
+        # create loss function
         if loss_classifier is None:
-            self.loss_classifier = torch.nn.BCEWithLogitsLoss()
+            self.loss_cl = torch.nn.BCEWithLogitsLoss()
 
         if weights:
             self.model.load_state_dict(weights)
@@ -74,10 +75,6 @@ class AttentionGAIN:
 
         # wire up our hooks for heatmap creation
         self._register_hooks(gradient_layer_name)
-
-        # create loss function
-        # TODO make this configurable
-        self.loss_cl = torch.nn.BCEWithLogitsLoss()
 
         # misc parameters
         self.omega = omega
@@ -135,10 +132,11 @@ class AttentionGAIN:
 
             with_segments_elements = 0
             without_segments_elements = 0
+
             for images, segments, labels in rds['train']:
 
                 # при инициализации я доверюсь, что входные параметны корректны
-                # если встретил None значит сегментов нет и надо применять классификацию
+                # если встретил вектор значит сегментов нет и надо применять классификацию
                 # иначе применять gain
                 if len(segments.shape) == 1:
                     without_segments_elements += images.shape[0]
@@ -158,11 +156,14 @@ class AttentionGAIN:
                                                                                                           loss_e_sum)
 
             train_size = len(rds['train']) * self.classes // 2
-            last_acc = acc_cl_sum / train_size
+            last_acc = acc_cl_sum / (with_segments_elements * self.classes // 2 + EPS + without_segments_elements)
             text = 'TRAIN Epoch %i, Loss_CL: %f, Loss_AM: %f, Loss E: %f, Loss Total: %f, Accuracy_CL: %f%%' % (
-                (i + 1), loss_cl_sum / (train_size * self.classes // 2),
-                loss_am_sum / (with_segments_elements + 1), loss_e_sum / (with_segments_elements + 1),
-                loss_sum / (with_segments_elements + 1), last_acc * 100.0)
+                (i + 1),
+                loss_cl_sum / (with_segments_elements * self.classes // 2 + EPS + without_segments_elements),
+                loss_am_sum / (with_segments_elements * self.classes // 2 + EPS),
+                loss_e_sum / (with_segments_elements * self.classes // 2 + EPS),
+                loss_sum / (with_segments_elements * self.classes // 2 + EPS),
+                last_acc * 100.0)
             print(text)
             P.write_to_log(text)
 
@@ -220,7 +221,7 @@ class AttentionGAIN:
             images = images.cuda(self.device)  # bs x 3 x 224 x 224
             labels = labels.cuda(self.device)  # bs x 10
         output_cl = self.model(images)
-        loss_cl = self.loss_classifier(output_cl, labels)
+        loss_cl = self.loss_cl(output_cl, labels)
 
         loss_cl.backward()
         optimizer.step()
@@ -281,13 +282,14 @@ class AttentionGAIN:
         return test_total_loss_cl, test_total_cl_acc
 
     def _attention_map_forward(self, data, label, ill_index: int):
+
+        self.model.zero_grad()
+
         output_cl = self.model(data)
         # тут раньше была сумма, но не думаю что она нужна в данном случае
         grad_target = output_cl * label
         grad_target[:, ill_index * 2].backward(gradient=label[:, ill_index * 2], retain_graph=True)
         grad_target[:, ill_index * 2 + 1].backward(gradient=label[:, ill_index * 2 + 1], retain_graph=True)
-
-        self.model.zero_grad()
 
         # Eq 1
         # grad = self._last_grad
@@ -327,22 +329,21 @@ class AttentionGAIN:
         output_cl_softmax = F.softmax(output_cl, dim=1)
 
         # Eq 4
-        # TODO this currently doesn't support batching, maybe add that
+        # TODO this support batching
         I_star, mask = self._mask_image(gcam, data)
 
-        # output_am = self.model(I_star)
-
-        # убрал здесть это из-за недостатка памяти, возвращать на сервере!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # Eq 5
-        # loss_am = F.sigmoid(output_am) * label
-        loss_am = torch.tensor([0])
-        # loss_am = loss_am.sum() / label.sum().type(self.tensor_source.FloatTensor)
+        loss_am = torch.tensor([0.0])
+        if self.usage_am_loss:
+            output_am = self.model(I_star)
+            # Eq 5
+            loss_am = F.sigmoid(output_am) * label
+            loss_am = loss_am.sum() / label.sum().type(self.tensor_source.FloatTensor)
 
         updated_segment_mask = segment * self.omega + self.minus_mask  # + loss_am * self.alpha
         loss_e = ((mask - updated_segment_mask) @ (mask - updated_segment_mask)).sum()
 
         # Eq 6
-        total_loss = loss_cl + loss_e * 100  # + self.alpha * loss_am
+        total_loss = loss_cl + loss_e * 100 + self.alpha * loss_am
 
         # cl_acc = output_cl_softmax.max(dim=1)[1] == label.max(dim=1)[1]
         # cl_acc = cl_acc.type(self.tensor_source.FloatTensor).mean()
@@ -358,15 +359,12 @@ class AttentionGAIN:
         return total_loss, loss_cl, loss_am, loss_e, output_cl_softmax, cl_acc, gcam, I_star, mask
 
     def _convert_data_and_label(self, data, label, segments):
-        # converts our data and label over to variables, gpu optional
+        # converts our data and label over to optional gpu
         if self.gpu:
             data = data.cuda(self.device)
             label = label.cuda(self.device)
             segments = segments.cuda(self.device)
 
-        # data = torch.autograd.Variable(data)
-        # label = torch.autograd.Variable(label)
-        # segments = torch.autograd.Variable(segments)
         return data, label, segments
 
     def save_model(self, weights, name="gain-model"):

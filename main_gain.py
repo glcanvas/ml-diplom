@@ -21,7 +21,7 @@ if __name__ == "__main__":
     P.initialize_log_name("gain_" + description)
 
     try:
-        gain = gain.AttentionGAIN(description, 5, gpu=True, device=gpu)
+        gain = gain.AttentionGAIN(description, 5, gpu=True, device=gpu, usage_am_loss=True)
 
         loader = il.DatasetLoader.initial()
         train = loader.load_tensors(train_left, train_right, train_segments_count)
