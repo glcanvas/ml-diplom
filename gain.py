@@ -156,13 +156,13 @@ class AttentionGAIN:
                                                                                                           loss_e_sum)
 
             train_size = len(rds['train']) * self.classes // 2
-            last_acc = acc_cl_sum / (with_segments_elements * self.classes // 2 + EPS + without_segments_elements)
+            last_acc = acc_cl_sum / (with_segments_elements + without_segments_elements * self.classes // 2 + EPS)
             text = 'TRAIN Epoch %i, Loss_CL: %f, Loss_AM: %f, Loss E: %f, Loss Total: %f, Accuracy_CL: %f%%' % (
                 (i + 1),
-                loss_cl_sum / (with_segments_elements * self.classes // 2 + EPS + without_segments_elements),
-                loss_am_sum / (with_segments_elements * self.classes // 2 + EPS),
-                loss_e_sum / (with_segments_elements * self.classes // 2 + EPS),
-                loss_sum / (with_segments_elements * self.classes // 2 + EPS),
+                loss_cl_sum / (with_segments_elements + without_segments_elements * self.classes // 2 + EPS),
+                loss_am_sum / (with_segments_elements + EPS),
+                loss_e_sum / (with_segments_elements + EPS),
+                loss_sum / (with_segments_elements + EPS),
                 last_acc * 100.0)
             print(text)
             P.write_to_log(text)
