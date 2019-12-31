@@ -118,11 +118,14 @@ class AttentionGAIN:
         opt = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
         for i in range(0, epochs, 1):
 
-            loss_cl_sum = 0
-            loss_am_sum = 0
-            acc_cl_sum = 0
-            loss_sum = 0
-            loss_e_sum = 0
+            loss_cl_sum_segm = 0
+            loss_am_sum_segm = 0
+            acc_cl_sum_segm = 0
+            loss_sum_segm = 0
+            loss_e_sum_segm = 0
+
+            loss_cl_sum_no_segm = 0
+            acc_cl_sum_no_segm = 0
 
             # train
             # segments.shape = torch.Size([10, 5, 1, 224, 224])
@@ -140,30 +143,42 @@ class AttentionGAIN:
                 # иначе применять gain
                 if len(segments.shape) == 1:
                     without_segments_elements += images.shape[0]
-                    loss_cl_sum, acc_cl_sum = self.__train_classifier_branch(images, labels, opt, loss_cl_sum,
-                                                                             acc_cl_sum)
+                    loss_cl_sum_no_segm, acc_cl_sum_no_segm = self.__train_classifier_branch(images, labels, opt,
+                                                                                             loss_cl_sum_no_segm,
+                                                                                             acc_cl_sum_no_segm)
                 else:
                     # тренирую здесь с использованием сегментов
                     with_segments_elements += images.shape[0]
-                    loss_sum, loss_cl_sum, loss_am_sum, acc_cl_sum, loss_e_sum = self.__train_gain_branch(images,
-                                                                                                          segments,
-                                                                                                          labels,
-                                                                                                          opt,
-                                                                                                          loss_sum,
-                                                                                                          loss_cl_sum,
-                                                                                                          loss_am_sum,
-                                                                                                          acc_cl_sum,
-                                                                                                          loss_e_sum)
+                    loss_sum_segm, loss_cl_sum_segm, loss_am_sum_segm, acc_cl_sum_segm, loss_e_sum_segm = \
+                        self.__train_gain_branch(
+                            images,
+                            segments,
+                            labels,
+                            opt,
+                            loss_sum_segm,
+                            loss_cl_sum_segm,
+                            loss_am_sum_segm,
+                            acc_cl_sum_segm,
+                            loss_e_sum_segm)
 
-            train_size = len(rds['train']) * self.classes // 2
-            last_acc = acc_cl_sum / (with_segments_elements + without_segments_elements * self.classes // 2 + EPS)
+            last_acc_total = acc_cl_sum_segm / self.classes * 2
+            last_acc_total += acc_cl_sum_no_segm
+            last_acc_total /= len(rds['train'])
+
+            # loss_cl_sum_total = loss_cl_sum_segm / (with_segments_elements + 1 + EPS)
+            # loss_cl_sum_total += loss_cl_sum_no_segm / (without_segments_elements + 1 + EPS)
+            # loss_cl_sum_total /= 2
+            loss_cl_sum_total = loss_cl_sum_segm / self.classes * 2
+            loss_cl_sum_total += loss_cl_sum_no_segm
+            loss_cl_sum_total /= len(rds['train'])
+
             text = 'TRAIN Epoch %i, Loss_CL: %f, Loss_AM: %f, Loss E: %f, Loss Total: %f, Accuracy_CL: %f%%' % (
                 (i + 1),
-                loss_cl_sum / (with_segments_elements + without_segments_elements * self.classes // 2 + EPS),
-                loss_am_sum / (with_segments_elements + EPS),
-                loss_e_sum / (with_segments_elements + EPS),
-                loss_sum / (with_segments_elements + EPS),
-                last_acc * 100.0)
+                loss_cl_sum_total,
+                loss_am_sum_segm / (with_segments_elements * self.classes // 2 + EPS),
+                loss_e_sum_segm / (with_segments_elements * self.classes // 2 + EPS),
+                loss_sum_segm / (with_segments_elements * self.classes // 2 + EPS),
+                last_acc_total * 100.0)
             print(text)
             P.write_to_log(text)
 
@@ -173,8 +188,8 @@ class AttentionGAIN:
                     best_test_loss = test_loss
                     self.best_test_weights = copy.deepcopy(self.model.state_dict())
 
-            if best_loss is None or loss_sum < best_loss:
-                best_loss = loss_sum
+            if best_loss is None or loss_sum_segm < best_loss:
+                best_loss = loss_sum_segm
                 self.best_weights = copy.deepcopy(self.model.state_dict())
         self.epochs_trained = epochs
         self.save_model(self.best_test_weights, "gain_test_weights")
@@ -195,7 +210,7 @@ class AttentionGAIN:
         # переберу все заболевания и буду брать градиент по i * 2 и i * 2 + 1
         # возможно стоит сделать 10 картинок и если заболевания нет -- то пустую маску
         for ill_index in range(0, self.classes // 2):
-            total_loss, loss_cl, loss_am, loss_e, probs, acc_cl, _, _, _ = self.forward(images, labels,
+            total_loss, loss_cl, loss_am, loss_e, _, acc_cl, _, _, _ = self.forward(images, labels,
                                                                                         segments[:, ill_index],
                                                                                         train_batch_size, ill_index)
             loss_sum += scalar(total_loss)
@@ -283,14 +298,14 @@ class AttentionGAIN:
 
     def _attention_map_forward(self, data, label, ill_index: int):
 
-        self.model.zero_grad()
-
         output_cl = self.model(data)
         # тут раньше была сумма, но не думаю что она нужна в данном случае
+        # grad_target[:, ill_index * 2].backward(gradient=label[:, ill_index * 2], retain_graph=True)
+        # grad_target[:, ill_index * 2 + 1].backward(gradient=label[:, ill_index * 2 + 1], retain_graph=True)
         grad_target = output_cl * label
-        grad_target[:, ill_index * 2].backward(gradient=label[:, ill_index * 2], retain_graph=True)
-        grad_target[:, ill_index * 2 + 1].backward(gradient=label[:, ill_index * 2 + 1], retain_graph=True)
-
+        grad_target[:, ill_index * 2].backward(gradient=grad_target.sum(axis=1), retain_graph=True)
+        grad_target[:, ill_index * 2 + 1].backward(gradient=grad_target.sum(axis=1), retain_graph=True)
+        self.model.zero_grad()
         # Eq 1
         # grad = self._last_grad
         # w_c = F.avg_pool2d(grad, (grad.shape[-2], grad.shape[-1]), 1)
@@ -332,7 +347,10 @@ class AttentionGAIN:
         # TODO this support batching
         I_star, mask = self._mask_image(gcam, data)
 
-        loss_am = torch.tensor([0.0])
+        if self.gpu:
+            loss_am = torch.tensor([0.0]).cuda(self.device)
+        else:
+            loss_am = torch.tensor([0.0])
         if self.usage_am_loss:
             output_am = self.model(I_star)
             # Eq 5

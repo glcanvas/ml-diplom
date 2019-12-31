@@ -6,14 +6,14 @@ import sys
 import torch
 
 if __name__ == "__main__":
-    parsed = P.parse_input_commands().parse_args(sys.argv[1:])
-    gpu = int(parsed.gpu)
-    description = parsed.description
-    train_left = int(parsed.train_left)
-    train_right = int(parsed.train_right)
-    test_left = int(parsed.test_left)
-    test_right = int(parsed.test_right)
-    train_segments_count = int(parsed.segments)
+    # parsed = P.parse_input_commands().parse_args(sys.argv[1:])
+    gpu = 0  # int(parsed.gpu)
+    description = ""  # parsed.description
+    train_left = 0  # int(parsed.train_left)
+    train_right = 100  # int(parsed.train_right)
+    test_left = 101  # int(parsed.test_left)
+    test_right = 2000  # int(parsed.test_right)
+    train_segments_count = 1000  # int(parsed.segments)
 
     if train_segments_count % 10 != 0:
         raise ValueError("train_segments_count must be multiple of 10")
@@ -21,7 +21,7 @@ if __name__ == "__main__":
     P.initialize_log_name("gain_" + description)
 
     try:
-        gain = gain.AttentionGAIN(description, 5, gpu=True, device=gpu, usage_am_loss=True)
+        gain = gain.AttentionGAIN(description, 5, gpu=True, device=gpu, usage_am_loss=False)
 
         loader = il.DatasetLoader.initial()
         train = loader.load_tensors(train_left, train_right, train_segments_count)
