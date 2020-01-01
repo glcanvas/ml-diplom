@@ -11,6 +11,9 @@ input_attribute = 'input'
 cached_extension = '.torch'
 
 base_data_dir = "/home/nikita/PycharmProjects"
+if not os.path.exists(base_data_dir):
+    base_data_dir = "/media/disk1/nduginec"
+
 data_inputs_path = base_data_dir + "/ISIC2018_Task1-2_Training_Input"
 data_labels_path = base_data_dir + "/ISIC2018_Task2_Training_GroundTruth_v3"
 
