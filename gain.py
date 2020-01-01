@@ -108,7 +108,7 @@ class AttentionGAIN:
         data, label, segments = self._convert_data_and_label(data, label, segments)
         return self._forward(data, label, segments, train_batch_size, ill_index)
 
-    def train(self, rds, epochs, test_each_epochs: int, learning_rate=1e-6):
+    def train(self, rds, epochs, test_each_epochs: int, pre_train_epoch: int = 10, learning_rate=1e-6):
 
         self.best_weights = copy.deepcopy(self.model.state_dict())
         best_loss = None
@@ -140,6 +140,8 @@ class AttentionGAIN:
                 # тренирую здесь с использованием сегментов
                 with_segments_elements += images.shape[0]
                 loss_sum_segm, loss_cl_sum_segm, loss_am_sum_segm, acc_cl_sum_segm, loss_e_sum_segm = self.__train_gain_branch(
+                    i,
+                    pre_train_epoch,
                     images,
                     segments,
                     labels,
@@ -167,7 +169,9 @@ class AttentionGAIN:
             loss_cl_sum_total += loss_cl_sum_no_segm
             loss_cl_sum_total /= (len(rds['train_segment']) + len(rds['train_classifier']))
 
-            text = 'TRAIN Epoch %i, Loss_CL: %f, Loss_AM: %f, Loss E: %f, Loss Total: %f, Accuracy_CL: %f%%' % (
+            prefix = "PRETRAIN" if i < pre_train_epoch else "TRAIN"
+            text = '%s Epoch %i, Loss_CL: %f, Loss_AM: %f, Loss E: %f, Loss Total: %f, Accuracy_CL: %f%%' % (
+                prefix,
                 (i + 1),
                 loss_cl_sum_total,
                 loss_am_sum_segm / (with_segments_elements * self.classes // 2 + EPS),
@@ -190,7 +194,7 @@ class AttentionGAIN:
         self.save_model(self.best_test_weights, "gain_test_weights")
         self.save_model(self.best_weights, "gain_train_weights")
 
-    def __train_gain_branch(self, images, segments, labels,
+    def __train_gain_branch(self, current_epoch: int, pre_train_epoch: int, images, segments, labels,
                             optimizer, loss_sum, loss_cl_sum, am_sum, acc_cl_sum, e_sum):
 
         train_batch_size = images.shape[0]
@@ -214,14 +218,12 @@ class AttentionGAIN:
             acc_cl_sum += scalar(acc_cl)
             e_sum += scalar(loss_e)
 
-            # возможно здесь стоит сначала предобучить на классификацию но пока не буду
+            # возможно здесь стоит сначала предобучить на классификацию но пока не буду (сделал)
             # Backprop selectively based on pretraining/training
-            # if pretrain_finished:
-            #    print_prefix = 'TRAIN'
-            total_loss.backward()
-            # else:
-            #    print_prefix = 'PRETRAIN'
-            #    loss_cl.backward()
+            if current_epoch < pre_train_epoch:
+                loss_cl.backward()
+            else:
+                total_loss.backward()
             optimizer.step()
             torch.cuda.empty_cache()
         return loss_sum, loss_cl_sum, am_sum, acc_cl_sum, e_sum
