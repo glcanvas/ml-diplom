@@ -6,33 +6,43 @@ import sys
 import torch
 
 if __name__ == "__main__":
-    # parsed = P.parse_input_commands().parse_args(sys.argv[1:])
-    gpu = 0  # int(parsed.gpu)
-    description = ""  # parsed.description
-    train_left = 0  # int(parsed.train_left)
-    train_right = 100  # int(parsed.train_right)
-    test_left = 101  # int(parsed.test_left)
-    test_right = 2000  # int(parsed.test_right)
-    train_segments_count = 1000  # int(parsed.segments)
+    parsed = P.parse_input_commands().parse_args(sys.argv[1:])
+    gpu = int(parsed.gpu)
+    parsed_description = parsed.description
+    train_left = int(parsed.train_left)
+    train_right = int(parsed.train_right)
+    test_left = int(parsed.test_left)
+    test_right = int(parsed.test_right)
+    train_segments_count = int(parsed.segments)
+    use_am_loss = parsed.am_loss.lower() == "true"
 
-    if train_segments_count % 10 != 0:
-        raise ValueError("train_segments_count must be multiple of 10")
+    description = "{}_train_left-{},train_segments-{},train_right-{},test_left-{},test_right-{},am_loss-{}" \
+        .format(parsed_description,
+                train_left,
+                train_segments_count,
+                train_right,
+                test_left,
+                test_right,
+                use_am_loss
+                )
 
     P.initialize_log_name("gain_" + description)
 
     try:
-        gain = gain.AttentionGAIN(description, 5, gpu=True, device=gpu, usage_am_loss=False)
+        gain = gain.AttentionGAIN(description, 5, gpu=True, device=gpu, usage_am_loss=use_am_loss)
 
         loader = il.DatasetLoader.initial()
-        train = loader.load_tensors(train_left, train_right, train_segments_count)
+        train_segments = loader.load_tensors(train_left, train_segments_count, train_segments_count)
+        train_classifier = loader.load_tensors(train_segments_count, train_right, 0)
         test = loader.load_tensors(test_left, test_right)
 
-        # здесь важно что train_set не мешается, так как сначала идут картинки с сегментами затем просто картинки
-        # так же train_segments_count должно быть кратно 10 !
-        train_set = DataLoader(il.ImageDataset(train), batch_size=10)
-        test_set = DataLoader(il.ImageDataset(test), batch_size=10, shuffle=True)
+        train_segments_set = DataLoader(il.ImageDataset(train_segments), batch_size=10, shuffle=True)
+        train_classifier_set = DataLoader(il.ImageDataset(train_classifier), batch_size=10, shuffle=True)
+        test_set = DataLoader(il.ImageDataset(test), batch_size=10)
 
-        gain.train({'train': train_set, 'test': test_set}, 100, 4)
+        gain.train({'train_segment': train_segments_set, 'train_classifier': train_classifier_set, 'test': test_set},
+                   100,
+                   4)
     except BaseException as e:
         print("EXCEPTION", e)
         print(type(e))

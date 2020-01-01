@@ -136,41 +136,36 @@ class AttentionGAIN:
             with_segments_elements = 0
             without_segments_elements = 0
 
-            for images, segments, labels in rds['train']:
+            for images, segments, labels in rds['train_segment']:
+                # тренирую здесь с использованием сегментов
+                with_segments_elements += images.shape[0]
+                loss_sum_segm, loss_cl_sum_segm, loss_am_sum_segm, acc_cl_sum_segm, loss_e_sum_segm = self.__train_gain_branch(
+                    images,
+                    segments,
+                    labels,
+                    opt,
+                    loss_sum_segm,
+                    loss_cl_sum_segm,
+                    loss_am_sum_segm,
+                    acc_cl_sum_segm,
+                    loss_e_sum_segm)
 
-                # при инициализации я доверюсь, что входные параметны корректны
-                # если встретил вектор значит сегментов нет и надо применять классификацию
-                # иначе применять gain
-                if len(segments.shape) == 1:
-                    without_segments_elements += images.shape[0]
-                    loss_cl_sum_no_segm, acc_cl_sum_no_segm = self.__train_classifier_branch(images, labels, opt,
-                                                                                             loss_cl_sum_no_segm,
-                                                                                             acc_cl_sum_no_segm)
-                else:
-                    # тренирую здесь с использованием сегментов
-                    with_segments_elements += images.shape[0]
-                    loss_sum_segm, loss_cl_sum_segm, loss_am_sum_segm, acc_cl_sum_segm, loss_e_sum_segm = \
-                        self.__train_gain_branch(
-                            images,
-                            segments,
-                            labels,
-                            opt,
-                            loss_sum_segm,
-                            loss_cl_sum_segm,
-                            loss_am_sum_segm,
-                            acc_cl_sum_segm,
-                            loss_e_sum_segm)
+            for images, segments, labels in rds['train_classifier']:
+                without_segments_elements += images.shape[0]
+                loss_cl_sum_no_segm, acc_cl_sum_no_segm = self.__train_classifier_branch(images, labels, opt,
+                                                                                         loss_cl_sum_no_segm,
+                                                                                         acc_cl_sum_no_segm)
 
             last_acc_total = acc_cl_sum_segm / self.classes * 2
             last_acc_total += acc_cl_sum_no_segm
-            last_acc_total /= len(rds['train'])
+            last_acc_total /= (len(rds['train_segment']) + len(rds['train_classifier']))
 
             # loss_cl_sum_total = loss_cl_sum_segm / (with_segments_elements + 1 + EPS)
             # loss_cl_sum_total += loss_cl_sum_no_segm / (without_segments_elements + 1 + EPS)
             # loss_cl_sum_total /= 2
             loss_cl_sum_total = loss_cl_sum_segm / self.classes * 2
             loss_cl_sum_total += loss_cl_sum_no_segm
-            loss_cl_sum_total /= len(rds['train'])
+            loss_cl_sum_total /= (len(rds['train_segment']) + len(rds['train_classifier']))
 
             text = 'TRAIN Epoch %i, Loss_CL: %f, Loss_AM: %f, Loss E: %f, Loss Total: %f, Accuracy_CL: %f%%' % (
                 (i + 1),
@@ -211,8 +206,8 @@ class AttentionGAIN:
         # возможно стоит сделать 10 картинок и если заболевания нет -- то пустую маску
         for ill_index in range(0, self.classes // 2):
             total_loss, loss_cl, loss_am, loss_e, _, acc_cl, _, _, _ = self.forward(images, labels,
-                                                                                        segments[:, ill_index],
-                                                                                        train_batch_size, ill_index)
+                                                                                    segments[:, ill_index],
+                                                                                    train_batch_size, ill_index)
             loss_sum += scalar(total_loss)
             loss_cl_sum += scalar(loss_cl)
             am_sum += scalar(loss_am)
