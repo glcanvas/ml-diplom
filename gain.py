@@ -300,8 +300,11 @@ class AttentionGAIN:
         # grad_target[:, ill_index * 2].backward(gradient=label[:, ill_index * 2], retain_graph=True)
         # grad_target[:, ill_index * 2 + 1].backward(gradient=label[:, ill_index * 2 + 1], retain_graph=True)
         grad_target = output_cl * label
-        grad_target[:, ill_index * 2].backward(gradient=grad_target.sum(axis=1), retain_graph=True)
-        grad_target[:, ill_index * 2 + 1].backward(gradient=grad_target.sum(axis=1), retain_graph=True)
+        ones = torch.ones(label.shape[0])
+        if self.gpu:
+            ones = ones.cuda(self.device)
+        grad_target[:, ill_index * 2].backward(gradient=ones, retain_graph=True)
+        grad_target[:, ill_index * 2 + 1].backward(gradient=ones, retain_graph=True)
         self.model.zero_grad()
         # Eq 1
         # grad = self._last_grad
@@ -315,9 +318,9 @@ class AttentionGAIN:
         # weights_new_shape = (1, weights.shape[0] * weights.shape[1], weights.shape[2], weights.shape[3])
         # weights = weights.view(weights_new_shape).unsqueeze(0)
 
-        self._last_grad = self._last_grad  # weights
-        self._last_activation = F.adaptive_avg_pool2d(self._last_activation, 1)  # fl
-        A_c = torch.mul(self._last_activation, self._last_grad).sum(dim=1, keepdim=True)
+        last_grad_GAP = F.adaptive_avg_pool2d(self._last_grad, 1)  # weights
+        # self._last_activation = F.adaptive_avg_pool2d(self._last_activation, 1)  # fl
+        A_c = torch.mul(self._last_activation, last_grad_GAP).sum(dim=1, keepdim=True)
         A_c = F.relu(A_c)
         A_c = F.upsample_bilinear(A_c, size=data.size()[2:])
         # gcam = F.relu(F.conv2d(weights, w_c))
