@@ -37,7 +37,7 @@ class Classifier:
         self.description = description
         # здесь * 2 так как каждой метке соответсвует бинарное значение -- да, нет в самом деле я сделал так для
         # классификации так как сделать по другому не знаю
-        self.classes = classes * 2
+        self.classes = classes
         self.model = m.vgg16(pretrained=True)
         num_features = self.model.classifier[6].in_features
         self.model.classifier[6] = nn.Linear(num_features, self.classes)
@@ -46,7 +46,7 @@ class Classifier:
         self.best_test_weights = copy.deepcopy(self.model.state_dict())
 
         if loss_classifier is None:
-            self.loss_classifier = torch.nn.BCEWithLogitsLoss()
+            self.loss_classifier = torch.nn.BCELoss()
 
         if self.gpu:
             self.model = self.model.cuda()
@@ -77,6 +77,8 @@ class Classifier:
                 # gradient=class_label * output_cl, retain_graph=True
                 # grad_target.backward()
 
+                sigmoid = nn.Sigmoid()  # used for calculate accuracy
+                output_cl = sigmoid(output_cl)
                 loss_cl = self.loss_classifier(output_cl, class_label)
 
                 loss_cl.backward()
@@ -118,6 +120,8 @@ class Classifier:
             grad_target = output_cl * class_label
             grad_target.backward(gradient=class_label * output_cl, retain_graph=True)
 
+            sigmoid = nn.Sigmoid()  # used for calculate accuracy
+            output_cl = sigmoid(output_cl)
             loss_cl = self.loss_classifier(output_cl, class_label)
 
             test_total_loss_cl, test_total_cl_acc = self.__calculate_accuracy(output_cl, class_label, batch_size,
@@ -147,13 +151,15 @@ class Classifier:
             P.write_to_log("Can't save model: {}".format(name), e)
 
     def __calculate_accuracy(self, output_cl, class_label, batch_size, loss_cl, total_loss_cl, total_cl_acc):
-        output_cl = output_cl.view((batch_size, self.classes // 2, 2))
-        class_label = class_label.view(batch_size, self.classes // 2, 2)
+        # output_cl = output_cl.view((batch_size, self.classes // 2, 2))
+        # class_label = class_label.view(batch_size, self.classes // 2, 2)
         # может софтмакс надо брать по dim=1 пока точность неочень
-        _, output_cl_softmax_indexes = F.softmax(output_cl, dim=2).max(dim=2)
-        _, label_indexes = class_label.max(dim=2)
-        cl_acc = torch.eq(output_cl_softmax_indexes, label_indexes).sum()
+        # _, output_cl_softmax_indexes = F.softmax(output_cl, dim=2).max(dim=2)
+        # _, label_indexes = class_label.max(dim=2)
+        output_cl[output_cl >= 0.5] = 1
+        output_cl[output_cl < 0.5] = 0
+        cl_acc = torch.eq(output_cl, class_label).sum()
 
-        total_loss_cl += scalar(loss_cl.sum()) / (batch_size)
-        total_cl_acc += scalar(cl_acc.sum() / (class_label.sum()))
+        total_loss_cl += scalar(loss_cl.sum()) / batch_size
+        total_cl_acc += scalar(cl_acc.sum()) / (batch_size * self.classes)
         return total_loss_cl, total_cl_acc

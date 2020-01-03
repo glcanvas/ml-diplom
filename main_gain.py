@@ -3,7 +3,6 @@ from torch.utils.data import DataLoader
 import gain
 import property as P
 import sys
-import torch
 
 if __name__ == "__main__":
     parsed = P.parse_input_commands().parse_args(sys.argv[1:])
@@ -15,15 +14,18 @@ if __name__ == "__main__":
     test_right = int(parsed.test_right)
     train_segments_count = int(parsed.segments)
     use_am_loss = parsed.am_loss.lower() == "true"
+    pre_train = int(parsed.pre_train)
 
-    description = "{}_train_left-{},train_segments-{},train_right-{},test_left-{},test_right-{},am_loss-{}" \
+    description = "{}_train_left-{},train_segments-{},train_right-{},test_left-{},test_right-{},am_loss-{}," \
+                  "pre_train-{}" \
         .format(parsed_description,
                 train_left,
                 train_segments_count,
                 train_right,
                 test_left,
                 test_right,
-                use_am_loss
+                use_am_loss,
+                pre_train
                 )
 
     P.initialize_log_name("gain_" + description)
@@ -42,7 +44,8 @@ if __name__ == "__main__":
 
         gain.train({'train_segment': train_segments_set, 'train_classifier': train_classifier_set, 'test': test_set},
                    100,
-                   4)
+                   4,
+                   pre_train)
     except BaseException as e:
         print("EXCEPTION", e)
         print(type(e))

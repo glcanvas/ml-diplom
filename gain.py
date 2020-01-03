@@ -45,9 +45,8 @@ class AttentionGAIN:
         self.device = device
         self.description = description
         self.usage_am_loss = usage_am_loss
-        # здесь * 2 так как каждой метке соответсвует бинарное значение -- да, нет в самом деле я сделал так для
-        # классификации так как сделать по другому не знаю
-        self.classes = classes * 2
+
+        self.classes = classes
 
         # define model
         self.model = m.vgg16(pretrained=True)
@@ -60,7 +59,8 @@ class AttentionGAIN:
         # define loss classifier for classifier path
         # create loss function
         if loss_classifier is None:
-            self.loss_cl = torch.nn.BCEWithLogitsLoss()
+            self.loss_cl = torch.nn.BCELoss()
+            self.gain_loss_cl = torch.nn.BCEWithLogitsLoss()
 
         if weights:
             self.model.load_state_dict(weights)
@@ -108,13 +108,12 @@ class AttentionGAIN:
         data, label, segments = self._convert_data_and_label(data, label, segments)
         return self._forward(data, label, segments, train_batch_size, ill_index)
 
-    def train(self, rds, epochs, test_each_epochs: int, pre_train_epoch: int = 10, learning_rate=1e-6):
+    def train(self, rds, epochs, test_each_epochs: int, pre_train_epoch: int = 25, learning_rate=1e-6):
 
         self.best_weights = copy.deepcopy(self.model.state_dict())
         best_loss = None
         best_test_loss = None
 
-        # pretrain_finished = False
         opt = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
         for i in range(0, epochs, 1):
 
@@ -126,12 +125,6 @@ class AttentionGAIN:
 
             loss_cl_sum_no_segm = 0
             acc_cl_sum_no_segm = 0
-
-            # train
-            # segments.shape = torch.Size([10, 5, 1, 224, 224])
-            # segments[:, i] = [10, 1,224,224] -- i-ое заболевание
-            # labels.shape = [10, 10]
-            # images.shape = torch.Size([10, 3, 224, 224])
 
             with_segments_elements = 0
             without_segments_elements = 0
@@ -158,14 +151,11 @@ class AttentionGAIN:
                                                                                          loss_cl_sum_no_segm,
                                                                                          acc_cl_sum_no_segm)
 
-            last_acc_total = acc_cl_sum_segm / self.classes * 2
+            last_acc_total = acc_cl_sum_segm / self.classes
             last_acc_total += acc_cl_sum_no_segm
             last_acc_total /= (len(rds['train_segment']) + len(rds['train_classifier']))
 
-            # loss_cl_sum_total = loss_cl_sum_segm / (with_segments_elements + 1 + EPS)
-            # loss_cl_sum_total += loss_cl_sum_no_segm / (without_segments_elements + 1 + EPS)
-            # loss_cl_sum_total /= 2
-            loss_cl_sum_total = loss_cl_sum_segm / self.classes * 2
+            loss_cl_sum_total = loss_cl_sum_segm / self.classes
             loss_cl_sum_total += loss_cl_sum_no_segm
             loss_cl_sum_total /= (len(rds['train_segment']) + len(rds['train_classifier']))
 
@@ -174,9 +164,9 @@ class AttentionGAIN:
                 prefix,
                 (i + 1),
                 loss_cl_sum_total,
-                loss_am_sum_segm / (with_segments_elements * self.classes // 2 + EPS),
-                loss_e_sum_segm / (with_segments_elements * self.classes // 2 + EPS),
-                loss_sum_segm / (with_segments_elements * self.classes // 2 + EPS),
+                loss_am_sum_segm / (with_segments_elements * self.classes + EPS),
+                loss_e_sum_segm / (with_segments_elements * self.classes + EPS),
+                loss_sum_segm / (with_segments_elements * self.classes + EPS),
                 last_acc_total * 100.0)
             print(text)
             P.write_to_log(text)
@@ -202,13 +192,10 @@ class AttentionGAIN:
         if self.gpu:
             images = images.cuda(self.device)  # bs x 3 x 224 x 224
             segments = segments.cuda(self.device)  # bs x 1 x 224 x 224
-            labels = labels.cuda(self.device)  # bs x 10
+            labels = labels.cuda(self.device)  # bs x 5
             self.minus_mask = self.minus_mask.cuda(self.device)
 
-        # здесь деление на 2 по понятным причинам
-        # переберу все заболевания и буду брать градиент по i * 2 и i * 2 + 1
-        # возможно стоит сделать 10 картинок и если заболевания нет -- то пустую маску
-        for ill_index in range(0, self.classes // 2):
+        for ill_index in range(0, self.classes):
             total_loss, loss_cl, loss_am, loss_e, _, acc_cl, _, _, _ = self.forward(images, labels,
                                                                                     segments[:, ill_index],
                                                                                     train_batch_size, ill_index)
@@ -218,8 +205,6 @@ class AttentionGAIN:
             acc_cl_sum += scalar(acc_cl)
             e_sum += scalar(loss_e)
 
-            # возможно здесь стоит сначала предобучить на классификацию но пока не буду (сделал)
-            # Backprop selectively based on pretraining/training
             if current_epoch < pre_train_epoch:
                 loss_cl.backward()
             else:
@@ -232,7 +217,10 @@ class AttentionGAIN:
         if self.gpu:
             images = images.cuda(self.device)  # bs x 3 x 224 x 224
             labels = labels.cuda(self.device)  # bs x 10
-        output_cl = self.model(images)
+        output_cl_model = self.model(images)
+
+        sigmoid = nn.Sigmoid()  # used for calculate accuracy
+        output_cl = sigmoid(output_cl_model)
         loss_cl = self.loss_cl(output_cl, labels)
 
         loss_cl.backward()
@@ -241,17 +229,14 @@ class AttentionGAIN:
 
         batch_size = images.shape[0]
 
-        # copy-paste from gain.py 346
-        output_cl = output_cl.view((batch_size, self.classes // 2, 2))
-        class_label = labels.view(batch_size, self.classes // 2, 2)
-        _, label_indexes = class_label.max(dim=2)
-        _, output_cl_softmax_indexes = F.softmax(output_cl, dim=2).max(dim=2)
-        cl_acc = torch.eq(output_cl_softmax_indexes, label_indexes).sum()
-        cl_acc = cl_acc.sum() / (class_label.sum() + EPS)
+        output_cl[output_cl >= 0.5] = 1
+        output_cl[output_cl < 0.5] = 0
+        cl_acc = torch.eq(output_cl, labels).sum().float()
+        cl_acc /= (batch_size * self.classes)
 
         # accumulate information
-        acc_cl_sum += scalar(cl_acc)
-        loss_cl_sum += scalar(loss_cl)
+        acc_cl_sum += scalar(cl_acc.sum())
+        loss_cl_sum += scalar(loss_cl.sum())
 
         return loss_cl_sum, acc_cl_sum
 
@@ -266,22 +251,27 @@ class AttentionGAIN:
                 images = images.cuda(self.device)
                 labels = labels.cuda(self.device)
 
-            output_cl = self.model(images)
+            output_cl_model = self.model(images)
 
             # лишние вычисления
             # grad_target = output_cl * labels
             # grad_target.backward(gradient=labels * output_cl, retain_graph=True)
 
+            sigmoid = nn.Sigmoid()  # used for calculate accuracy
+            output_cl = sigmoid(output_cl_model)
             loss_cl = self.loss_cl(output_cl, labels)
 
-            output_cl = output_cl.view((batch_size, self.classes // 2, 2))
-            labels = labels.view(batch_size, self.classes // 2, 2)
-            _, label_indexes = labels.max(dim=2)
-            _, output_cl_softmax_indexes = F.softmax(output_cl, dim=2).max(dim=2)
-            cl_acc = torch.eq(output_cl_softmax_indexes, label_indexes).sum()
+            # output_cl = output_cl.view((batch_size, self.classes // 2, 2))
+            # labels = labels.view(batch_size, self.classes // 2, 2)
+            # _, label_indexes = labels.max(dim=2)
+            # _, output_cl_softmax_indexes = F.softmax(output_cl, dim=2).max(dim=2)
+            # cl_acc = torch.eq(output_cl_softmax_indexes, label_indexes).sum()
+            output_cl[output_cl >= 0.5] = 1
+            output_cl[output_cl < 0.5] = 0
+            cl_acc = torch.eq(output_cl, labels).sum().float()
 
             test_total_loss_cl += scalar(loss_cl.sum()) / batch_size
-            test_total_cl_acc += scalar(cl_acc.sum() / (labels.sum()))
+            test_total_cl_acc += scalar(cl_acc) / (batch_size * self.classes)
 
         test_size = len(test_data_set)
 
@@ -295,17 +285,22 @@ class AttentionGAIN:
 
     def _attention_map_forward(self, data, label, ill_index: int):
 
-        output_cl = self.model(data)
+        output_cl_model = self.model(data)
         # тут раньше была сумма, но не думаю что она нужна в данном случае
         # grad_target[:, ill_index * 2].backward(gradient=label[:, ill_index * 2], retain_graph=True)
         # grad_target[:, ill_index * 2 + 1].backward(gradient=label[:, ill_index * 2 + 1], retain_graph=True)
-        grad_target = output_cl * label
+        grad_target = output_cl_model * label
         ones = torch.ones(label.shape[0])
         if self.gpu:
             ones = ones.cuda(self.device)
-        grad_target[:, ill_index * 2].backward(gradient=ones, retain_graph=True)
-        grad_target[:, ill_index * 2 + 1].backward(gradient=ones, retain_graph=True)
+
+        sigmoid = nn.Sigmoid()  # used for calculate accuracy
+        output_cl = sigmoid(output_cl_model)
+        loss_cl = self.gain_loss_cl(output_cl_model, label)
+
+        grad_target[:, ill_index].backward(gradient=ones, retain_graph=True)
         self.model.zero_grad()
+
         # Eq 1
         # grad = self._last_grad
         # w_c = F.avg_pool2d(grad, (grad.shape[-2], grad.shape[-1]), 1)
@@ -325,8 +320,6 @@ class AttentionGAIN:
         A_c = F.upsample_bilinear(A_c, size=data.size()[2:])
         # gcam = F.relu(F.conv2d(weights, w_c))
         # A_c = F.upsample(gcam, size=data.size()[2:], mode='bilinear')
-
-        loss_cl = self.loss_cl(output_cl, label)
 
         return output_cl, loss_cl, A_c
 
@@ -351,6 +344,7 @@ class AttentionGAIN:
             loss_am = torch.tensor([0.0]).cuda(self.device)
         else:
             loss_am = torch.tensor([0.0])
+
         if self.usage_am_loss:
             output_am = self.model(I_star)
             # Eq 5
@@ -363,16 +357,16 @@ class AttentionGAIN:
         # Eq 6
         total_loss = loss_cl + loss_e * 100 + self.alpha * loss_am
 
-        # cl_acc = output_cl_softmax.max(dim=1)[1] == label.max(dim=1)[1]
-        # cl_acc = cl_acc.type(self.tensor_source.FloatTensor).mean()
-        # считаю здесь ТОЛЬКО ТОЧНОСТЬ
-        # может софтмакс надо брать по dim=1 пока точность неочень
-        output_cl = output_cl.view((train_batch_size, self.classes // 2, 2))
-        class_label = label.view(train_batch_size, self.classes // 2, 2)
-        _, label_indexes = class_label.max(dim=2)
-        _, output_cl_softmax_indexes = F.softmax(output_cl, dim=2).max(dim=2)
-        cl_acc = torch.eq(output_cl_softmax_indexes, label_indexes).sum()
-        cl_acc = cl_acc.sum() / (class_label.sum() + EPS)
+        # output_cl = output_cl.view((train_batch_size, self.classes // 2, 2))
+        # class_label = label.view(train_batch_size, self.classes // 2, 2)
+        # _, label_indexes = class_label.max(dim=2)
+        # _, output_cl_softmax_indexes = F.softmax(output_cl, dim=2).max(dim=2)
+        # cl_acc = torch.eq(output_cl_softmax_indexes, label_indexes).sum()
+        # cl_acc = cl_acc.sum() / (class_label.sum() + EPS)
+        output_cl[output_cl >= 0.5] = 1
+        output_cl[output_cl < 0.5] = 0
+        cl_acc = torch.eq(output_cl, label).sum().float()
+        cl_acc /= (train_batch_size * self.classes + EPS)
 
         return total_loss, loss_cl, loss_am, loss_e, output_cl_softmax, cl_acc, gcam, I_star, mask
 

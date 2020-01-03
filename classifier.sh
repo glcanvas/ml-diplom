@@ -1,3 +1,5 @@
+~/nduginec_evn3/bin/python ~/ml-diplom/main_classifier.py --train_left 0 --train_right 2000 --test_left 2001 --test_right 2592 --description train2000test_other_1
+
 ~/nduginec_evn3/bin/python ~/ml-diplom/main_classifier.py --train_left 0 --train_right 500 --test_left 501 --test_right 2592 --description train500test_other_1
 ~/nduginec_evn3/bin/python ~/ml-diplom/main_classifier.py --train_left 0 --train_right 500 --test_left 501 --test_right 2592 --description train500test_other_2
 ~/nduginec_evn3/bin/python ~/ml-diplom/main_classifier.py --train_left 0 --train_right 500 --test_left 501 --test_right 2592 --description train500test_other_3
