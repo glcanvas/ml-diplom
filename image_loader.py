@@ -4,6 +4,7 @@ import torch.utils.data.dataset
 from torchvision import transforms
 from PIL import Image
 import property as P
+import random
 
 composite = transforms.Compose([
     transforms.Scale((P.image_size, P.image_size)),
@@ -44,6 +45,8 @@ class DatasetLoader:
             P.write_to_log("created cache target dir: {}".format(cache_target_path))
         self.cache_input_path = cache_input_path
         self.cache_target_path = cache_target_path
+
+        self.data = None
 
     def __get_input_image_list(self, input_path) -> list:
         inputs = self.__get_id_value(input_path)
@@ -101,14 +104,16 @@ class DatasetLoader:
         P.write_to_log("all saved successfully")
 
     def load_tensors(self, lower_bound=None, upper_bound=None, load_first_segments: int = 10 ** 20):
-        data = self.__merge_data(self.cache_input_path, self.cache_target_path)
-        data_len = len(data)
+        if self.data is None:
+            self.data = self.__merge_data(self.cache_input_path, self.cache_target_path)
+            random.shuffle(self.data)
+        data_len = len(self.data)
         lower_bound = 0 if lower_bound is None else lower_bound
         upper_bound = data_len if upper_bound is None else upper_bound
         result = []
 
         loads = 0
-        for idx, dct in enumerate(data):
+        for idx, dct in enumerate(self.data):
             if lower_bound <= idx < upper_bound:
                 torch_dict = dict()
                 torch_dict['id'] = dct['id']
@@ -171,7 +176,7 @@ class ImageDataset(torch.utils.data.Dataset):
             segm, labl = ImageDataset.split_targets(target_data)
             # ничего не загружаю
             if not dct['is_segments']:
-                segm = -1 # torch.zeros([5, 1, 224, 224]).float()
+                segm = -1  # torch.zeros([5, 1, 224, 224]).float()
             result.append((input_data, segm, labl))
         return result
 
@@ -190,13 +195,13 @@ class ImageDataset(torch.utils.data.Dataset):
         labels = []
         # trusted = None
         for idx, i in enumerate(P.labels_attributes):
-            segments = dct[i] if segments is None else torch.cat((segments, dct[i]), 0)
+            segments = dct[i] if segments is None else torch.cat((segments, dct[i]))
             # trusted = dct[i]
             ill_tag = i + '_value'
             if dct[ill_tag]:
-                labels.extend([0, 1])
+                labels.append(1)
             else:
-                labels.extend([1, 0])
+                labels.append(0)
         return segments, torch.tensor(labels).float()
 
 

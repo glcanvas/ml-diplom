@@ -61,4 +61,5 @@ def parse_input_commands():
     parser.add_argument("--am_loss", default="False")
     parser.add_argument("--gpu", default=0)
     parser.add_argument("--segments", default=10 ** 10)
+    parser.add_argument("--pre_train", default=15)
     return parser
