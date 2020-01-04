@@ -43,8 +43,10 @@ if __name__ == "__main__":
         test_set = DataLoader(il.ImageDataset(test), batch_size=10)
 
         gain.train({'train_segment': train_segments_set, 'train_classifier': train_classifier_set, 'test': test_set},
-                   100,
+                   101,
                    4,
+                   4,
+                   10,
                    pre_train)
     except BaseException as e:
         print("EXCEPTION", e)

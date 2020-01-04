@@ -3,13 +3,15 @@ classify dataset
 """
 
 import torch
-import torch.nn.functional as F
 import torchvision.models as m
 import property as P
 import torch.nn as nn
 import copy
 from datetime import datetime
 import os
+import utils
+
+probability_threshold = 0.5
 
 
 def scalar(tensor):
@@ -54,7 +56,17 @@ class Classifier:
         else:
             self.tensor_source = torch
 
-    def train(self, test_each_epochs: int, train_data_set, test_data_set, epochs, learning_rate=1e-6):
+        self.train_model_answers = [[] for _ in range(self.classes)]
+        self.train_trust_answers = [[] for _ in range(self.classes)]
+        self.train_probabilities = [[] for _ in range(self.classes)]
+
+        self.test_model_answers = [[] for _ in range(self.classes)]
+        self.test_trust_answers = [[] for _ in range(self.classes)]
+        self.test_probabilities = [[] for _ in range(self.classes)]
+
+    def train(self, epochs: int, test_each_epochs: int, save_test_roc_each_epochs: int, save_train_roc_each_epochs: int,
+              train_data_set, test_data_set,
+              learning_rate=1e-6):
 
         optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
         self.model.train()
@@ -73,10 +85,6 @@ class Classifier:
                 self.model.zero_grad()
                 output_cl = self.model(images)
 
-                # grad_target = output_cl * class_label
-                # gradient=class_label * output_cl, retain_graph=True
-                # grad_target.backward()
-
                 sigmoid = nn.Sigmoid()  # used for calculate accuracy
                 output_cl = sigmoid(output_cl)
                 loss_cl = self.loss_classifier(output_cl, class_label)
@@ -84,35 +92,70 @@ class Classifier:
                 loss_cl.backward()
                 optimizer.step()
 
-                total_loss_cl, total_cl_acc = self.__calculate_accuracy(output_cl, class_label,
-                                                                        train_batch_size, loss_cl,
-                                                                        total_loss_cl, total_cl_acc)
+                total_loss_cl, total_cl_acc, output_cl, output_probability = self.__calculate_accuracy(output_cl,
+                                                                                                       class_label,
+                                                                                                       train_batch_size,
+                                                                                                       loss_cl,
+                                                                                                       total_loss_cl,
+                                                                                                       total_cl_acc)
+
+                labels = labels.cpu()
+                output_cl = output_cl.cpu()
+                output_probability = output_probability.cpu()
+                for i in range(output_cl.shape[1]):
+                    self.train_trust_answers[i].extend(labels[:, i].tolist())
+                    self.train_model_answers[i].extend(output_cl[:, i].tolist())
+                    self.train_probabilities[i].extend(output_probability[:, i].tolist())
+
                 torch.cuda.empty_cache()
-                send_to_cpu(images, labels)
+
             if best_loss is None or total_loss_cl < best_loss:
                 best_loss = total_loss_cl
                 self.best_weights = copy.deepcopy(self.model.state_dict())
 
             train_size = len(train_data_set)
-            text = 'TRAIN %i of %i EPOCHS, Train Loss_CL: %f, Accuracy_CL: %f%%' % (
-                epoch, epochs, total_loss_cl / train_size, (total_cl_acc / train_size) * 100.0)
+
+            f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
+                                                                                             self.train_trust_answers,
+                                                                                             self.train_model_answers)
+            text = "TRAIN={} Loss_CL={:.10f} Accuracy_CL_Percent={:.5f} {} {} {} ".format(epoch,
+                                                                                          total_loss_cl / train_size,
+                                                                                          total_cl_acc / train_size * 100.0,
+                                                                                          f_1_score_text,
+                                                                                          recall_score_text,
+                                                                                          precision_score_text)
+            if epoch % save_train_roc_each_epochs == 0:
+                auc_roc = "auc_roc="
+                for idx, i in enumerate(self.train_trust_answers):
+                    auc_roc += "trust_{}={}".format(idx, ",".join(list(map(lambda x: "{}".format(x), i))))
+                for idx, i in enumerate(self.train_probabilities):
+                    auc_roc += "prob_{}={}".format(idx, ",".join(list(map(lambda x: "{:.5f}".format(x), i))))
+                text += auc_roc
+
             print(text)
             P.write_to_log(text)
             if epoch % test_each_epochs == 0:
-                test_loss, _ = self.test(test_data_set)
+                test_loss, _ = self.test(test_data_set, epoch, save_test_roc_each_epochs)
                 if best_test_loss is None or test_loss < best_test_loss:
                     best_test_loss = test_loss
                     self.best_test_weights = copy.deepcopy(self.model.state_dict())
+
+            self.train_model_answers = [[] for _ in range(self.classes)]
+            self.train_trust_answers = [[] for _ in range(self.classes)]
+            self.test_model_answers = [[] for _ in range(self.classes)]
+            self.test_trust_answers = [[] for _ in range(self.classes)]
+            self.train_probabilities = [[] for _ in range(self.classes)]
+            self.test_probabilities = [[] for _ in range(self.classes)]
+
         self.save_model(self.best_test_weights, "classifier_test_weights")
         self.save_model(self.best_weights, "classifier_train_weights")
 
-    def test(self, test_data_set):
+    def test(self, test_data_set, epoch: int, save_test_roc_each_epoch: int):
         test_total_loss_cl = 0
         test_total_cl_acc = 0
         for images, _, labels in test_data_set:
             if self.gpu:
                 images, labels = send_to_gpu(images, labels)
-            # images, labels = wrap_to_variable(images, labels)
             class_label = labels
             batch_size = labels.shape[0]
             output_cl = self.model(images)
@@ -124,14 +167,40 @@ class Classifier:
             output_cl = sigmoid(output_cl)
             loss_cl = self.loss_classifier(output_cl, class_label)
 
-            test_total_loss_cl, test_total_cl_acc = self.__calculate_accuracy(output_cl, class_label, batch_size,
-                                                                              loss_cl, test_total_loss_cl,
-                                                                              test_total_cl_acc)
-        test_size = len(test_data_set)
+            test_total_loss_cl, test_total_cl_acc, output_cl, output_probability = self.__calculate_accuracy(output_cl,
+                                                                                                             class_label,
+                                                                                                             batch_size,
+                                                                                                             loss_cl,
+                                                                                                             test_total_loss_cl,
+                                                                                                             test_total_cl_acc)
+            labels = labels.cpu()
+            output_cl = output_cl.cpu()
+            output_probability = output_probability.cpu()
+            for i in range(output_cl.shape[1]):
+                self.test_trust_answers[i].extend(labels[:, i].tolist())
+                self.test_model_answers[i].extend(output_cl[:, i].tolist())
+                self.test_probabilities[i].extend(output_probability[:, i].tolist())
 
+        test_size = len(test_data_set)
         test_total_loss_cl /= test_size
         test_total_cl_acc = (test_total_cl_acc / test_size) * 100.0
-        text = 'TEST Loss_CL: %f, Accuracy_CL: %f%%' % (test_total_loss_cl, test_total_cl_acc)
+
+        f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
+                                                                                         self.test_trust_answers,
+                                                                                         self.test_model_answers)
+        text = "TEST Loss_CL={:.10f} Accuracy_CL_Percent={:.5f} {} {} {}".format(test_total_loss_cl,
+                                                                                 test_total_cl_acc,
+                                                                                 f_1_score_text,
+                                                                                 recall_score_text,
+                                                                                 precision_score_text)
+        if epoch % save_test_roc_each_epoch == 0:
+            auc_roc = "auc_roc="
+            for idx, i in enumerate(self.test_trust_answers):
+                auc_roc += "trust_{}={}".format(idx, ",".join(list(map(lambda x: "{}".format(x), i))))
+            for idx, i in enumerate(self.test_probabilities):
+                auc_roc += "prob_{}={}".format(idx, ",".join(list(map(lambda x: "{:.5f}".format(x), i))))
+            text += auc_roc
+
         print(text)
         P.write_to_log(text)
 
@@ -151,15 +220,11 @@ class Classifier:
             P.write_to_log("Can't save model: {}".format(name), e)
 
     def __calculate_accuracy(self, output_cl, class_label, batch_size, loss_cl, total_loss_cl, total_cl_acc):
-        # output_cl = output_cl.view((batch_size, self.classes // 2, 2))
-        # class_label = class_label.view(batch_size, self.classes // 2, 2)
-        # может софтмакс надо брать по dim=1 пока точность неочень
-        # _, output_cl_softmax_indexes = F.softmax(output_cl, dim=2).max(dim=2)
-        # _, label_indexes = class_label.max(dim=2)
-        output_cl[output_cl >= 0.5] = 1
-        output_cl[output_cl < 0.5] = 0
+        output_probability = output_cl.clone()
+        output_cl[output_cl >= probability_threshold] = 1
+        output_cl[output_cl < probability_threshold] = 0
         cl_acc = torch.eq(output_cl, class_label).sum()
 
         total_loss_cl += scalar(loss_cl.sum()) / batch_size
         total_cl_acc += scalar(cl_acc.sum()) / (batch_size * self.classes)
-        return total_loss_cl, total_cl_acc
+        return total_loss_cl, total_cl_acc, output_cl, output_probability

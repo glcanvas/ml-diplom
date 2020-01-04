@@ -129,8 +129,8 @@ class DatasetLoader:
                 torch_dict[P.input_attribute] = normalization(torch.load(dct[P.input_attribute]))
                 # normalization(torch.load(dct[P.input_attribute]))
                 result.append(torch_dict)
-                print("left:{}, current:{}, right:{} processed".format(lower_bound, idx, upper_bound))
-                P.write_to_log("left:{}, current:{}, right:{} processed".format(lower_bound, idx, upper_bound))
+                # print("left:{}, current:{}, right:{} processed".format(lower_bound, idx, upper_bound))
+                # P.write_to_log("left:{}, current:{}, right:{} processed".format(lower_bound, idx, upper_bound))
         return result
 
     @staticmethod
