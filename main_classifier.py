@@ -12,7 +12,7 @@ if __name__ == "__main__":
     train_right = int(parsed.train_right)
     test_left = int(parsed.test_left)
     test_right = int(parsed.test_right)
-    P.initialize_log_name("classifier_" + description)
+    P.initialize_log_name("metric_classifier_" + description)
     try:
         clf = classifier.Classifier(description, 5, gpu=True)
 

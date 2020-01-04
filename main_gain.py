@@ -28,7 +28,7 @@ if __name__ == "__main__":
                 pre_train
                 )
 
-    P.initialize_log_name("gain_" + description)
+    P.initialize_log_name("metric_gain_" + description)
 
     try:
         gain = gain.AttentionGAIN(description, 5, gpu=True, device=gpu, usage_am_loss=use_am_loss)
