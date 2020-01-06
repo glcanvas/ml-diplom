@@ -6,14 +6,18 @@ from torchvision.models import alexnet
 
 
 class GAIN(nn.Module):
-    def __init__(self, grad_layer, num_classes):
+    def __init__(self, model,
+                 grad_layer,
+                 num_classes,
+                 use_am: bool = False,
+                 gpu: bool = False,
+                 device: int = 0,
+                 alpha: float = 1.0,
+                 omega: float = 10.0,
+                 sigma: float = 0.5,
+                 ):
         super(GAIN, self).__init__()
-        self.model = alexnet(pretrained=True)
-        # self.model = self.model.cuda()
-
-        num_features = self.model.classifier[6].in_features
-        self.model.classifier[6] = nn.Linear(num_features, num_classes)
-
+        self.model = model
 
         self.grad_layer = grad_layer
 
@@ -27,9 +31,13 @@ class GAIN(nn.Module):
         # Register hooks
         self._register_hooks(grad_layer)
 
+        self.use_am = use_am
+        self.gpu = gpu
+        self.device = device
         # sigma, omega for making the soft-mask
-        self.sigma = 0.25
-        self.omega = 100
+        self.alpha = alpha
+        self.omega = omega
+        self.sigma = sigma
 
     def _register_hooks(self, grad_layer):
         def forward_hook(module, grad_input, grad_output):
@@ -54,6 +62,7 @@ class GAIN(nn.Module):
 
     def _to_ohe(self, labels):
         ohe = torch.zeros((labels.size(0), self.num_classes), requires_grad=True)
+        labels = labels.long()
         for i, label in enumerate(labels):
             ohe[i, label] = 1
 
@@ -61,7 +70,7 @@ class GAIN(nn.Module):
 
         return ohe
 
-    def forward(self, images, labels):
+    def forward(self, images, labels, index):
 
         # Remember, only do back-probagation during the training. During the validation, it will be affected by bachnorm
         # dropout, etc. It leads to unstable validation score. It is better to visualize attention maps at the testset
@@ -69,8 +78,6 @@ class GAIN(nn.Module):
         is_train = self.model.training
 
         with torch.enable_grad():
-            # labels_ohe = self._to_ohe(labels).cuda()
-            # labels_ohe.requires_grad = True
 
             _, _, img_h, img_w = images.size()
 
@@ -80,13 +87,24 @@ class GAIN(nn.Module):
 
             if not is_train:
                 pred = F.softmax(logits).argmax(dim=1)
-                labels_ohe = self._to_ohe(pred).cuda()
+                labels_ohe = self._to_ohe(pred)
             else:
-                labels_ohe = self._to_ohe(labels).cpu() ### CUDA HERE WAS
+                labels_ohe = self._to_ohe(labels)
 
-            gradient = logits * labels_ohe
-            grad_logits = (logits * labels_ohe).sum()  # BS x num_classes
-            grad_logits.backward(gradient=gradient, retain_graph=True)
+            if self.gpu:
+                labels_ohe = labels_ohe.cuda(self.device)
+            else:
+                labels_ohe = labels_ohe.cpu()
+
+            ones = torch.ones(labels.shape[0])
+            if self.gpu:
+                ones = ones.cuda(self.device)
+            # Здесь переписал так
+            # так, как мы так обсуждали
+            gradient = logits * labels
+            grad_logits = logits * labels  # .sum()  # BS x num_classes
+            # grad_logits = logits
+            grad_logits[:, index].backward(gradient=gradient[:, index], retain_graph=True)
             self.model.zero_grad()
 
         if is_train:
@@ -97,43 +115,15 @@ class GAIN(nn.Module):
             logits = self.model(images)
 
         backward_features = self.backward_features  # BS x C x H x W
-        # bs, c, h, w = backward_features.size()
-        # wc = F.avg_pool2d(backward_features, (h, w), 1)  # BS x C x 1 x 1
-
-        """
-        The wc shows how important of the features map
-        """
 
         # Eq 2
         fl = self.feed_forward_features  # BS x C x H x W
-        # print(fl.shape)
-        # bs, c, h, w = fl.size()
-        # fl = fl.view(1, bs * c, h, w)
-
-        """
-        fl is the feature maps during feed-forward
-        """
-
-        """
-        We do 2d convolution to find the Attention maps. We consider wc as a filter matrix.
-        """
-
-        # Ac = F.relu(F.conv2d(fl, wc, groups=bs))
-        # # Resize to be as same as of image size
-        # Ac = F.interpolate(Ac, size=images.size()[2:], mode='bilinear', align_corners=False)
-        # Ac = Ac.permute((1, 0, 2, 3))
-        # heatmap = Ac
 
         weights = F.adaptive_avg_pool2d(backward_features, 1)
         Ac = torch.mul(fl, weights).sum(dim=1, keepdim=True)
         Ac = F.relu(Ac)
-        # Ac = F.interpolate(Ac, size=images.size()[2:], mode='bilinear', align_corners=False)
         Ac = F.upsample_bilinear(Ac, size=images.size()[2:])
         heatmap = Ac
-
-        """
-        Generate the soft-mask
-        """
 
         Ac_min = Ac.min()
         Ac_max = Ac.max()
@@ -141,6 +131,22 @@ class GAIN(nn.Module):
         mask = F.sigmoid(self.omega * (scaled_ac - self.sigma))
         masked_image = images - images * mask
 
-        logits_am = self.model(masked_image)
-
+        if self.use_am:
+            logits_am = self.model(masked_image)
+        else:
+            logits_am = torch.tensor([[0]]).float()
+            if self.gpu:
+                logits_am = logits_am.cuda(self.device)
+                
         return logits, logits_am, heatmap
+
+    def forvard_(self, images, labels):
+        with torch.enable_grad():
+            self.model.train(True)
+            logits = self.model(images)
+            self.model.zero_grad()
+            gradient = logits * labels
+            grad_logits = logits * labels.sum()  # BS x num_classes
+            grad_logits.backward(gradient=gradient, retain_graph=True)
+            self.model.zero_grad()
+            return logits
