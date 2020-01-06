@@ -172,7 +172,7 @@ class AttentionGAIN:
                                                                                              self.train_trust_answers,
                                                                                              self.train_model_answers)
             prefix = "PRETRAIN" if epoch < pre_train_epoch else "TRAIN"
-            text = "{}={} Loss_CL={:.5f} Loss_AM={:.5f} Loss_E={:.5f} Loss_Total={:.5f} Accuracy_CL=={:.5f} " \
+            text = "{}={} Loss_CL={:.5f} Loss_AM={:.5f} Loss_E={:.5f} Loss_Total={:.5f} Accuracy_CL={:.5f} " \
                    "{} {} {} ".format(
                 prefix,
                 epoch,

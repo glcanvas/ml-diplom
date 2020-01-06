@@ -23,7 +23,7 @@ if __name__ == "__main__":
         train_set = DataLoader(il.ImageDataset(train), batch_size=10, shuffle=True, num_workers=0)
         test_set = DataLoader(il.ImageDataset(test), batch_size=10, shuffle=True, num_workers=0)
 
-        clf.train(100, 4, 10, 4, train_set, test_set)
+        clf.train(100, 4, 4, 10, train_set, test_set)
     except BaseException as e:
         print("EXCEPTION", e)
         print(type(e))

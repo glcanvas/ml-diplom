@@ -16,23 +16,20 @@ def calculate_metric(classes, trust_answers, model_answer):
     for i in range(classes):
         f_1_score_text += "f_1_{}={:.5f} ".format(i,
                                                   metrics.f1_score(trust_answers[i],
-                                                                   model_answer[i],
-                                                                   average='micro')
+                                                                   model_answer[i])
                                                   )
     recall_score_text = ""
     for i in range(classes):
         recall_score_text += "recall_{}={:.5f} ".format(i,
                                                         metrics.recall_score(trust_answers[i],
-                                                                             model_answer[i],
-                                                                             average='micro')
+                                                                             model_answer[i])
                                                         )
 
     precision_score_text = ""
     for i in range(classes):
         precision_score_text += "precision_{}={:.5f} ".format(i,
                                                               metrics.precision_score(trust_answers[i],
-                                                                                      model_answer[i],
-                                                                                      average='micro')
+                                                                                      model_answer[i])
                                                               )
 
     trust_answer, model_answer = __to_global(trust_answers, model_answer)
