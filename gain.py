@@ -6,8 +6,10 @@ import copy
 import property as P
 from datetime import datetime
 import os
+import utils
 
 EPS = 1e-10
+probability_threshold = 0.5
 
 
 def scalar(tensor):
@@ -81,7 +83,13 @@ class AttentionGAIN:
         self.sigma = sigma
         self.alpha = alpha
 
-        self.epochs_trained = 0
+        self.train_model_answers = [[] for _ in range(self.classes)]
+        self.train_trust_answers = [[] for _ in range(self.classes)]
+        self.train_probabilities = [[] for _ in range(self.classes)]
+
+        self.test_model_answers = [[] for _ in range(self.classes)]
+        self.test_trust_answers = [[] for _ in range(self.classes)]
+        self.test_probabilities = [[] for _ in range(self.classes)]
 
     def _register_hooks(self, layer_name):
         # this wires up a hook that stores both the activation and gradient of the conv layer we are interested in
@@ -108,14 +116,15 @@ class AttentionGAIN:
         data, label, segments = self._convert_data_and_label(data, label, segments)
         return self._forward(data, label, segments, train_batch_size, ill_index)
 
-    def train(self, rds, epochs, test_each_epochs: int, pre_train_epoch: int = 25, learning_rate=1e-6):
+    def train(self, rds, epochs, test_each_epochs: int, save_test_roc_each_epochs: int, save_train_roc_each_epochs: int,
+              pre_train_epoch: int = 25, learning_rate=1e-6):
 
         self.best_weights = copy.deepcopy(self.model.state_dict())
         best_loss = None
         best_test_loss = None
 
         opt = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
-        for i in range(0, epochs, 1):
+        for epoch in range(1, epochs, 1):
 
             loss_cl_sum_segm = 0
             loss_am_sum_segm = 0
@@ -133,7 +142,7 @@ class AttentionGAIN:
                 # тренирую здесь с использованием сегментов
                 with_segments_elements += images.shape[0]
                 loss_sum_segm, loss_cl_sum_segm, loss_am_sum_segm, acc_cl_sum_segm, loss_e_sum_segm = self.__train_gain_branch(
-                    i,
+                    epoch,
                     pre_train_epoch,
                     images,
                     segments,
@@ -159,20 +168,35 @@ class AttentionGAIN:
             loss_cl_sum_total += loss_cl_sum_no_segm
             loss_cl_sum_total /= (len(rds['train_segment']) + len(rds['train_classifier']))
 
-            prefix = "PRETRAIN" if i < pre_train_epoch else "TRAIN"
-            text = '%s Epoch %i, Loss_CL: %f, Loss_AM: %f, Loss E: %f, Loss Total: %f, Accuracy_CL: %f%%' % (
+            f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
+                                                                                             self.train_trust_answers,
+                                                                                             self.train_model_answers)
+            prefix = "PRETRAIN" if epoch < pre_train_epoch else "TRAIN"
+            text = "{}={} Loss_CL={:.5f} Loss_AM={:.5f} Loss_E={:.5f} Loss_Total={:.5f} Accuracy_CL={:.5f} " \
+                   "{} {} {} ".format(
                 prefix,
-                (i + 1),
+                epoch,
                 loss_cl_sum_total,
                 loss_am_sum_segm / (with_segments_elements * self.classes + EPS),
                 loss_e_sum_segm / (with_segments_elements * self.classes + EPS),
                 loss_sum_segm / (with_segments_elements * self.classes + EPS),
-                last_acc_total * 100.0)
+                last_acc_total * 100.0,
+                f_1_score_text,
+                recall_score_text,
+                precision_score_text)
+
+            if epoch % save_train_roc_each_epochs == 0:
+                auc_roc = "auc_roc="
+                for idx, i in enumerate(self.train_trust_answers):
+                    auc_roc += "trust_{}={}".format(idx, ",".join(list(map(lambda x: "{}".format(x), i))))
+                for idx, i in enumerate(self.train_probabilities):
+                    auc_roc += "prob_{}={}".format(idx, ",".join(list(map(lambda x: "{:.5f}".format(x), i))))
+                text += auc_roc
             print(text)
             P.write_to_log(text)
 
-            if (i + 1) % test_each_epochs == 0:
-                test_loss, _ = self.test(rds['test'])
+            if epoch % test_each_epochs == 0:
+                test_loss, _ = self.test(rds['test'], epoch, save_test_roc_each_epochs)
                 if best_test_loss is None or test_loss < best_test_loss:
                     best_test_loss = test_loss
                     self.best_test_weights = copy.deepcopy(self.model.state_dict())
@@ -180,7 +204,15 @@ class AttentionGAIN:
             if best_loss is None or loss_sum_segm < best_loss:
                 best_loss = loss_sum_segm
                 self.best_weights = copy.deepcopy(self.model.state_dict())
-        self.epochs_trained = epochs
+
+            self.train_model_answers = [[] for _ in range(self.classes)]
+            self.train_trust_answers = [[] for _ in range(self.classes)]
+            self.train_probabilities = [[] for _ in range(self.classes)]
+
+            self.test_model_answers = [[] for _ in range(self.classes)]
+            self.test_trust_answers = [[] for _ in range(self.classes)]
+            self.test_probabilities = [[] for _ in range(self.classes)]
+
         self.save_model(self.best_test_weights, "gain_test_weights")
         self.save_model(self.best_weights, "gain_train_weights")
 
@@ -196,16 +228,22 @@ class AttentionGAIN:
             self.minus_mask = self.minus_mask.cuda(self.device)
 
         for ill_index in range(0, self.classes):
-            total_loss, loss_cl, loss_am, loss_e, _, acc_cl, _, _, _ = self.forward(images, labels,
-                                                                                    segments[:, ill_index],
-                                                                                    train_batch_size, ill_index)
+            total_loss, loss_cl, loss_am, loss_e, output_cl, output_probability, acc_cl, _, _, _ = \
+                self.forward(images,
+                             labels,
+                             segments[:, ill_index],
+                             train_batch_size,
+                             ill_index)
+
+            self.save_train_data(labels, output_cl, output_probability)
+
             loss_sum += scalar(total_loss)
             loss_cl_sum += scalar(loss_cl)
             am_sum += scalar(loss_am)
             acc_cl_sum += scalar(acc_cl)
             e_sum += scalar(loss_e)
 
-            if current_epoch < pre_train_epoch:
+            if current_epoch <= pre_train_epoch:
                 loss_cl.backward()
             else:
                 total_loss.backward()
@@ -229,10 +267,9 @@ class AttentionGAIN:
 
         batch_size = images.shape[0]
 
-        output_cl[output_cl >= 0.5] = 1
-        output_cl[output_cl < 0.5] = 0
-        cl_acc = torch.eq(output_cl, labels).sum().float()
-        cl_acc /= (batch_size * self.classes)
+        output_probability, output_cl, cl_acc = self.calculate_accuracy(labels, output_cl, batch_size)
+
+        self.save_train_data(labels, output_cl, output_probability)
 
         # accumulate information
         acc_cl_sum += scalar(cl_acc.sum())
@@ -241,7 +278,7 @@ class AttentionGAIN:
         return loss_cl_sum, acc_cl_sum
 
     # тестирование взять с классификатора(взял)
-    def test(self, test_data_set):
+    def test(self, test_data_set, epoch: int, save_test_roc_each_epoch: int):
         test_total_loss_cl = 0
         test_total_cl_acc = 0
         for images, _, labels in test_data_set:
@@ -253,31 +290,36 @@ class AttentionGAIN:
 
             output_cl_model = self.model(images)
 
-            # лишние вычисления
-            # grad_target = output_cl * labels
-            # grad_target.backward(gradient=labels * output_cl, retain_graph=True)
-
             sigmoid = nn.Sigmoid()  # used for calculate accuracy
             output_cl = sigmoid(output_cl_model)
             loss_cl = self.loss_cl(output_cl, labels)
 
-            # output_cl = output_cl.view((batch_size, self.classes // 2, 2))
-            # labels = labels.view(batch_size, self.classes // 2, 2)
-            # _, label_indexes = labels.max(dim=2)
-            # _, output_cl_softmax_indexes = F.softmax(output_cl, dim=2).max(dim=2)
-            # cl_acc = torch.eq(output_cl_softmax_indexes, label_indexes).sum()
-            output_cl[output_cl >= 0.5] = 1
-            output_cl[output_cl < 0.5] = 0
-            cl_acc = torch.eq(output_cl, labels).sum().float()
+            output_probability, output_cl, cl_acc = self.calculate_accuracy(labels, output_cl, batch_size)
+
+            self.save_test_data(labels, output_cl, output_probability)
 
             test_total_loss_cl += scalar(loss_cl.sum()) / batch_size
-            test_total_cl_acc += scalar(cl_acc) / (batch_size * self.classes)
+            test_total_cl_acc += scalar(cl_acc)
 
+        f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
+                                                                                         self.test_trust_answers,
+                                                                                         self.test_model_answers)
         test_size = len(test_data_set)
-
         test_total_loss_cl /= test_size
         test_total_cl_acc = (test_total_cl_acc / test_size) * 100.0
-        text = 'TEST Loss_CL: %f, Accuracy_CL: %f%%' % (test_total_loss_cl, test_total_cl_acc)
+        text = 'TEST Loss_CL={:.5f} Accuracy_CL={:.5f} {} {} {} '.format(test_total_loss_cl,
+                                                                          test_total_cl_acc,
+                                                                          f_1_score_text,
+                                                                          recall_score_text,
+                                                                          precision_score_text)
+        if epoch % save_test_roc_each_epoch == 0:
+            auc_roc = "auc_roc="
+            for idx, i in enumerate(self.test_trust_answers):
+                auc_roc += "trust_{}={}".format(idx, ",".join(list(map(lambda x: "{}".format(x), i))))
+            for idx, i in enumerate(self.test_probabilities):
+                auc_roc += "prob_{}={}".format(idx, ",".join(list(map(lambda x: "{:.5f}".format(x), i))))
+            text += auc_roc
+
         P.write_to_log(text)
         print(text)
 
@@ -287,8 +329,6 @@ class AttentionGAIN:
 
         output_cl_model = self.model(data)
         # тут раньше была сумма, но не думаю что она нужна в данном случае
-        # grad_target[:, ill_index * 2].backward(gradient=label[:, ill_index * 2], retain_graph=True)
-        # grad_target[:, ill_index * 2 + 1].backward(gradient=label[:, ill_index * 2 + 1], retain_graph=True)
         grad_target = output_cl_model * label
         ones = torch.ones(label.shape[0])
         if self.gpu:
@@ -334,7 +374,6 @@ class AttentionGAIN:
     def _forward(self, data, label, segment, train_batch_size: int, ill_index: int):
         # TODO normalize elsewhere, this feels wrong (вроде здесь ок)
         output_cl, loss_cl, gcam = self._attention_map_forward(data, label, ill_index)
-        output_cl_softmax = F.softmax(output_cl, dim=1)
 
         # Eq 4
         # TODO this support batching
@@ -351,24 +390,15 @@ class AttentionGAIN:
             loss_am = F.sigmoid(output_am) * label
             loss_am = loss_am.sum() / label.sum().type(self.tensor_source.FloatTensor)
 
-        updated_segment_mask = segment * self.omega + self.minus_mask  # + loss_am * self.alpha
+        updated_segment_mask = segment * self.omega + self.minus_mask
         loss_e = ((mask - updated_segment_mask) @ (mask - updated_segment_mask)).sum()
 
         # Eq 6
         total_loss = loss_cl + loss_e * 100 + self.alpha * loss_am
 
-        # output_cl = output_cl.view((train_batch_size, self.classes // 2, 2))
-        # class_label = label.view(train_batch_size, self.classes // 2, 2)
-        # _, label_indexes = class_label.max(dim=2)
-        # _, output_cl_softmax_indexes = F.softmax(output_cl, dim=2).max(dim=2)
-        # cl_acc = torch.eq(output_cl_softmax_indexes, label_indexes).sum()
-        # cl_acc = cl_acc.sum() / (class_label.sum() + EPS)
-        output_cl[output_cl >= 0.5] = 1
-        output_cl[output_cl < 0.5] = 0
-        cl_acc = torch.eq(output_cl, label).sum().float()
-        cl_acc /= (train_batch_size * self.classes + EPS)
+        output_probability, output_cl, cl_acc = self.calculate_accuracy(label, output_cl, train_batch_size)
 
-        return total_loss, loss_cl, loss_am, loss_e, output_cl_softmax, cl_acc, gcam, I_star, mask
+        return total_loss, loss_cl, loss_am, loss_e, output_cl, output_probability, cl_acc, gcam, I_star, mask
 
     def _convert_data_and_label(self, data, label, segments):
         # converts our data and label over to optional gpu
@@ -391,3 +421,29 @@ class AttentionGAIN:
         except Exception as e:
             print("Can't save model: {}".format(name), e)
             P.write_to_log("Can't save model: {}".format(name), e)
+
+    def save_train_data(self, labels, output_cl, output_probability):
+        output_cl = output_cl.cpu()
+        output_probability = output_probability.cpu()
+        labels = labels.cpu()
+        for i in range(output_cl.shape[1]):
+            self.train_trust_answers[i].extend(labels[:, i].tolist())
+            self.train_model_answers[i].extend(output_cl[:, i].tolist())
+            self.train_probabilities[i].extend(output_probability[:, i].tolist())
+
+    def save_test_data(self, labels, output_cl, output_probability):
+        output_cl = output_cl.cpu()
+        output_probability = output_probability.cpu()
+        labels = labels.cpu()
+        for i in range(output_cl.shape[1]):
+            self.test_trust_answers[i].extend(labels[:, i].tolist())
+            self.test_model_answers[i].extend(output_cl[:, i].tolist())
+            self.test_probabilities[i].extend(output_probability[:, i].tolist())
+
+    def calculate_accuracy(self, labels, output_cl, batch_size):
+        output_probability = output_cl.clone()
+        output_cl[output_cl >= probability_threshold] = 1
+        output_cl[output_cl < probability_threshold] = 0
+        cl_acc = torch.eq(output_cl, labels).sum().float()
+        cl_acc /= (batch_size * self.classes + EPS)
+        return output_probability, output_cl, cl_acc

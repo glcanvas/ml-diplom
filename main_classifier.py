@@ -12,7 +12,7 @@ if __name__ == "__main__":
     train_right = int(parsed.train_right)
     test_left = int(parsed.test_left)
     test_right = int(parsed.test_right)
-    P.initialize_log_name("classifier_" + description)
+    P.initialize_log_name("metric_classifier_" + description)
     try:
         clf = classifier.Classifier(description, 5, gpu=True)
 
@@ -23,7 +23,7 @@ if __name__ == "__main__":
         train_set = DataLoader(il.ImageDataset(train), batch_size=10, shuffle=True, num_workers=0)
         test_set = DataLoader(il.ImageDataset(test), batch_size=10, shuffle=True, num_workers=0)
 
-        clf.train(4, train_set, test_set, 100)
+        clf.train(100, 4, 4, 10, train_set, test_set)
     except BaseException as e:
         print("EXCEPTION", e)
         print(type(e))

@@ -28,7 +28,7 @@ if __name__ == "__main__":
                 pre_train
                 )
 
-    P.initialize_log_name("gain_" + description)
+    P.initialize_log_name("metric_gain_" + description)
 
     try:
         gain = gain.AttentionGAIN(description, 5, gpu=True, device=gpu, usage_am_loss=use_am_loss)
@@ -43,8 +43,10 @@ if __name__ == "__main__":
         test_set = DataLoader(il.ImageDataset(test), batch_size=10)
 
         gain.train({'train_segment': train_segments_set, 'train_classifier': train_classifier_set, 'test': test_set},
-                   100,
+                   101,
                    4,
+                   4,
+                   10,
                    pre_train)
     except BaseException as e:
         print("EXCEPTION", e)
