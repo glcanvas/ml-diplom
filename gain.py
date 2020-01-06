@@ -139,6 +139,7 @@ class AttentionGAIN:
             without_segments_elements = 0
 
             for images, segments, labels in rds['train_segment']:
+
                 # тренирую здесь с использованием сегментов
                 with_segments_elements += images.shape[0]
                 loss_sum_segm, loss_cl_sum_segm, loss_am_sum_segm, acc_cl_sum_segm, loss_e_sum_segm = self.__train_gain_branch(
@@ -162,11 +163,11 @@ class AttentionGAIN:
 
             last_acc_total = acc_cl_sum_segm / self.classes
             last_acc_total += acc_cl_sum_no_segm
-            last_acc_total /= (len(rds['train_segment']) + len(rds['train_classifier']))
+            last_acc_total /= (with_segments_elements + without_segments_elements)
 
             loss_cl_sum_total = loss_cl_sum_segm / self.classes
             loss_cl_sum_total += loss_cl_sum_no_segm
-            loss_cl_sum_total /= (len(rds['train_segment']) + len(rds['train_classifier']))
+            loss_cl_sum_total /= (with_segments_elements + without_segments_elements)
 
             f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
                                                                                              self.train_trust_answers,
@@ -180,7 +181,7 @@ class AttentionGAIN:
                 loss_am_sum_segm / (with_segments_elements * self.classes + EPS),
                 loss_e_sum_segm / (with_segments_elements * self.classes + EPS),
                 loss_sum_segm / (with_segments_elements * self.classes + EPS),
-                last_acc_total * 100.0,
+                last_acc_total,
                 f_1_score_text,
                 recall_score_text,
                 precision_score_text)
@@ -281,7 +282,9 @@ class AttentionGAIN:
     def test(self, test_data_set, epoch: int, save_test_roc_each_epoch: int):
         test_total_loss_cl = 0
         test_total_cl_acc = 0
+        test_size =0
         for images, _, labels in test_data_set:
+            test_size += images.size(0)
             batch_size = images.shape[0]
             if self.gpu:
                 # images, labels = send_to_gpu(images, labels)
@@ -304,9 +307,8 @@ class AttentionGAIN:
         f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
                                                                                          self.test_trust_answers,
                                                                                          self.test_model_answers)
-        test_size = len(test_data_set)
-        test_total_loss_cl /= test_size
-        test_total_cl_acc = (test_total_cl_acc / test_size) * 100.0
+        test_total_loss_cl = (test_total_loss_cl / test_size)
+        test_total_cl_acc = (test_total_cl_acc / test_size)
         text = 'TEST Loss_CL={:.5f} Accuracy_CL={:.5f} {} {} {} '.format(test_total_loss_cl,
                                                                           test_total_cl_acc,
                                                                           f_1_score_text,

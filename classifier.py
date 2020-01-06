@@ -76,7 +76,9 @@ class Classifier:
         for epoch in range(1, epochs + 1):
             total_loss_cl = 0
             total_cl_acc = 0
+            set_size = 0
             for images, _, labels in train_data_set:
+                set_size += images.size(0)
                 if self.gpu:
                     images, labels = send_to_gpu(images, labels)
                 # images, labels = wrap_to_variable(images, labels)
@@ -113,14 +115,12 @@ class Classifier:
                 best_loss = total_loss_cl
                 self.best_weights = copy.deepcopy(self.model.state_dict())
 
-            train_size = len(train_data_set)
-
             f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
                                                                                              self.train_trust_answers,
                                                                                              self.train_model_answers)
             text = "TRAIN={} Loss_CL={:.10f} Accuracy_CL_Percent={:.5f} {} {} {} ".format(epoch,
-                                                                                          total_loss_cl / train_size,
-                                                                                          total_cl_acc / train_size * 100.0,
+                                                                                          total_loss_cl / set_size,
+                                                                                          total_cl_acc / set_size,
                                                                                           f_1_score_text,
                                                                                           recall_score_text,
                                                                                           precision_score_text)
@@ -153,7 +153,9 @@ class Classifier:
     def test(self, test_data_set, epoch: int, save_test_roc_each_epoch: int):
         test_total_loss_cl = 0
         test_total_cl_acc = 0
+        test_size = 0
         for images, _, labels in test_data_set:
+            test_size += images.size(0)
             if self.gpu:
                 images, labels = send_to_gpu(images, labels)
             class_label = labels
@@ -181,9 +183,9 @@ class Classifier:
                 self.test_model_answers[i].extend(output_cl[:, i].tolist())
                 self.test_probabilities[i].extend(output_probability[:, i].tolist())
 
-        test_size = len(test_data_set)
+        # test_size = len(test_data_set)
         test_total_loss_cl /= test_size
-        test_total_cl_acc = (test_total_cl_acc / test_size) * 100.0
+        test_total_cl_acc /= test_size
 
         f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
                                                                                          self.test_trust_answers,
