@@ -102,7 +102,11 @@ def gain_parse_train(input: str):
     Loss_AM = float(dct['Loss_AM'])
     Loss_E = float(dct['Loss_E'])
     Loss_Total = float(dct['Loss_Total'])
-    Accuracy_CL = float(dct['Accuracy_CL'][1:])
+    Accuracy_CL = dct['Accuracy_CL']
+    if Accuracy_CL[0] == "=":
+        Accuracy_CL = float(Accuracy_CL[1:])
+    else:
+        Accuracy_CL = float(Accuracy_CL)
     f_measures, recall, precision = __load_statistics(dct)
     if not 'auc_roc' in dct:
         return Loss_CL, Loss_AM, Loss_E, Loss_Total, Accuracy_CL, f_measures, recall, precision
