@@ -190,7 +190,7 @@ class Classifier:
         f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
                                                                                          self.test_trust_answers,
                                                                                          self.test_model_answers)
-        text = "TEST Loss_CL={:.10f} Accuracy_CL_Percent={:.5f} {} {} {}".format(test_total_loss_cl,
+        text = "TEST Loss_CL={:.10f} Accuracy_CL_Percent={:.5f} {} {} {} ".format(test_total_loss_cl,
                                                                                  test_total_cl_acc,
                                                                                  f_1_score_text,
                                                                                  recall_score_text,

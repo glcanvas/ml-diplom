@@ -5,7 +5,7 @@ import re
 from sklearn.metrics import roc_curve, auc, precision_recall_curve, average_precision_score
 
 plot_images_path = "/home/nikita/PycharmProjects/ml-diplom/stat_plot"
-logs_path = "/home/nikita/PycharmProjects/logs"
+logs_path = "/home/nikita/PycharmProjects/ml-data/logs"
 
 
 def gain_train_parse(train_line):
@@ -45,18 +45,18 @@ def __load_statistics(dct: dict) -> tuple:
     precision = []
     for i in range(0, 5):
         key = 'f_1_{}'.format(i)
-        f_measures.append((key, dct[key]))
-    f_measures.append(('f_1_global', dct['f_1_global']))
+        f_measures.append((key, float(dct[key])))
+    f_measures.append(('f_1_global', float(dct['f_1_global'])))
 
     for i in range(0, 5):
         key = 'recall_{}'.format(i)
-        recall.append((key, dct[key]))
-    recall.append(('recall_global', dct['recall_global']))
+        recall.append((key, float(dct[key])))
+    recall.append(('recall_global', float(dct['recall_global'])))
 
     for i in range(0, 5):
         key = 'precision_{}'.format(i)
-        precision.append((key, dct[key]))
-    precision.append(('precision_global', dct['precision_global']))
+        precision.append((key, float(dct[key])))
+    precision.append(('precision_global', float(dct['precision_global'])))
     return f_measures, recall, precision
 
 
@@ -87,6 +87,12 @@ def __to_dict(input: str) -> dict:
 def gain_parse_test_and_classifier_all(input: str):
     dct = __to_dict(input)
     loss_cl = float(dct['Loss_CL'])
+
+    k = str(dct['precision_global'])
+    idx_auc = k.find("auc_roc")
+    if idx_auc != -1:
+        dct['precision_global'] = k[:idx_auc]
+        dct['auc_roc'] = k[k.find("=trust_0") + 1:]
     accuracy_cl = float(dct['Accuracy_CL_Percent']) if 'Accuracy_CL_Percent' in dct else float(dct['Accuracy_CL'])
     f_measures, recall, precision = __load_statistics(dct)
     if not 'auc_roc' in dct:
@@ -150,7 +156,7 @@ def draw_metrics_classification_plot(file_path: str):
         if len(i) > 5:
             test_auc += 1
 
-    fig, axes = plt.subplots(5 + max(train_auc, test_auc) * 2, 2, figsize=(15, 50))
+    fig, axes = plt.subplots(6 + max(train_auc, test_auc) * 2, 2, figsize=(15, 50))
     fig.tight_layout()
     plt.subplots_adjust(bottom=0.5, top=2)
 
@@ -192,40 +198,40 @@ def draw_metrics_classification_plot(file_path: str):
     for idx, values in enumerate(train):
         if len(values) <= 5:
             continue
-        axes[5 + train_idx * 2][0].set_title("auc plot for train={}".format(idx + 1))
-        axes[5 + train_idx * 2 + 1][0].set_title("auc plot for train={}".format(idx + 1))
+        axes[6 + train_idx * 2][0].set_title("auc plot for train={}".format(idx + 1))
+        axes[6 + train_idx * 2 + 1][0].set_title("auc plot for train={}".format(idx + 1))
         for i in range(0, 5):
             trust_name, trust_value = values[5][i]
             prob_name, prob_value = values[6][i]
             a, b, _ = roc_curve(trust_value, prob_value)
             c = auc(a, b)
-            axes[5 + train_idx * 2][0].plot(a, b, lw=2, label='ROC curve {} (area = {:.2f})'.format(prob_name[4:], c))
+            axes[6 + train_idx * 2][0].plot(a, b, lw=2, label='ROC curve {} (area = {:.2f})'.format(prob_name[4:], c))
             a1, b1, _ = precision_recall_curve(trust_value, prob_value)
             c1 = average_precision_score(trust_value, prob_value)
-            axes[5 + train_idx * 2 + 1][0].plot(a1, b1, lw=2,
+            axes[6 + train_idx * 2 + 1][0].plot(a1, b1, lw=2,
                                                 label='PR curve {} (area = {:.2f})'.format(prob_name[4:], c1))
-        axes[5 + train_idx * 2][0].legend(loc='upper left')
-        axes[5 + train_idx * 2 + 1][0].legend(loc='upper left')
+        axes[6 + train_idx * 2][0].legend(loc='upper left')
+        axes[6 + train_idx * 2 + 1][0].legend(loc='upper left')
         train_idx += 1
 
     test_idx = 0
     for idx, values in enumerate(test):
         if len(values) <= 5:
             continue
-        axes[5 + test_idx * 2][1].set_title("auc plot for test={}".format((idx + 1) * 4))
-        axes[5 + test_idx * 2 + 1][1].set_title("auc plot for test={}".format((idx + 1) * 4))
+        axes[6 + test_idx * 2][1].set_title("auc plot for test={}".format((idx + 1) * 4))
+        axes[6 + test_idx * 2 + 1][1].set_title("auc plot for test={}".format((idx + 1) * 4))
         for i in range(0, 5):
             trust_name, trust_value = values[5][i]
             prob_name, prob_value = values[6][i]
             a, b, _ = roc_curve(trust_value, prob_value)
             c = auc(a, b)
-            axes[5 + test_idx * 2][1].plot(a, b, lw=2, label='ROC curve {} (area = {:.2f})'.format(prob_name[4:], c))
+            axes[6 + test_idx * 2][1].plot(a, b, lw=2, label='ROC curve {} (area = {:.2f})'.format(prob_name[4:], c))
             a1, b1, _ = precision_recall_curve(trust_value, prob_value)
             c1 = average_precision_score(trust_value, prob_value)
-            axes[5 + test_idx * 2 + 1][1].plot(a1, b1, lw=2,
+            axes[6 + test_idx * 2 + 1][1].plot(a1, b1, lw=2,
                                                label='PR curve {} (area = {:.2f})'.format(prob_name[4:], c1))
-        axes[5 + test_idx * 2][1].legend(loc='upper left')
-        axes[5 + test_idx * 2 + 1][1].legend(loc='upper left')
+        axes[6 + test_idx * 2][1].legend(loc='upper left')
+        axes[6 + test_idx * 2 + 1][1].legend(loc='upper left')
         test_idx += 1
 
     for ax in axes[0:5][:].flat:
@@ -283,12 +289,14 @@ def draw_gain_metric_plot(file_path: str):
     __set_train_axes(2, "train e loss", 2)
     __set_train_axes(3, "train total loss", 3)
     __set_train_axes(4, "train accuracy", 4)
+
     __set_train_measures(0, "f_1_train", 5)
     __set_train_measures(1, "recall_train", 6)
     __set_train_measures(2, "precision_train", 7)
 
     __set_test_axes(5, "test classification loss", 0)
     __set_test_axes(6, "test accuracy", 1)
+
     __set_test_measures(3, "f_1_test", 2)
     __set_test_measures(4, "recall_test", 3)
     __set_test_measures(5, "precision_test", 4)
@@ -421,7 +429,7 @@ def visualize_all():
                     draw_gain_plot(os.path.join(r, file))
                     print("end", file)
             except ValueError as e:
-                print("empty file: {}".format(file))
+                print("error file: {}".format(file), e)
 
 
 if __name__ == "__main__":
