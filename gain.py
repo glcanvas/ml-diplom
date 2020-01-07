@@ -242,9 +242,9 @@ class GAIN(nn.Module):
             # gradient = logits * labels
             # gradient[:, index].backward(gradient=ones, retain_graph=True)
             gradient = logits * labels
-            grad_logits = (logits * labels).sum()  # BS x num_classes
+            grad_logits = (logits * labels) # .sum()  # BS x num_classes
             grad_logits.backward(gradient=gradient, retain_graph=True)
-            # self.model.zero_grad()
+            self.model.zero_grad()
 
         backward_features = self.backward_features  # BS x C x H x W
 
