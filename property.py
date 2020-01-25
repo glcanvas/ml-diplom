@@ -62,4 +62,6 @@ def parse_input_commands():
     parser.add_argument("--gpu", default=0)
     parser.add_argument("--segments", default=10 ** 10)
     parser.add_argument("--pre_train", default=15)
+    parser.add_argument("--gradient_layer_name", default="features.28")
+    parser.add_argument("--from_gradient_layer", default="False")
     return parser
