@@ -28,7 +28,9 @@ def reduce_boundaries(boundaries: int, batch_size=10, huge: int = -10000):
 
 class AttentionGAIN:
     # 28
-    def __init__(self, description: str, classes: int, gradient_layer_name="features.28", weights=None,
+    def __init__(self, description: str, classes: int, gradient_layer_name="features.27",
+                 from_gradient_layer=False,
+                 weights=None,
                  gpu=False,
                  device=0,
                  loss_classifier=None,
@@ -76,7 +78,12 @@ class AttentionGAIN:
             self.tensor_source = torch
 
         # wire up our hooks for heatmap creation
-        self._register_hooks(gradient_layer_name)
+        self.from_gradient_layer = from_gradient_layer
+        self.gradient_layer_name = gradient_layer_name
+
+        self.registered_for_update_weights = self.register_weights_gradient()
+
+        self._register_hooks(self.gradient_layer_name)
 
         # misc parameters
         self.omega = omega
@@ -123,7 +130,7 @@ class AttentionGAIN:
         best_loss = None
         best_test_loss = None
 
-        opt = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
+        opt = torch.optim.Adam(self.registered_for_update_weights, lr=learning_rate)
         for epoch in range(1, epochs, 1):
 
             loss_cl_sum_segm = 0
@@ -139,7 +146,6 @@ class AttentionGAIN:
             without_segments_elements = 0
 
             for images, segments, labels in rds['train_segment']:
-
                 # тренирую здесь с использованием сегментов
                 with_segments_elements += images.shape[0]
                 loss_sum_segm, loss_cl_sum_segm, loss_am_sum_segm, acc_cl_sum_segm, loss_e_sum_segm = self.__train_gain_branch(
@@ -282,7 +288,7 @@ class AttentionGAIN:
     def test(self, test_data_set, epoch: int, save_test_roc_each_epoch: int):
         test_total_loss_cl = 0
         test_total_cl_acc = 0
-        test_size =0
+        test_size = 0
         for images, _, labels in test_data_set:
             test_size += images.size(0)
             batch_size = images.shape[0]
@@ -310,10 +316,10 @@ class AttentionGAIN:
         test_total_loss_cl = (test_total_loss_cl / test_size)
         test_total_cl_acc = (test_total_cl_acc / test_size)
         text = 'TEST Loss_CL={:.5f} Accuracy_CL={:.5f} {} {} {} '.format(test_total_loss_cl,
-                                                                          test_total_cl_acc,
-                                                                          f_1_score_text,
-                                                                          recall_score_text,
-                                                                          precision_score_text)
+                                                                         test_total_cl_acc,
+                                                                         f_1_score_text,
+                                                                         recall_score_text,
+                                                                         precision_score_text)
         if epoch % save_test_roc_each_epoch == 0:
             auc_roc = "auc_roc="
             for idx, i in enumerate(self.test_trust_answers):
@@ -449,3 +455,25 @@ class AttentionGAIN:
         cl_acc = torch.eq(output_cl, labels).sum().float()
         cl_acc /= (batch_size * self.classes + EPS)
         return output_probability, output_cl, cl_acc
+
+    def register_weights_gradient(self):
+        for param in self.model.parameters():
+            param.requires_grad = True
+
+        # update all weights
+        if not self.from_gradient_layer:
+            print("all layers updates weights")
+            P.write_to_log("all layers updates weights")
+            return self.model.parameters()
+
+        # register weights after marked layer
+        flag = False
+        result = []
+        for registered_param, (name, param) in zip(self.model.parameters(), self.model.named_modules()):
+            if name == self.gradient_layer_name:
+                flag = True
+            if flag:
+                result.append(registered_param)
+                print("register layer: ", name)
+                P.write_to_log("register layer: ", name)
+        return result
