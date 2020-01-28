@@ -30,6 +30,7 @@ class AttentionGAIN:
     # 28
     def __init__(self, description: str, classes: int, gradient_layer_name="features.27",
                  from_gradient_layer=False,
+                 model=m.vgg16(pretrained=True),
                  weights=None,
                  gpu=False,
                  device=0,
@@ -53,7 +54,7 @@ class AttentionGAIN:
         self.classes = classes
 
         # define model
-        self.model = m.vgg16(pretrained=True)
+        self.model = model
         num_features = self.model.classifier[6].in_features
         self.model.classifier[6] = nn.Linear(num_features, self.classes)
 
