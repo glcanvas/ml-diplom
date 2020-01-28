@@ -4,7 +4,7 @@ import os
 import re
 from sklearn.metrics import roc_curve, auc, precision_recall_curve, average_precision_score
 
-plot_images_path = "/home/nikita/PycharmProjects/ml-diplom/stat_plot"
+plot_images_path = "/home/nikita/PycharmProjects/ml-diplom/stat_plot_layers_grad"
 logs_path = "/home/nikita/PycharmProjects/ml-data/logs"
 
 
@@ -348,7 +348,7 @@ def draw_gain_metric_plot(file_path: str):
         ax.set(xlabel='False Positive Rate', ylabel='True Positive Rate')
 
     plt.suptitle(file_name, y=1.99)
-    plt.savefig(os.path.join(plot_images_path, file_name[:-4]), bbox_inches='tight')
+    plt.savefig(os.path.join(plot_images_path, file_name.replace(".", "_")[:-4]), bbox_inches='tight')
     plt.show()
 
 
@@ -378,7 +378,7 @@ def draw_gain_plot(file_path: str):
     for ax in axes.flat:
         ax.set(xlabel='epoch', ylabel='value')
     plt.suptitle(file_name, y=1.99)
-    plt.savefig(os.path.join(plot_images_path, file_name[:-4]), bbox_inches='tight')
+    plt.savefig(os.path.join(plot_images_path, file_name.replace(".", "_")[:-4]), bbox_inches='tight')
 
 
 def draw_classification_plot(file_path: str):
@@ -408,6 +408,8 @@ def draw_classification_plot(file_path: str):
     plt.savefig(os.path.join(plot_images_path, file_name[:-4]), bbox_inches='tight')
 
 
+import traceback
+
 def visualize_all():
     for r, d, f in os.walk(logs_path):
         for file in f:
@@ -430,6 +432,8 @@ def visualize_all():
                     print("end", file)
             except ValueError as e:
                 print("error file: {}".format(file), e)
+                traceback.print_exc()
+
 
 
 if __name__ == "__main__":
