@@ -37,6 +37,7 @@ if __name__ == "__main__":
     pre_train = int(parsed.pre_train)
     gradient_layer_name = parsed.gradient_layer_name
     from_gradient_layer = parsed.from_gradient_layer.lower() == "true"
+    epochs = int(parsed.epochs)
 
     description = "BAM_{}_train_left-{},train_segments-{},train_right-{},test_left-{},test_right-{},am_loss-{}," \
                   "pre_train-{}_gradient_layer_name-{}_from_gradient_layer-{}" \
@@ -71,7 +72,7 @@ if __name__ == "__main__":
         test_set = DataLoader(il.ImageDataset(test), batch_size=10)
 
         gain.train({'train_segment': train_segments_set, 'train_classifier': train_classifier_set, 'test': test_set},
-                   101,
+                   epochs,
                    4,
                    4,
                    10,
@@ -139,7 +140,6 @@ VGG(
   )
 )
 """
-
 
 """
 /home/nikita/anaconda3/envs/ml-diplom/bin/python /home/nikita/PycharmProjects/ml-diplom/main_bam.py
