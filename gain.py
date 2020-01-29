@@ -30,6 +30,7 @@ class AttentionGAIN:
     # 28
     def __init__(self, description: str, classes: int, gradient_layer_name="features.27",
                  from_gradient_layer=False,
+                 model=m.vgg16(pretrained=True),
                  weights=None,
                  gpu=False,
                  device=0,
@@ -53,7 +54,7 @@ class AttentionGAIN:
         self.classes = classes
 
         # define model
-        self.model = m.vgg16(pretrained=True)
+        self.model = model
         num_features = self.model.classifier[6].in_features
         self.model.classifier[6] = nn.Linear(num_features, self.classes)
 
@@ -290,13 +291,16 @@ class AttentionGAIN:
         test_total_cl_acc = 0
         test_size = 0
         for images, _, labels in test_data_set:
+            if images.size(0) < 2:
+                continue
             test_size += images.size(0)
             batch_size = images.shape[0]
             if self.gpu:
                 # images, labels = send_to_gpu(images, labels)
                 images = images.cuda(self.device)
                 labels = labels.cuda(self.device)
-
+            # print(images.shape)
+            # P.write_to_log(images.shape) 
             output_cl_model = self.model(images)
 
             sigmoid = nn.Sigmoid()  # used for calculate accuracy
