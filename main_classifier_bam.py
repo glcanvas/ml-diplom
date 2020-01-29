@@ -1,8 +1,12 @@
 import image_loader as il
 from torch.utils.data import DataLoader
-import gain
+import classifier
 import property as P
 import sys
+import torchvision.models as m
+import torch.nn as nn
+import bam_model as bm
+import main_bam as mb
 import traceback
 
 if __name__ == "__main__":
@@ -19,8 +23,8 @@ if __name__ == "__main__":
     gradient_layer_name = parsed.gradient_layer_name
     from_gradient_layer = parsed.from_gradient_layer.lower() == "true"
     epochs = int(parsed.epochs)
-
-    description = "{}_train_left-{},train_segments-{},train_right-{},test_left-{},test_right-{},am_loss-{}," \
+    description = "BAM_CLASSIFIER_{}_train_left-{},train_segments-{},train_right-{}," \
+                  "test_left-{},test_right-{},am_loss-{}," \
                   "pre_train-{}_gradient_layer_name-{}_from_gradient_layer-{}" \
         .format(parsed_description,
                 train_left,
@@ -34,28 +38,19 @@ if __name__ == "__main__":
                 from_gradient_layer
                 )
 
-    P.initialize_log_name("metric_gain_" + description)
-
+    P.initialize_log_name("metric_gain_with_bam" + description)
+    model = mb.build_model(m.vgg16(pretrained=True), [3, 8, 15, 22, 29], [2, 7, 14, 21, 28])
     try:
-        gain = gain.AttentionGAIN(description, 5, gpu=True, device=gpu, gradient_layer_name=gradient_layer_name,
-                                  from_gradient_layer=from_gradient_layer,
-                                  usage_am_loss=use_am_loss)
+        clf = classifier.Classifier(description, 5, gpu=True, device=gpu)
 
         loader = il.DatasetLoader.initial()
-        train_segments = loader.load_tensors(train_left, train_segments_count, train_segments_count)
-        train_classifier = loader.load_tensors(train_segments_count, train_right, 0)
+        train = loader.load_tensors(train_left, train_right)
         test = loader.load_tensors(test_left, test_right)
 
-        train_segments_set = DataLoader(il.ImageDataset(train_segments), batch_size=10, shuffle=True)
-        train_classifier_set = DataLoader(il.ImageDataset(train_classifier), batch_size=10, shuffle=True)
-        test_set = DataLoader(il.ImageDataset(test), batch_size=10)
+        train_set = DataLoader(il.ImageDataset(train), batch_size=10, shuffle=True, num_workers=0)
+        test_set = DataLoader(il.ImageDataset(test), batch_size=10, shuffle=True, num_workers=0)
 
-        gain.train({'train_segment': train_segments_set, 'train_classifier': train_classifier_set, 'test': test_set},
-                   epochs,
-                   4,
-                   4,
-                   10,
-                   pre_train)
+        clf.train(epochs, 4, 4, 10, train_set, test_set)
     except BaseException as e:
         print("EXCEPTION", e)
         print(type(e))
