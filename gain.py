@@ -291,13 +291,16 @@ class AttentionGAIN:
         test_total_cl_acc = 0
         test_size = 0
         for images, _, labels in test_data_set:
+            if images.size(0) < 2:
+                continue
             test_size += images.size(0)
             batch_size = images.shape[0]
             if self.gpu:
                 # images, labels = send_to_gpu(images, labels)
                 images = images.cuda(self.device)
                 labels = labels.cuda(self.device)
-
+            # print(images.shape)
+            # P.write_to_log(images.shape) 
             output_cl_model = self.model(images)
 
             sigmoid = nn.Sigmoid()  # used for calculate accuracy

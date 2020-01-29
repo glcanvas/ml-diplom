@@ -6,6 +6,7 @@ import sys
 import torchvision.models as m
 import torch.nn as nn
 import bam_model as bm
+import traceback
 
 
 def build_model(module: nn.Module, after_indexes: list, use_dim_indexes: list, feature: str = 'features'):
@@ -73,7 +74,7 @@ if __name__ == "__main__":
 
         gain.train({'train_segment': train_segments_set, 'train_classifier': train_classifier_set, 'test': test_set},
                    epochs,
-                   4,
+                   1,
                    4,
                    10,
                    pre_train)
@@ -81,6 +82,8 @@ if __name__ == "__main__":
         print("EXCEPTION", e)
         print(type(e))
         P.write_to_log("EXCEPTION", e, type(e))
+        traceback.print_stack()
+        
         raise e
 
 """

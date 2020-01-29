@@ -18,17 +18,39 @@
 
 source ~/nduginec_evn3/bin/activate
 
-~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.28
-~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.28 --am_loss=True
+# ~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.28
+# ~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.28 --am_loss=True
 
-~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.27
-~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.27 --am_loss=True
+# ~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.27
+# ~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.27 --am_loss=True
 
-~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.26
-~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.26 --am_loss=True
+# ~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.26
+# ~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.26 --am_loss=True
 
-~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.25
-~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.25 --am_loss=True
+# ~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.25
+# ~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.25 --am_loss=True
 
-~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.24
-~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.24 --am_loss=True
+# ~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.24
+# ~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.24 --am_loss=True
+
+
+~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.23                           
+
+~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.23 --am_loss=True  
+
+~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.22
+
+~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.22 --am_loss=True   
+
+~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.21
+
+~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.21 --am_loss=True   
+
+~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.20           
+
+~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.20 --am_loss=True   
+
+
+~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.19                                                                                                                                                                                                                                                                                                            ~/nduginec_evn3/bin/python ~/ml-diplom/main_gain.py --description measures --pre_train 25 --train_left 0 --segments 500 --train_right 1000 --test_left 1001 --test_right 2592 --gpu 1 --from_gradient_layer True --gradient_layer_name features.19 --am_loss=True                                                                                                                                                                                                                                                                                                 
+
+
