@@ -410,30 +410,30 @@ def draw_classification_plot(file_path: str):
 
 import traceback
 
+
 def visualize_all():
     for r, d, f in os.walk(logs_path):
         for file in f:
             try:
-                if "metric_classifier" in file:
+                if "classifier" in file:
                     print("begin", file)
                     draw_metrics_classification_plot(os.path.join(r, file))
                     print("end", file)
-                elif "classifier" in file:
-                    print("begin", file)
-                    draw_classification_plot(os.path.join(r, file))
-                    print("end", file)
-                elif "metric_gain" in file:
+                # elif "classifier" in file:
+                #     print("begin", file)
+                #     draw_classification_plot(os.path.join(r, file))
+                #    print("end", file)
+                elif "gain" in file:
                     print("begin", file)
                     draw_gain_metric_plot(os.path.join(r, file))
                     print("end", file)
-                elif "gain" in file:
-                    print("begin", file)
-                    draw_gain_plot(os.path.join(r, file))
-                    print("end", file)
+                # elif "gain" in file:
+                #     print("begin", file)
+                #     draw_gain_plot(os.path.join(r, file))
+                #     print("end", file)
             except ValueError as e:
                 print("error file: {}".format(file), e)
                 traceback.print_exc()
-
 
 
 if __name__ == "__main__":
