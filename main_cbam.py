@@ -5,7 +5,7 @@ import property as P
 import sys
 import torchvision.models as m
 import torch.nn as nn
-import bam_model as bm
+import cbam_model as cbm
 import traceback
 
 
@@ -18,7 +18,7 @@ def build_model(module: nn.Module, after_indexes: list, use_dim_indexes: list, f
         if idx in after_indexes:
             output_dim = feature_seq[use_dim_indexes[cnt]].out_channels
             cnt += 1
-            layers.append(bm.BAM(output_dim))
+            layers.append(cbm.CBAM(output_dim))
             pass
 
     module.__setattr__(feature, nn.Sequential(*layers))
@@ -54,7 +54,7 @@ if __name__ == "__main__":
                 from_gradient_layer
                 )
 
-    P.initialize_log_name("metric_gain_with_bam" + description)
+    P.initialize_log_name("gain_with_сbam" + description)
 
     try:
         model = build_model(m.vgg16(pretrained=True), [3, 8, 15, 22, 29], [2, 7, 14, 21, 28])
@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
         gain.train({'train_segment': train_segments_set, 'train_classifier': train_classifier_set, 'test': test_set},
                    epochs,
-                   1,
+                   4,
                    4,
                    10,
                    pre_train)
@@ -145,7 +145,7 @@ VGG(
 """
 
 """
-/home/nikita/anaconda3/envs/ml-diplom/bin/python /home/nikita/PycharmProjects/ml-diplom/main_bam.py
+/home/nikita/anaconda3/envs/ml-diplom/bin/python /home/nikita/PycharmProjects/ml-diplom/main_cbam.py
 VGG(
   (features): Sequential(
     (0): Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))

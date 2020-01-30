@@ -5,8 +5,7 @@ import property as P
 import sys
 import torchvision.models as m
 import torch.nn as nn
-import bam_model as bm
-import main_bam as mb
+import main_cbam as mb
 import traceback
 
 if __name__ == "__main__":
@@ -23,22 +22,15 @@ if __name__ == "__main__":
     gradient_layer_name = parsed.gradient_layer_name
     from_gradient_layer = parsed.from_gradient_layer.lower() == "true"
     epochs = int(parsed.epochs)
-    description = "BAM_CLASSIFIER_{}_train_left-{},train_segments-{},train_right-{}," \
-                  "test_left-{},test_right-{},am_loss-{}," \
-                  "pre_train-{}_gradient_layer_name-{}_from_gradient_layer-{}" \
+    description = "BAM_CLASSIFIER_{}_train_left-{},train_right-{},test_left-{},test_right-{}" \
         .format(parsed_description,
                 train_left,
-                train_segments_count,
                 train_right,
                 test_left,
-                test_right,
-                use_am_loss,
-                pre_train,
-                gradient_layer_name,
-                from_gradient_layer
+                test_right
                 )
 
-    P.initialize_log_name("metric_gain_with_bam" + description)
+    P.initialize_log_name("classifier_with_cbam" + description)
     model = mb.build_model(m.vgg16(pretrained=True), [3, 8, 15, 22, 29], [2, 7, 14, 21, 28])
     try:
         clf = classifier.Classifier(description, 5, gpu=True, device=gpu)
