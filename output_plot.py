@@ -4,7 +4,7 @@ import os
 import re
 from sklearn.metrics import roc_curve, auc, precision_recall_curve, average_precision_score
 
-plot_images_path = "/home/nikita/PycharmProjects/ml-diplom/stat_plot_layers_grad"
+plot_images_path = "/home/nikita/PycharmProjects/ml-diplom/cbam_plots"
 logs_path = "/home/nikita/PycharmProjects/ml-data/logs"
 
 
@@ -415,7 +415,7 @@ def visualize_all():
     for r, d, f in os.walk(logs_path):
         for file in f:
             try:
-                if "classifier" in file:
+                if "cbam" in file and "classifier" in file:
                     print("begin", file)
                     draw_metrics_classification_plot(os.path.join(r, file))
                     print("end", file)
@@ -423,7 +423,7 @@ def visualize_all():
                 #     print("begin", file)
                 #     draw_classification_plot(os.path.join(r, file))
                 #    print("end", file)
-                elif "gain" in file:
+                elif "cbam" in file and "gain" in file:
                     print("begin", file)
                     draw_gain_metric_plot(os.path.join(r, file))
                     print("end", file)

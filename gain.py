@@ -402,8 +402,11 @@ class AttentionGAIN:
             loss_am = F.sigmoid(output_am) * label
             loss_am = loss_am.sum() / label.sum().type(self.tensor_source.FloatTensor)
 
-        updated_segment_mask = segment * self.omega + self.minus_mask
-        loss_e = ((mask - updated_segment_mask) @ (mask - updated_segment_mask)).sum()
+        updated_segment_mask = segment#  * self.omega  + self.minus_mask
+        sq_loss = ((mask - updated_segment_mask) @ (mask - updated_segment_mask)) # .sum()
+
+        loss_e = (sq_loss @ weights).sum()
+        # веса -- взвешеные пиксели
 
         # Eq 6
         total_loss = loss_cl + loss_e * 100 + self.alpha * loss_am
