@@ -5,7 +5,7 @@ import property as P
 import sys
 import torchvision.models as m
 import torch.nn as nn
-import cbam_model as cbm
+import bam_model as bm
 import traceback
 
 
@@ -18,7 +18,7 @@ def build_model(module: nn.Module, after_indexes: list, use_dim_indexes: list, f
         if idx in after_indexes:
             output_dim = feature_seq[use_dim_indexes[cnt]].out_channels
             cnt += 1
-            layers.append(cbm.CBAM(output_dim))
+            layers.append(bm.BAM(output_dim))
             pass
 
     module.__setattr__(feature, nn.Sequential(*layers))
@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
         gain.train({'train_segment': train_segments_set, 'train_classifier': train_classifier_set, 'test': test_set},
                    epochs,
-                   4,
+                   1,
                    4,
                    10,
                    pre_train)
@@ -83,5 +83,5 @@ if __name__ == "__main__":
         print(type(e))
         P.write_to_log("EXCEPTION", e, type(e))
         traceback.print_stack()
-        
+
         raise e

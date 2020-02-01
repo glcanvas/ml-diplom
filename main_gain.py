@@ -3,27 +3,6 @@ from torch.utils.data import DataLoader
 import gain
 import property as P
 import sys
-import torchvision.models as m
-import torch.nn as nn
-import cbam_model as cbm
-import traceback
-
-
-def build_model(module: nn.Module, after_indexes: list, use_dim_indexes: list, feature: str = 'features'):
-    feature_seq = module.__getattr__(feature)
-    layers = []
-    cnt = 0
-    for idx, layer in enumerate(feature_seq):
-        layers.append(layer)
-        if idx in after_indexes:
-            output_dim = feature_seq[use_dim_indexes[cnt]].out_channels
-            cnt += 1
-            layers.append(cbm.CBAM(output_dim))
-            pass
-
-    module.__setattr__(feature, nn.Sequential(*layers))
-    return module
-
 
 if __name__ == "__main__":
     parsed = P.parse_input_commands().parse_args(sys.argv[1:])
@@ -57,10 +36,8 @@ if __name__ == "__main__":
     P.initialize_log_name("_" + description)
 
     try:
-        model = build_model(m.vgg16(pretrained=True), [3, 8, 15, 22, 29], [2, 7, 14, 21, 28])
-
-        gain = gain.AttentionGAIN(description, 5, gpu=True, model=model, device=gpu,
-                                  gradient_layer_name=gradient_layer_name, from_gradient_layer=from_gradient_layer,
+        gain = gain.AttentionGAIN(description, 5, gpu=True, device=gpu, gradient_layer_name=gradient_layer_name,
+                                  from_gradient_layer=from_gradient_layer,
                                   usage_am_loss=use_am_loss)
 
         loader = il.DatasetLoader.initial()
@@ -82,6 +59,4 @@ if __name__ == "__main__":
         print("EXCEPTION", e)
         print(type(e))
         P.write_to_log("EXCEPTION", e, type(e))
-        traceback.print_stack()
-        
         raise e

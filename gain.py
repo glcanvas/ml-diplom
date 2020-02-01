@@ -16,9 +16,9 @@ def scalar(tensor):
     return tensor.data.cpu().item()
 
 
-def reduce_boundaries(boundaries: int, batch_size=10, huge: int = -10000):
+def weighted_mask(boundaries: int, batch_size=10, huge: int = 5):
     # assume BSx1x224x224
-    zeros = torch.zeros((batch_size, 1, 224, 224))
+    zeros = torch.ones((batch_size, 1, 224, 224))
     zeros[:, :, 0:boundaries, :] = huge
     zeros[:, :, 224 - boundaries:224, :] = huge
     zeros[:, :, :, 0:boundaries] = huge
@@ -70,11 +70,11 @@ class AttentionGAIN:
         if weights:
             self.model.load_state_dict(weights)
 
-        self.minus_mask = reduce_boundaries(8)
+        self.weight_mask = weighted_mask(8)
         if self.gpu:
             self.model = self.model.cuda(self.device)
             self.tensor_source = torch.cuda
-            self.minus_mask = self.minus_mask.cuda(self.device)
+            self.weight_mask = self.weight_mask.cuda(self.device)
         else:
             self.tensor_source = torch
 
@@ -228,12 +228,12 @@ class AttentionGAIN:
                             optimizer, loss_sum, loss_cl_sum, am_sum, acc_cl_sum, e_sum):
 
         train_batch_size = images.shape[0]
-        self.minus_mask = reduce_boundaries(8, train_batch_size)
+        self.weight_mask = weighted_mask(8, train_batch_size)
         if self.gpu:
             images = images.cuda(self.device)  # bs x 3 x 224 x 224
             segments = segments.cuda(self.device)  # bs x 1 x 224 x 224
             labels = labels.cuda(self.device)  # bs x 5
-            self.minus_mask = self.minus_mask.cuda(self.device)
+            self.weight_mask = self.weight_mask.cuda(self.device)
 
         for ill_index in range(0, self.classes):
             total_loss, loss_cl, loss_am, loss_e, output_cl, output_probability, acc_cl, _, _, _ = \
@@ -402,10 +402,10 @@ class AttentionGAIN:
             loss_am = F.sigmoid(output_am) * label
             loss_am = loss_am.sum() / label.sum().type(self.tensor_source.FloatTensor)
 
-        updated_segment_mask = segment#  * self.omega  + self.minus_mask
-        sq_loss = ((mask - updated_segment_mask) @ (mask - updated_segment_mask)) # .sum()
+        updated_segment_mask = segment  # * self.omega  + self.weight_mask
+        sq_loss = ((mask - updated_segment_mask) @ (mask - updated_segment_mask))  # .sum()
 
-        loss_e = (sq_loss @ weights).sum()
+        loss_e = (sq_loss @ self.weight_mask).sum()
         # веса -- взвешеные пиксели
 
         # Eq 6
