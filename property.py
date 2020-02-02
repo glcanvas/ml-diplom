@@ -48,7 +48,7 @@ def write_to_log(*args):
                 log_file.write(str(i) + "\n")
             log_file.flush()
     except Exception as e:
-        print("Exception while write log", e)
+        print("Exception while write to log", e)
 
 
 def parse_input_commands():
