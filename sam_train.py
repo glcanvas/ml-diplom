@@ -223,20 +223,21 @@ class SAM_TRAIN:
             loss_classification_sum += scalar(classification_loss.sum())
             without_segments_elements += 1  # labels.size(0)
 
-            f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
-                                                                                             self.test_trust_answers,
-                                                                                             self.test_model_answers)
+        f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
+                                                                                         self.test_trust_answers,
+                                                                                         self.test_model_answers)
 
-            text = 'TEST Loss_CL={:.5f} Accuracy_CL={:.5f} {} {} {} '.format(loss_classification_sum,
-                                                                             accuracy_classification_sum,
-                                                                             f_1_score_text,
-                                                                             recall_score_text,
-                                                                             precision_score_text)
-            P.write_to_log(text)
-            print(text)
+        loss_classification_sum /= without_segments_elements + EPS
+        accuracy_classification_sum /= without_segments_elements + EPS
+        text = 'TEST Loss_CL={:.5f} Accuracy_CL={:.5f} {} {} {} '.format(loss_classification_sum,
+                                                                         accuracy_classification_sum,
+                                                                         f_1_score_text,
+                                                                         recall_score_text,
+                                                                         precision_score_text)
+        P.write_to_log(text)
+        print(text)
 
-        return loss_classification_sum / (without_segments_elements + EPS), accuracy_classification_sum / (
-                without_segments_elements + EPS)
+        return loss_classification_sum, accuracy_classification_sum
 
     def __save_model(self, weights):
         name = self.description + "_date-" + datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S') + ".torch"
