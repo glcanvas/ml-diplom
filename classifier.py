@@ -170,7 +170,7 @@ class Classifier:
             loss_cl = self.loss_classifier(output_cl, class_label)
 
             test_total_loss_cl, test_total_cl_acc, output_cl, output_probability = self.__calculate_accuracy(output_cl,
-                                                                                                             class_lat_size el,
+                                                                                                             class_lat_size ,
                                                                                                              batch_size,
                                                                                                              loss_cl,
                                                                                                              test_total_loss_cl,
