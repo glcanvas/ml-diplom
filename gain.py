@@ -147,7 +147,7 @@ class AttentionGAIN:
 
             for images, segments, labels in rds['train_segment']:
                 # тренирую здесь с использованием сегментов
-                with_segments_elements += images.shape[0]
+                with_segments_elements += 1 # images.shape[0]
                 loss_sum_segm, loss_cl_sum_segm, loss_am_sum_segm, acc_cl_sum_segm, loss_e_sum_segm = self.__train_gain_branch(
                     epoch,
                     pre_train_epoch,
@@ -162,18 +162,20 @@ class AttentionGAIN:
                     loss_e_sum_segm)
 
             for images, segments, labels in rds['train_classifier']:
-                without_segments_elements += images.shape[0]
+                without_segments_elements += 1 # images.shape[0]
                 loss_cl_sum_no_segm, acc_cl_sum_no_segm = self.__train_classifier_branch(images, labels, opt,
                                                                                          loss_cl_sum_no_segm,
                                                                                          acc_cl_sum_no_segm)
 
-            last_acc_total = acc_cl_sum_segm / self.classes
-            last_acc_total += acc_cl_sum_no_segm
-            last_acc_total /= (with_segments_elements + without_segments_elements)
+            last_acc_total_segm = acc_cl_sum_segm / self.classes
+            last_acc_total_segm /= with_segments_elements
 
-            loss_cl_sum_total = loss_cl_sum_segm / self.classes
-            loss_cl_sum_total += loss_cl_sum_no_segm
-            loss_cl_sum_total /= (with_segments_elements + without_segments_elements)
+            last_acc_total = (last_acc_total_segm + acc_cl_sum_no_segm  / without_segments_elements) / 2
+
+            loss_cl_sum_total_segm = loss_cl_sum_segm / self.classes
+            loss_cl_sum_total_segm /= with_segments_elements 
+
+            loss_cl_sum_total = (loss_cl_sum_total_segm + loss_cl_sum_no_segm /without_segments_elements) / 2
 
             f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
                                                                                              self.train_trust_answers,
@@ -290,7 +292,7 @@ class AttentionGAIN:
         test_total_cl_acc = 0
         test_size = 0
         for images, _, labels in test_data_set:
-            test_size += images.size(0)
+            test_size += 1 # images.size(0)
             batch_size = images.shape[0]
             if self.gpu:
                 # images, labels = send_to_gpu(images, labels)
@@ -307,7 +309,7 @@ class AttentionGAIN:
 
             self.save_test_data(labels, output_cl, output_probability)
 
-            test_total_loss_cl += scalar(loss_cl.sum()) / batch_size
+            test_total_loss_cl += scalar(loss_cl.sum()) # / batch_size
             test_total_cl_acc += scalar(cl_acc)
 
         f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,

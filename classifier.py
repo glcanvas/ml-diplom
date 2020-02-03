@@ -78,7 +78,7 @@ class Classifier:
             total_cl_acc = 0
             set_size = 0
             for images, _, labels in train_data_set:
-                set_size += images.size(0)
+                set_size += 1 # images.size(0)
                 if self.gpu:
                     images, labels = send_to_gpu(images, labels)
                 # images, labels = wrap_to_variable(images, labels)
@@ -155,7 +155,7 @@ class Classifier:
         test_total_cl_acc = 0
         test_size = 0
         for images, _, labels in test_data_set:
-            test_size += images.size(0)
+            test_size += 1 # images.size(0)
             if self.gpu:
                 images, labels = send_to_gpu(images, labels)
             class_label = labels
@@ -170,7 +170,7 @@ class Classifier:
             loss_cl = self.loss_classifier(output_cl, class_label)
 
             test_total_loss_cl, test_total_cl_acc, output_cl, output_probability = self.__calculate_accuracy(output_cl,
-                                                                                                             class_label,
+                                                                                                             class_lat_size el,
                                                                                                              batch_size,
                                                                                                              loss_cl,
                                                                                                              test_total_loss_cl,
