@@ -51,10 +51,18 @@ class SAM(nn.Module):
         basis_out = self.basis(input_images)
         classifier_out = self.classifier_branch(basis_out)
         sam_out = self.sam_branch(basis_out)
+        # замечание -- sam_out -- небольшого размера...
+        point_wise_out = None
+        for c in range(0, sam_out.size(1)):
+            sub_sam_out = sam_out[:, c:c + 1, :, :]
+            if point_wise_out is None:
+                point_wise_out = classifier_out @ sub_sam_out
+            else:
+                point_wise_out = torch.cat((point_wise_out, classifier_out @ sub_sam_out), dim=1)
         # if sam_out.shape != classifier_out.shape:
         #    raise Exception("sam output: {} must be equal with classifier output: {}".format(sam_out.shape,
         #                                                                                     classifier_out.shape))
-        point_wise_out = classifier_out @ sam_out
+        # point_wise_out = classifier_out @ sam_out
 
         merged_out = self.merged_branch(point_wise_out)
         avg_out = self.avg_pool(merged_out)

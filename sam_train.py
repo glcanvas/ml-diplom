@@ -148,7 +148,7 @@ class SAM_TRAIN:
         accuracy_classification_sum = 0
         without_segments_elements = 0
         for images, _, labels in train_set:
-            labels = labels[:, 0:1]
+            labels = labels
             images, labels = self.__convert_data_and_label(images, labels)
 
             # calculate and optimize model
@@ -167,6 +167,9 @@ class SAM_TRAIN:
             accuracy_classification_sum += scalar(cl_acc.sum())
             loss_classification_sum += scalar(classification_loss.sum())
             without_segments_elements += 1  # labels.size(0)
+            self.__de_convert_data_and_label(images, labels)
+            torch.cuda.empty_cache()
+
         return loss_classification_sum / (without_segments_elements + EPS), accuracy_classification_sum / (
                 without_segments_elements + EPS)
 
@@ -177,8 +180,8 @@ class SAM_TRAIN:
         with_segments_elements = 0
 
         for images, segments, labels in train_set:
-            segments = segments[:, 0:1, :, :]
-            labels = labels[:, 0:1]
+            segments = segments
+            labels = labels
             images, labels, segments = self.__convert_data_and_label(images, labels, segments)
             segments = self.puller(segments)
             optimizer.zero_grad()
@@ -198,6 +201,8 @@ class SAM_TRAIN:
             loss_classification_sum += scalar(classification_loss.sum())
             loss_m_sum += scalar(segmentation_loss.sum())
             with_segments_elements += 1  # labels.size(0)
+            self.__de_convert_data_and_label(images, labels, segments)
+            torch.cuda.empty_cache()
 
         return accuracy_classification_sum / (with_segments_elements + EPS), loss_classification_sum / (
                 with_segments_elements + EPS), loss_m_sum / (with_segments_elements + EPS)
@@ -207,7 +212,7 @@ class SAM_TRAIN:
         accuracy_classification_sum = 0
         without_segments_elements = 0
         for images, _, labels in self.test_set:
-            labels = labels[:, 0:1]
+            labels = labels
             images, labels = self.__convert_data_and_label(images, labels)
             model_classification, _ = self.sam_model(images)
             classification_loss = self.l_loss(model_classification, labels)
@@ -222,6 +227,8 @@ class SAM_TRAIN:
             accuracy_classification_sum += scalar(cl_acc.sum())
             loss_classification_sum += scalar(classification_loss.sum())
             without_segments_elements += 1  # labels.size(0)
+            self.__de_convert_data_and_label(images, labels)
+            torch.cuda.empty_cache()
 
         f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
                                                                                          self.test_trust_answers,
@@ -284,5 +291,14 @@ class SAM_TRAIN:
             label = label.cuda(self.gpu_device)
             if segments is not None:
                 segments = segments.cuda(self.gpu_device)
+                return data, label, segments
+            return data, label
+
+    def __de_convert_data_and_label(self, data, label, segments=None):
+        if self.use_gpu:
+            data = data.cpu()
+            label = label.cpu()
+            if segments is not None:
+                segments = segments.cpu()
                 return data, label, segments
             return data, label

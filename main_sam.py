@@ -8,7 +8,7 @@ import traceback
 import sam_model as ss
 import sam_train as st
 
-classes = 1
+classes = 5
 
 if __name__ == "__main__":
     parsed = P.parse_input_commands().parse_args(sys.argv[1:])
@@ -43,9 +43,9 @@ if __name__ == "__main__":
         train_classifier = loader.load_tensors(train_segments_count, train_right, 0)
         test = loader.load_tensors(test_left, test_right)
 
-        train_segments_set = DataLoader(il.ImageDataset(train_segments), batch_size=10, shuffle=True)
-        train_classifier_set = DataLoader(il.ImageDataset(train_classifier), batch_size=10, shuffle=True)
-        test_set = DataLoader(il.ImageDataset(test), batch_size=10)
+        train_segments_set = DataLoader(il.ImageDataset(train_segments), batch_size=5, shuffle=True)
+        train_classifier_set = DataLoader(il.ImageDataset(train_classifier), batch_size=5, shuffle=True)
+        test_set = DataLoader(il.ImageDataset(test), batch_size=5)
 
         sam_branch = nn.Sequential(
             nn.Conv2d(64, 64, kernel_size=(3, 3)),
@@ -58,7 +58,7 @@ if __name__ == "__main__":
             nn.MaxPool2d(kernel_size=2, stride=2, padding=(1, 1)),
             nn.Conv2d(64, 128, kernel_size=(3, 3), padding=(1, 1)),
             nn.ReLU(),
-            nn.Conv2d(128, 1, kernel_size=(3, 3), padding=(1, 1)),
+            nn.Conv2d(128, 5, kernel_size=(3, 3), padding=(1, 1)),
             nn.Sigmoid()
         )
         model = m.vgg16(pretrained=True)
@@ -68,6 +68,7 @@ if __name__ == "__main__":
         classifier_branch = model.features[4:16]
 
         merged_branch = model.features[16:]
+        merged_branch[1] = nn.Conv2d(1280, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
         avg_pool = model.avgpool
         classifier = nn.Sequential(*model.classifier,
                                    nn.Linear(1000, classes),
@@ -79,7 +80,7 @@ if __name__ == "__main__":
                            merged_branch,
                            avg_pool,
                            classifier)
-        # print(sam_model)
+        print(sam_model)
         sam_train = st.SAM_TRAIN(sam_model, train_classifier_set, train_segments_set, test_set, classes=classes,
                                  pre_train_epochs=pre_train,
                                  gpu_device=gpu,
