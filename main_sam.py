@@ -45,8 +45,8 @@ if __name__ == "__main__":
         train_classifier = loader.load_tensors(train_segments_count, train_right, 0)
         test = loader.load_tensors(test_left, test_right)
 
-        train_segments_set = DataLoader(il.ImageDataset(train_segments), batch_size=5, shuffle=True)
-        train_classifier_set = DataLoader(il.ImageDataset(train_classifier), batch_size=5, shuffle=True)
+        train_segments_set = DataLoader(il.ImageDataset(train_segments), batch_size=2, shuffle=True)
+        train_classifier_set = DataLoader(il.ImageDataset(train_classifier), batch_size=2, shuffle=True)
         test_set = DataLoader(il.ImageDataset(test), batch_size=5)
 
         sam_branch = nn.Sequential(

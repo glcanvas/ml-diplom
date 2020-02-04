@@ -92,8 +92,9 @@ class SAM_TRAIN:
             self.current_epoch = epoch
 
             loss_m_sum = 0
+            loss_l1_sum = 0
             optimizer = self.__apply_adaptive_learning(optimizer, learning_rate, self.current_epoch)
-            
+
             if self.current_epoch <= self.pre_train_epochs:
                 loss_classification_sum_segments, accuracy_classification_sum_segments = self.__train_classifier(
                     optimizer, self.train_classifier_set)
@@ -101,7 +102,7 @@ class SAM_TRAIN:
                     optimizer, self.train_segments_set)
             else:
 
-                accuracy_classification_sum_segments, loss_classification_sum_segments, loss_m_sum = self.__train_segments(
+                accuracy_classification_sum_segments, loss_classification_sum_segments, loss_m_sum, loss_l1_sum = self.__train_segments(
                     optimizer, self.train_segments_set)
 
                 loss_classification_sum_classifier, accuracy_classification_sum_classifier = self.__train_classifier(
@@ -111,14 +112,15 @@ class SAM_TRAIN:
             classification_loss_total = (loss_classification_sum_segments + loss_classification_sum_classifier) / 2
             loss_total = loss_classification_sum_segments + loss_classification_sum_classifier + loss_m_sum
 
-            prefix = "PRETRAIN" if epoch < self.pre_train_epochs else "TRAIN"
+            prefix = "PRETRAIN" if epoch <= self.pre_train_epochs else "TRAIN"
             f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
                                                                                              self.train_trust_answers,
                                                                                              self.train_model_answers)
 
-            text = "{}={} Loss_CL={:.5f} Loss_M={:.5f} Loss_Total={:.5f} Accuracy_CL={:.5f} " \
+            text = "{}={} Loss_CL={:.5f} Loss_M={:.5f} Loss_L1={:.5f} Loss_Total={:.5f} Accuracy_CL={:.5f} " \
                    "{} {} {} ".format(prefix, self.current_epoch, classification_loss_total,
                                       loss_m_sum,
+                                      loss_l1_sum,
                                       loss_total,
                                       accuracy_total,
                                       f_1_score_text,
@@ -182,6 +184,7 @@ class SAM_TRAIN:
         accuracy_classification_sum = 0
         loss_classification_sum = 0
         loss_m_sum = 0
+        loss_l1_sum = 0
         with_segments_elements = 0
 
         for images, segments, labels in train_set:
@@ -191,10 +194,15 @@ class SAM_TRAIN:
             segments = self.puller(segments)
             optimizer.zero_grad()
             model_classification, model_segmentation = self.sam_model(images)
+
             classification_loss = self.l_loss(model_classification, labels)
             classification_loss.backward(retain_graph=True)
+
             segmentation_loss = self.m_loss(model_segmentation, segments)
-            segmentation_loss.backward()
+            l1_loss = self.__add_l1_regularization_loss()
+            segmentation_l1_loss = segmentation_loss + l1_loss
+            segmentation_l1_loss.backward()
+
             optimizer.step()
 
             output_probability, output_cl, cl_acc = self.__calculate_accuracy(labels, model_classification,
@@ -205,12 +213,14 @@ class SAM_TRAIN:
             accuracy_classification_sum += scalar(cl_acc.sum())
             loss_classification_sum += scalar(classification_loss.sum())
             loss_m_sum += scalar(segmentation_loss.sum())
+            loss_l1_sum += scalar(l1_loss.sum())
             with_segments_elements += 1  # labels.size(0)
             self.__de_convert_data_and_label(images, labels, segments)
             torch.cuda.empty_cache()
 
         return accuracy_classification_sum / (with_segments_elements + EPS), loss_classification_sum / (
-                with_segments_elements + EPS), loss_m_sum / (with_segments_elements + EPS)
+                with_segments_elements + EPS), loss_m_sum / (with_segments_elements + EPS), \
+               loss_l1_sum / (with_segments_elements + EPS)
 
     def test(self):
         loss_classification_sum = 0
@@ -314,3 +324,11 @@ class SAM_TRAIN:
             return optimizer
         return torch.optim.Adam(self.sam_model.parameters(),
                                 lr=learning_rate * (0.1 ** pow_epoch))
+
+    def __add_l1_regularization_loss(self):
+        l2_loss = torch.tensor(0.)
+        if self.use_gpu:
+            l2_loss = l2_loss.cuda(self.gpu_device)
+        for param in self.sam_model.sam_branch.parameters():
+            l2_loss += torch.norm(param)
+        return 0.5 * l2_loss
