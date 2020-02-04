@@ -35,7 +35,8 @@ class SAM_TRAIN:
                  test_each_epoch: int = 5,
                  use_gpu: bool = True,
                  gpu_device: int = 0,
-                 description: str = "sam"):
+                 description: str = "sam",
+                 change_lr_epochs: int = None):
         self.train_classifier_set = train_classifier_set
         self.train_segments_set = train_segments_set
         self.test_set = test_set
@@ -74,10 +75,13 @@ class SAM_TRAIN:
         self.puller = nn.Sequential(nn.MaxPool2d(kernel_size=2, stride=2),
                                     nn.MaxPool2d(kernel_size=2, stride=2))
 
+        self.change_lr_epochs = change_lr_epochs
+
     def train(self):
 
+        learning_rate = 1e-6
         optimizer = torch.optim.Adam(self.sam_model.parameters(),
-                                     lr=1e-6)
+                                     lr=learning_rate)
         # optimizer = opt.SGD(self.sam_model.parameters(), lr=0.1, momentum=0.9)
 
         self.best_weights = copy.deepcopy(self.sam_model.state_dict())
@@ -85,10 +89,11 @@ class SAM_TRAIN:
         best_test_loss = None
 
         for epoch in range(1, self.train_epochs + 1):
+            self.current_epoch = epoch
 
             loss_m_sum = 0
-
-            self.current_epoch = epoch
+            optimizer = self.__apply_adaptive_learning(optimizer, learning_rate, self.current_epoch)
+            
             if self.current_epoch <= self.pre_train_epochs:
                 loss_classification_sum_segments, accuracy_classification_sum_segments = self.__train_classifier(
                     optimizer, self.train_classifier_set)
@@ -302,3 +307,10 @@ class SAM_TRAIN:
                 segments = segments.cpu()
                 return data, label, segments
             return data, label
+
+    def __apply_adaptive_learning(self, optimizer, learning_rate, epoch):
+        pow_epoch = epoch // self.change_lr_epochs
+        if pow_epoch == 0:
+            return optimizer
+        return torch.optim.Adam(self.sam_model.parameters(),
+                                lr=learning_rate * (0.1 ** pow_epoch))
