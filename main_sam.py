@@ -39,13 +39,19 @@ if __name__ == "__main__":
 
     try:
         loader = il.DatasetLoader.initial()
+        print("A")
         train_segments = loader.load_tensors(train_left, train_segments_count, train_segments_count)
+        print("A")
         train_classifier = loader.load_tensors(train_segments_count, train_right, 0)
+        print("A")
         test = loader.load_tensors(test_left, test_right)
-
+        print("A")
         train_segments_set = DataLoader(il.ImageDataset(train_segments), batch_size=5, shuffle=True)
+        print("A")
         train_classifier_set = DataLoader(il.ImageDataset(train_classifier), batch_size=5, shuffle=True)
+        print("A")
         test_set = DataLoader(il.ImageDataset(test), batch_size=5)
+        print("A")
 
         sam_branch = nn.Sequential(
             nn.Conv2d(64, 64, kernel_size=(3, 3)),
