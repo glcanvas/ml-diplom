@@ -103,7 +103,8 @@ class DatasetLoader:
         print("all saved successfully")
         P.write_to_log("all saved successfully")
 
-    def load_tensors(self, lower_bound=None, upper_bound=None, load_first_segments: int = 10 ** 20):
+    def load_tensors(self, lower_bound=None, upper_bound=None, load_first_segments: int = 10 ** 20,
+                     use_norm: bool = False):
         if self.data is None:
             self.data = self.__merge_data(self.cache_input_path, self.cache_target_path)
             random.shuffle(self.data)
@@ -126,7 +127,10 @@ class DatasetLoader:
                     loads += 1
                 for item in P.labels_attributes:
                     torch_dict[item] = torch.load(dct[item])
-                torch_dict[P.input_attribute] = normalization(torch.load(dct[P.input_attribute]))
+                if use_norm:
+                    torch_dict[P.input_attribute] = normalization(torch.load(dct[P.input_attribute]))
+                else:
+                    torch_dict[P.input_attribute] = torch.load(dct[P.input_attribute])
                 # normalization(torch.load(dct[P.input_attribute]))
                 result.append(torch_dict)
                 # print("left:{}, current:{}, right:{} processed".format(lower_bound, idx, upper_bound))
@@ -138,6 +142,59 @@ class DatasetLoader:
         composited_image = composite(Image.open(dct[item]))
         name = os.path.basename(dct[item])[:-4] + P.cached_extension
         torch.save(composited_image, os.path.join(path, name))
+
+
+def __prepare_data(data: list):
+    result = []
+    for item in range(0, len(data)):
+        dct = data[item]
+        input_data = dct[P.input_attribute]
+        target_data = dict()
+        for i in P.labels_attributes:
+            target_data[i] = dct[i]
+        target_data = __cache_targets(target_data)
+        # tensor of input data
+        # tensor of segments
+        # tensor of labels answer
+        segm, labl = split_targets(target_data)
+        # ничего не загружаю
+        if not dct['is_segments']:
+            segm = -1  # torch.zeros([5, 1, 224, 224]).float()
+        result.append((input_data, segm, labl))
+    return result
+
+
+def __cache_targets(dct: dict):
+    for i in P.labels_attributes:
+        ill_tag = i + '_value'
+        if ill_tag not in dct:
+            dct[ill_tag] = True if dct[i].sum().item() > 0 else False
+    return dct
+
+
+def split_targets(dct: dict):
+    segments = None
+    # not exist ill, exist ill
+    labels = []
+    # trusted = None
+    for idx, i in enumerate(P.labels_attributes):
+        segments = dct[i] if segments is None else torch.cat((segments, dct[i]))
+        # trusted = dct[i]
+        ill_tag = i + '_value'
+        if dct[ill_tag]:
+            labels.append(1)
+        else:
+            labels.append(0)
+    return segments, torch.tensor(labels).float()
+
+
+def load_all_data(classifier_set_size: int, segmentation_set_size: int, test_set_size: int):
+    loader = DatasetLoader.initial()
+    counts = torch.zeros(5)
+    all_data = __prepare_data(loader.load_tensors())  # input segemt, label
+    for _, _, l in all_data:
+        counts += l
+    print(counts)
 
 
 class ImageDataset(torch.utils.data.Dataset):
@@ -152,7 +209,7 @@ class ImageDataset(torch.utils.data.Dataset):
     """
 
     def __init__(self, data_set):
-        self.data_set = self.__prepare_data(data_set)
+        self.data_set = __prepare_data(data_set)
 
     def __len__(self):
         return len(self.data_set)
@@ -160,56 +217,15 @@ class ImageDataset(torch.utils.data.Dataset):
     def __getitem__(self, item):
         return self.data_set[item]
 
-    @staticmethod
-    def __prepare_data(data: list):
-        result = []
-        for item in range(0, len(data)):
-            dct = data[item]
-            input_data = dct[P.input_attribute]
-            target_data = dict()
-            for i in P.labels_attributes:
-                target_data[i] = dct[i]
-            target_data = ImageDataset.__cache_targets(target_data)
-            # tensor of input data
-            # tensor of segments
-            # tensor of labels answer
-            segm, labl = ImageDataset.split_targets(target_data)
-            # ничего не загружаю
-            if not dct['is_segments']:
-                segm = -1  # torch.zeros([5, 1, 224, 224]).float()
-            result.append((input_data, segm, labl))
-        return result
-
-    @staticmethod
-    def __cache_targets(dct: dict):
-        for i in P.labels_attributes:
-            ill_tag = i + '_value'
-            if ill_tag not in dct:
-                dct[ill_tag] = True if dct[i].sum().item() > 0 else False
-        return dct
-
-    @staticmethod
-    def split_targets(dct: dict):
-        segments = None
-        # not exist ill, exist ill
-        labels = []
-        # trusted = None
-        for idx, i in enumerate(P.labels_attributes):
-            segments = dct[i] if segments is None else torch.cat((segments, dct[i]))
-            # trusted = dct[i]
-            ill_tag = i + '_value'
-            if dct[ill_tag]:
-                labels.append(1)
-            else:
-                labels.append(0)
-        return segments, torch.tensor(labels).float()
-
 
 def create_torch_tensors():
     loader = DatasetLoader(P.data_inputs_path, P.data_labels_path)
     loader.save_images_to_tensors()
 
 
+# ###
+# ### honest loader
+# ### давайте загрузим все, посмотрим на соотношение и раскидаем по датасету в соответстивии с пропорциями
 # from torch.utils.data.dataloader import DataLoader
 
 if __name__ == "__main__":
