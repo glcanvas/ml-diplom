@@ -7,6 +7,7 @@ import torch.nn as nn
 import traceback
 import sam_model as ss
 import sam_train as st
+import cbam_model as cbam
 
 classes = 5
 
@@ -45,8 +46,8 @@ if __name__ == "__main__":
         train_classifier = loader.load_tensors(train_segments_count, train_right, 0)
         test = loader.load_tensors(test_left, test_right)
 
-        train_segments_set = DataLoader(il.ImageDataset(train_segments), batch_size=2, shuffle=True)
-        train_classifier_set = DataLoader(il.ImageDataset(train_classifier), batch_size=2, shuffle=True)
+        train_segments_set = DataLoader(il.ImageDataset(train_segments), batch_size=5, shuffle=True)
+        train_classifier_set = DataLoader(il.ImageDataset(train_classifier), batch_size=5, shuffle=True)
         test_set = DataLoader(il.ImageDataset(test), batch_size=5)
 
         sam_branch = nn.Sequential(
@@ -57,6 +58,7 @@ if __name__ == "__main__":
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(128, 64, kernel_size=(3, 3), padding=(1, 1)),
             nn.ReLU(),
+            cbam.CBAM(64),
             nn.MaxPool2d(kernel_size=2, stride=2, padding=(1, 1)),
             nn.Conv2d(64, 128, kernel_size=(3, 3), padding=(1, 1)),
             nn.ReLU(),
