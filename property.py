@@ -65,4 +65,5 @@ def parse_input_commands():
     parser.add_argument("--gradient_layer_name", default="features.28")
     parser.add_argument("--from_gradient_layer", default="False")
     parser.add_argument("--epochs", default="100")
+    parser.add_argument("--change_lr", default="15")
     return parser

@@ -7,6 +7,7 @@ import torch.nn as nn
 import traceback
 import sam_model as ss
 import sam_train as st
+import cbam_model as cbam
 
 classes = 5
 
@@ -24,16 +25,18 @@ if __name__ == "__main__":
     # gradient_layer_name = parsed.gradient_layer_name
     # from_gradient_layer = parsed.from_gradient_layer.lower() == "true"
     epochs = int(parsed.epochs)
+    change_lr_epochs = int(parsed.change_lr)
 
-    description = "{}_train_left-{},train_segments-{},train_right-{},test_left-{},test_right-{},pre_train-{}" \
-        .format(parsed_description,
-                train_left,
-                train_segments_count,
-                train_right,
-                test_left,
-                test_right,
-                pre_train
-                )
+    description = "{}_train_left-{},train_segments-{},train_right-{},test_left-{},test_right-{},pre_train-{}," \
+                  "lr_epoch-{}".format(parsed_description,
+                                       train_left,
+                                       train_segments_count,
+                                       train_right,
+                                       test_left,
+                                       test_right,
+                                       pre_train,
+                                       change_lr_epochs
+                                       )
 
     P.initialize_log_name("_" + description)
 
@@ -61,6 +64,7 @@ if __name__ == "__main__":
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(128, 64, kernel_size=(3, 3), padding=(1, 1)),
             nn.ReLU(),
+            cbam.CBAM(64),
             nn.MaxPool2d(kernel_size=2, stride=2, padding=(1, 1)),
             nn.Conv2d(64, 128, kernel_size=(3, 3), padding=(1, 1)),
             nn.ReLU(),
@@ -92,7 +96,8 @@ if __name__ == "__main__":
                                  gpu_device=gpu,
                                  train_epochs=epochs,
                                  save_train_logs_epochs=4,
-                                 test_each_epoch=4)
+                                 test_each_epoch=4,
+                                 change_lr_epochs=change_lr_epochs)
         sam_train.train()
 
     except BaseException as e:
