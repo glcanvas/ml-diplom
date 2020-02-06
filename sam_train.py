@@ -308,6 +308,7 @@ class SAM_TRAIN:
                 segments = segments.cuda(self.gpu_device)
                 return data, label, segments
             return data, label
+        return data, label
 
     def __de_convert_data_and_label(self, data, label, segments=None):
         if self.use_gpu:

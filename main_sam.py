@@ -15,25 +15,26 @@ if __name__ == "__main__":
     parsed = P.parse_input_commands().parse_args(sys.argv[1:])
     gpu = int(parsed.gpu)
     parsed_description = parsed.description
-    train_left = int(parsed.train_left)
-    train_right = int(parsed.train_right)
-    test_left = int(parsed.test_left)
-    test_right = int(parsed.test_right)
-    train_segments_count = int(parsed.segments)
+    # train_left = int(parsed.train_left)
+    # train_right = int(parsed.train_right)
+    # test_left = int(parsed.test_left)
+    # test_right = int(parsed.test_right)
+    # train_segments_count = int(parsed.segments)
     pre_train = int(parsed.pre_train)
     # use_am_loss = parsed.am_loss.lower() == "true"
     # gradient_layer_name = parsed.gradient_layer_name
     # from_gradient_layer = parsed.from_gradient_layer.lower() == "true"
+
+    classifier = float(parsed.classifier)
+    segments = float(parsed.segments)
+    test = float(parsed.test)
+
     epochs = int(parsed.epochs)
     change_lr_epochs = int(parsed.change_lr)
 
-    description = "{}_train_left-{},train_segments-{},train_right-{},test_left-{},test_right-{},pre_train-{}," \
+    description = "{}_segments-{},classifier-{},tests-{},pre_train-{}," \
                   "lr_epoch-{}".format(parsed_description,
-                                       train_left,
-                                       train_segments_count,
-                                       train_right,
-                                       test_left,
-                                       test_right,
+                                       segments, classifier, test,
                                        pre_train,
                                        change_lr_epochs
                                        )
@@ -41,19 +42,21 @@ if __name__ == "__main__":
     P.initialize_log_name("_" + description)
 
     try:
-        loader = il.DatasetLoader.initial()
+        """loader = il.DatasetLoader.initial()
         print("A")
         train_segments = loader.load_tensors(train_left, train_segments_count, train_segments_count)
         print("A")
         train_classifier = loader.load_tensors(train_segments_count, train_right, 0)
         print("A")
         test = loader.load_tensors(test_left, test_right)
+        print("A")"""
+        classifier_set, segments_set, test_set = il.load_all_data(classifier, segments, test)
+
+        train_segments_set = DataLoader(il.ImageDataset(segments_set), batch_size=5, shuffle=True)
         print("A")
-        train_segments_set = DataLoader(il.ImageDataset(train_segments), batch_size=5, shuffle=True)
+        train_classifier_set = DataLoader(il.ImageDataset(classifier_set), batch_size=5, shuffle=True)
         print("A")
-        train_classifier_set = DataLoader(il.ImageDataset(train_classifier), batch_size=5, shuffle=True)
-        print("A")
-        test_set = DataLoader(il.ImageDataset(test), batch_size=5)
+        test_set = DataLoader(il.ImageDataset(test_set), batch_size=5)
         print("A")
 
         sam_branch = nn.Sequential(

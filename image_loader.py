@@ -187,11 +187,13 @@ def split_targets(dct: dict):
             labels.append(0)
     return segments, torch.tensor(labels).float()
 
+
 def count_size(x):
     cnt = torch.zeros(5)
     for _, _, i in x:
         cnt += i
     return cnt
+
 
 def load_all_data(classifier_ratio: float, segmentation_ratio: float, test_ratio: float):
     loader = DatasetLoader.initial()
@@ -200,19 +202,16 @@ def load_all_data(classifier_ratio: float, segmentation_ratio: float, test_ratio
     matched_data = list(zip([False for _ in all_data], all_data))
     # print(matched_data[0:3]) 
     data_length = len(all_data)
-    #classifier_ratio = classifier_set_size / data_length 
-    #segment_ratio =  segmentation_set_size / data_length 
-    #test_ratio = test_set_size / data_length
-    
+    # classifier_ratio = classifier_set_size / data_length
+    # segment_ratio =  segmentation_set_size / data_length
+    # test_ratio = test_set_size / data_length
+
     for _, _, l in all_data:
         counts += l
     classifier_count = counts * classifier_ratio
     segment_count = counts * segmentation_ratio
     test_count = counts * test_ratio
-    print(classifier_count )
-    print(segment_count )
-    print(test_count )
-    
+
     classifier_set = []
     segment_set = []
     test_set = []
@@ -223,34 +222,42 @@ def load_all_data(classifier_ratio: float, segmentation_ratio: float, test_ratio
                 continue
             data = matched_data[idx][1]
             if classifier_count[cls] > 0.0 and data[2][cls] >= 1.0:
-                matched_data[idx] = (True, matched_data[idx][1])   
+                matched_data[idx] = (True, matched_data[idx][1])
                 classifier_set.append(data)
                 classifier_count -= data[2]
 
-        for idx in range(len(matched_data)):  
+        for idx in range(len(matched_data)):
             if matched_data[idx][0]:
                 # occuped  
-                continue  
+                continue
             data = matched_data[idx][1]
-            if segment_count[cls] > 0.0 and data[2][cls] >= 1.0:  
+            if segment_count[cls] > 0.0 and data[2][cls] >= 1.0:
                 matched_data[idx] = (True, matched_data[idx][1])
                 segment_set.append(data)
                 segment_count -= data[2]
 
-        for idx in range(len(matched_data)):     
-            if matched_data[idx][0]: 
+        for idx in range(len(matched_data)):
+            if matched_data[idx][0]:
                 # occuped 
-                continue 
-            data = matched_data[idx][1]  
-            if test_count[cls] > 0.0 and data[2][cls] >= 1.0: 
-                matched_data[idx] = (True, matched_data[idx][1])   
-                test_set.append(data)  
+                continue
+            data = matched_data[idx][1]
+            if test_count[cls] > 0.0 and data[2][cls] >= 1.0:
+                matched_data[idx] = (True, matched_data[idx][1])
+                test_set.append(data)
                 test_count -= data[2]
-    print(count_size(classifier_set))
-    print(count_size(segment_set)) 
-    print(count_size(test_set)) 
-    print(counts)
+    print("classifier elements", count_size(classifier_set))
+    P.write_to_log("classifier elements", count_size(classifier_set))
 
+    print("segment elements", count_size(segment_set))
+    P.write_to_log("segment elements", count_size(segment_set))
+
+    print("test elements", count_size(test_set))
+    P.write_to_log("test elements", count_size(test_set))
+
+    print("all elements", counts)
+    P.write_to_log("all elements", counts)
+
+    return classifier_set, segment_set, test_set
 
 
 class ImageDataset(torch.utils.data.Dataset):
@@ -264,8 +271,11 @@ class ImageDataset(torch.utils.data.Dataset):
     i + 1 --  если 1 то есть заболевание
     """
 
-    def __init__(self, data_set):
-        self.data_set = prepare_data(data_set)
+    def __init__(self, data_set, from_honest: bool = True):
+        if from_honest:
+            self.data_set = data_set
+        else:
+            self.data_set = prepare_data(data_set)
 
     def __len__(self):
         return len(self.data_set)
@@ -286,7 +296,7 @@ def create_torch_tensors():
 
 if __name__ == "__main__":
     # create_torch_tensors()
-    load_all_data(0.2,0.3,0.5)
+    load_all_data(0.2, 0.3, 0.5)
     # loader = DatasetLoader.initial()
     # train = loader.load_tensors(0, 100)
     # test = loader.load_tensors(100, 150)

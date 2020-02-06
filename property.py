@@ -60,10 +60,14 @@ def parse_input_commands():
     parser.add_argument("--description", default="_DEF_DESCRIPTION_")
     parser.add_argument("--am_loss", default="False")
     parser.add_argument("--gpu", default=0)
-    parser.add_argument("--segments", default=10 ** 10)
+    # parser.add_argument("--segments", default=10 ** 10)
     parser.add_argument("--pre_train", default=15)
     parser.add_argument("--gradient_layer_name", default="features.28")
     parser.add_argument("--from_gradient_layer", default="False")
     parser.add_argument("--epochs", default="100")
     parser.add_argument("--change_lr", default="15")
+
+    parser.add_argument("--classifier", default="0.25")
+    parser.add_argument("--segments", default="0.5")
+    parser.add_argument("--test", default="0.25")
     return parser
