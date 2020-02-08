@@ -1,14 +1,18 @@
-source ~/nduginec_evn3/bin/activate
+GPU=0
+RUN_NAME=RUN_01
+ALGORITHM_NAME=SAM_LOSS
+SCRIPT_PATH=ml2/ml-diplom
+SCRIPT_NAME=main_sam.py
+DESCRIPTION=N
+EPOCHS_COUNT=150
+PRE_TRAIN_EPOCHS_COUNT=150
+CHANGE_LR=150
 
-GPU=1
-~/nduginec_evn3/bin/python ~/ml2/ml-diplom/main_sam.py --description sam_only_classif_honest --classifier 0.5 --segments 0.4 --test 0.1  --pre_train 100 --epochs 100 --gpu $GPU
-~/nduginec_evn3/bin/python ~/ml2/ml-diplom/main_sam.py --description sam_only_classif_honest --classifier 0.5 --segments 0.4 --test 0.1  --pre_train 100 --epochs 100 --gpu $GPU
-~/nduginec_evn3/bin/python ~/ml2/ml-diplom/main_sam.py --description sam_only_classif_honest --classifier 0.1 --segments 0.8 --test 0.1  --pre_train 100 --epochs 100 --gpu $GPU
-~/nduginec_evn3/bin/python ~/ml2/ml-diplom/main_sam.py --description sam_only_classif_honest --classifier 0.1 --segments 0.8 --test 0.1  --pre_train 100 --epochs 100 --gpu $GPU
-~/nduginec_evn3/bin/python ~/ml2/ml-diplom/main_sam.py --description sam_only_classif_honest --classifier 0.1 --segments 0.5 --test 0.4  --pre_train 100 --epochs 100 --gpu $GPU
-~/nduginec_evn3/bin/python ~/ml2/ml-diplom/main_sam.py --description sam_only_classif_honest --classifier 0.1 --segments 0.5 --test 0.4  --pre_train 100 --epochs 100 --gpu $GPU
-~/nduginec_evn3/bin/python ~/ml2/ml-diplom/main_sam.py --description sam_only_classif_honest --classifier 0.25 --segments 0.25 --test 0.5 --pre_train 100 --epochs 100 --gpu $GPU
-~/nduginec_evn3/bin/python ~/ml2/ml-diplom/main_sam.py --description sam_only_classif_honest --classifier 0.25 --segments 0.25 --test 0.5 --pre_train 100 --epochs 100 --gpu $GPU
-~/nduginec_evn3/bin/python ~/ml2/ml-diplom/main_sam.py --description sam_only_classif_honest --classifier 0.1--segments 0.6 --test 0.3   --pre_train 100 --epochs 100 --gpu $GPU
-~/nduginec_evn3/bin/python ~/ml2/ml-diplom/main_sam.py --description sam_only_classif_honest --classifier 0.1--segments 0.6 --test 0.3   --pre_train 100 --epochs 100 --gpu $GPU
-
+~/nduginec_evn3/bin/python ~/$SCRIPT_PATH/$SCRIPT_NAME --description $DESCRIPTION --run_name $RUN_NAME --algorithm_name ALGORITHM_NAME --epochs $EPOCHS_COUNT --gpu $GPU --pre_train $PRE_TRAIN --change_lr $CHANGE_LR
+~/nduginec_evn3/bin/python ~/$SCRIPT_PATH/$SCRIPT_NAME --description $DESCRIPTION --run_name $RUN_NAME --algorithm_name ALGORITHM_NAME --epochs $EPOCHS_COUNT --gpu $GPU --pre_train $PRE_TRAIN --change_lr $CHANGE_LR
+~/nduginec_evn3/bin/python ~/$SCRIPT_PATH/$SCRIPT_NAME --description $DESCRIPTION --run_name $RUN_NAME --algorithm_name ALGORITHM_NAME --epochs $EPOCHS_COUNT --gpu $GPU --pre_train $PRE_TRAIN --change_lr $CHANGE_LR
+~/nduginec_evn3/bin/python ~/$SCRIPT_PATH/$SCRIPT_NAME --description $DESCRIPTION --run_name $RUN_NAME --algorithm_name ALGORITHM_NAME --epochs $EPOCHS_COUNT --gpu $GPU --pre_train $PRE_TRAIN --change_lr $CHANGE_LR
+~/nduginec_evn3/bin/python ~/$SCRIPT_PATH/$SCRIPT_NAME --description $DESCRIPTION --run_name $RUN_NAME --algorithm_name ALGORITHM_NAME --epochs $EPOCHS_COUNT --gpu $GPU --pre_train $PRE_TRAIN --change_lr $CHANGE_LR
+~/nduginec_evn3/bin/python ~/$SCRIPT_PATH/$SCRIPT_NAME --description $DESCRIPTION --run_name $RUN_NAME --algorithm_name ALGORITHM_NAME --epochs $EPOCHS_COUNT --gpu $GPU --pre_train $PRE_TRAIN --change_lr $CHANGE_LR
+~/nduginec_evn3/bin/python ~/$SCRIPT_PATH/$SCRIPT_NAME --description $DESCRIPTION --run_name $RUN_NAME --algorithm_name ALGORITHM_NAME --epochs $EPOCHS_COUNT --gpu $GPU --pre_train $PRE_TRAIN --change_lr $CHANGE_LR
+~/nduginec_evn3/bin/python ~/$SCRIPT_PATH/$SCRIPT_NAME --description $DESCRIPTION --run_name $RUN_NAME --algorithm_name ALGORITHM_NAME --epochs $EPOCHS_COUNT --gpu $GPU --pre_train $PRE_TRAIN --change_lr $CHANGE_LR

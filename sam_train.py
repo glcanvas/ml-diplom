@@ -23,7 +23,6 @@ def scalar(tensor):
 class SAM_TRAIN:
 
     def __init__(self, sam_model: nn.Module = None,
-                 train_classifier_set=None,
                  train_segments_set=None,
                  test_set=None,
                  l_loss: nn.Module = nn.BCELoss(),
@@ -37,7 +36,7 @@ class SAM_TRAIN:
                  gpu_device: int = 0,
                  description: str = "sam",
                  change_lr_epochs: int = None):
-        self.train_classifier_set = train_classifier_set
+
         self.train_segments_set = train_segments_set
         self.test_set = test_set
 
@@ -97,7 +96,7 @@ class SAM_TRAIN:
 
             if self.current_epoch <= self.pre_train_epochs:
                 loss_classification_sum_segments, accuracy_classification_sum_segments = self.__train_classifier(
-                    optimizer, self.train_classifier_set)
+                     optimizer, self.train_segments_set)
                 loss_classification_sum_classifier, accuracy_classification_sum_classifier = self.__train_classifier(
                     optimizer, self.train_segments_set)
             else:
@@ -106,7 +105,7 @@ class SAM_TRAIN:
                     optimizer, self.train_segments_set)
 
                 loss_classification_sum_classifier, accuracy_classification_sum_classifier = self.__train_classifier(
-                    optimizer, self.train_classifier_set)
+                    optimizer, self.train_segments_set)
 
             accuracy_total = (accuracy_classification_sum_segments + accuracy_classification_sum_classifier) / 2
             classification_loss_total = (loss_classification_sum_segments + loss_classification_sum_classifier) / 2

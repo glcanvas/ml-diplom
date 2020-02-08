@@ -15,49 +15,36 @@ if __name__ == "__main__":
     parsed = P.parse_input_commands().parse_args(sys.argv[1:])
     gpu = int(parsed.gpu)
     parsed_description = parsed.description
-    # train_left = int(parsed.train_left)
-    # train_right = int(parsed.train_right)
-    # test_left = int(parsed.test_left)
-    # test_right = int(parsed.test_right)
-    # train_segments_count = int(parsed.segments)
     pre_train = int(parsed.pre_train)
-    # use_am_loss = parsed.am_loss.lower() == "true"
-    # gradient_layer_name = parsed.gradient_layer_name
-    # from_gradient_layer = parsed.from_gradient_layer.lower() == "true"
-
-    classifier = float(parsed.classifier)
-    segments = float(parsed.segments)
-    test = float(parsed.test)
-
+    train_set_size = int(parsed.train_set)
     epochs = int(parsed.epochs)
     change_lr_epochs = int(parsed.change_lr)
+    run_name = parsed.run_name
+    algorithm_name = parsed.algorithm_name
 
-    description = "{}_segments-{},classifier-{},tests-{},pre_train-{}," \
-                  "lr_epoch-{}".format(parsed_description,
-                                       segments, classifier, test,
-                                       pre_train,
-                                       change_lr_epochs
-                                       )
+    description = "description-{},train_set-{},pre_train_epochs-{},update_lr_epoch-{},epochs-{},classes-{}".format(
+        parsed_description,
+        train_set_size,
+        pre_train,
+        change_lr_epochs,
+        epochs,
+        classes
+    )
 
-    P.initialize_log_name("_" + description)
+    P.initialize_log_name(run_name, algorithm_name, description)
+
+    P.write_to_log("description={}".format(description))
+    P.write_to_log("classes={}".format(classes))
+    P.write_to_log("run=" + run_name)
+    P.write_to_log("algorithm_name=" + algorithm_name)
 
     try:
-        """loader = il.DatasetLoader.initial()
-        print("A")
-        train_segments = loader.load_tensors(train_left, train_segments_count, train_segments_count)
-        print("A")
-        train_classifier = loader.load_tensors(train_segments_count, train_right, 0)
-        print("A")
-        test = loader.load_tensors(test_left, test_right)
-        print("A")"""
-        classifier_set, segments_set, test_set = il.load_all_data(classifier, segments, test)
+        segments_set, test_set = il.load_data_2(train_set_size)
 
         train_segments_set = DataLoader(il.ImageDataset(segments_set), batch_size=5, shuffle=True)
-        print("A")
-        train_classifier_set = DataLoader(il.ImageDataset(classifier_set), batch_size=5, shuffle=True)
-        print("A")
+        print("ok")
         test_set = DataLoader(il.ImageDataset(test_set), batch_size=5)
-        print("A")
+        print("ok")
 
         sam_branch = nn.Sequential(
             nn.Conv2d(64, 64, kernel_size=(3, 3)),
@@ -81,7 +68,11 @@ if __name__ == "__main__":
         classifier_branch = model.features[4:16]
 
         merged_branch = model.features[16:]
-        merged_branch[1] = nn.Conv2d(1280, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+        merged_branch = nn.Sequential(
+            nn.Conv2d(1280, 256, kernel_size=(1, 1), stride=(1, 1), padding=(1, 1)),
+            *merged_branch
+        )
+
         avg_pool = model.avgpool
         classifier = nn.Sequential(*model.classifier,
                                    nn.Linear(1000, classes),
@@ -93,8 +84,9 @@ if __name__ == "__main__":
                            merged_branch,
                            avg_pool,
                            classifier)
-        print(sam_model)
-        sam_train = st.SAM_TRAIN(sam_model, train_classifier_set, train_segments_set, test_set, classes=classes,
+
+        P.write_to_log(sam_model)
+        sam_train = st.SAM_TRAIN(sam_model, train_segments_set, test_set, classes=classes,
                                  pre_train_epochs=pre_train,
                                  gpu_device=gpu,
                                  train_epochs=epochs,

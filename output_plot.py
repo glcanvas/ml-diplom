@@ -15,17 +15,17 @@ def __load_statistics(dct: dict) -> tuple:
     for i in range(0, 5):
         key = 'f_1_{}'.format(i)
         f_measures.append((key, float(dct[key]) if key in dct else -1))
-    f_measures.append(('f_1_global', float(dct['f_1_global'])))
+    f_measures.append(('f_1_global', float(dct['f_1_global']) if 'f_1_global' in dct else -1))
 
     for i in range(0, 5):
         key = 'recall_{}'.format(i)
         recall.append((key, float(dct[key]) if key in dct else -1))
-    recall.append(('recall_global', float(dct['recall_global'])))
+    recall.append(('recall_global', float(dct['recall_global']) if 'recall_global' in dct else -1))
 
     for i in range(0, 5):
         key = 'precision_{}'.format(i)
         precision.append((key, float(dct[key]) if key in dct else -1))
-    precision.append(('precision_global', float(dct['precision_global'])))
+    precision.append(('precision_global', float(dct['precision_global']) if 'precision_global' in dct else -1))
     return f_measures, recall, precision
 
 
@@ -78,11 +78,11 @@ def __load_file(file_path: str, train_parse, test_parse):
         raise ValueError("Empty data")
     return train, test, train_indexes, test_indexes, file_name
 
-# OK 
+
+# OK
 def draw_gain_metric_plot(file_path: str):
     train, test, train_indexes, test_indexes, file_name = __load_file(file_path, sam_parse_train,
                                                                       sam_parse_train)
-
 
     fig, axes = plt.subplots(8, 2, figsize=(15, 50))
     fig.tight_layout()

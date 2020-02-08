@@ -195,6 +195,9 @@ def count_size(x):
     return cnt
 
 
+#
+# ЭТО НЕВЕРНО!!!!!!!!!!!!!!!!!
+#
 def load_all_data(classifier_ratio: float, segmentation_ratio: float, test_ratio: float):
     loader = DatasetLoader.initial()
     counts = torch.zeros(5)
@@ -258,6 +261,26 @@ def load_all_data(classifier_ratio: float, segmentation_ratio: float, test_ratio
     P.write_to_log("all elements", counts)
 
     return classifier_set, segment_set, test_set
+
+
+def load_data_2(test_size: int):
+    loader = DatasetLoader.initial()
+    all_data = prepare_data(loader.load_tensors())
+    log = "set size: {}, set by classes: {}".format(len(all_data), count_size(all_data))
+    print(log)
+    P.write_to_log(log)
+    random.shuffle(all_data)
+    test_set = all_data[:test_size]
+    train_set = all_data[test_size:]
+    log = "test set size: {}, test set by classes: {}".format(len(test_set), count_size(test_set))
+    print(log)
+    P.write_to_log(log)
+
+    log = "train set size: {}, train set by classes: {}".format(len(train_set), count_size(train_set))
+    print(log)
+    P.write_to_log(log)
+
+    return test_set, train_set
 
 
 class ImageDataset(torch.utils.data.Dataset):
