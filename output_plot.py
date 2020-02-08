@@ -3,29 +3,30 @@ import matplotlib.pyplot as plt
 import os
 import re
 from sklearn.metrics import roc_curve, auc, precision_recall_curve, average_precision_score
+import traceback
 
 plot_images_path = "/home/nikita/PycharmProjects/ml-diplom/sam_plots"
 logs_path = "/home/nikita/PycharmProjects/ml-data/logs"
 
 
 def __load_statistics(dct: dict) -> tuple:
-    f_measures = []
-    recall = []
-    precision = []
+    f_measures = {}
+    recall = {}
+    precision = {}
     for i in range(0, 5):
         key = 'f_1_{}'.format(i)
-        f_measures.append((key, float(dct[key]) if key in dct else -1))
-    f_measures.append(('f_1_global', float(dct['f_1_global']) if 'f_1_global' in dct else -1))
+        f_measures[key] = float(dct[key]) if key in dct else -1
+    f_measures['f_1_global'] = float(dct['f_1_global']) if 'f_1_global' in dct else -1
 
     for i in range(0, 5):
         key = 'recall_{}'.format(i)
-        recall.append((key, float(dct[key]) if key in dct else -1))
-    recall.append(('recall_global', float(dct['recall_global']) if 'recall_global' in dct else -1))
+        recall[key] = float(dct[key]) if key in dct else -1
+    recall['recall_global'] = float(dct['recall_global']) if 'recall_global' in dct else -1
 
     for i in range(0, 5):
         key = 'precision_{}'.format(i)
-        precision.append((key, float(dct[key]) if key in dct else -1))
-    precision.append(('precision_global', float(dct['precision_global']) if 'precision_global' in dct else -1))
+        precision[key] = float(dct[key]) if key in dct else -1
+    precision['precision_global'] = float(dct['precision_global']) if 'precision_global' in dct else -1
     return f_measures, recall, precision
 
 
@@ -53,7 +54,9 @@ def sam_parse_train(input: str):
     else:
         Accuracy_CL = float(Accuracy_CL)
     f_measures, recall, precision = __load_statistics(dct)
-    return Loss_CL, Loss_M, Loss_L1, Loss_Total, Accuracy_CL, f_measures, recall, precision
+    return {'Loss_CL': Loss_CL, 'Loss_M': Loss_M, 'Loss_L1': Loss_L1,
+            'Loss_Total': Loss_Total, 'Accuracy_CL': Accuracy_CL, 'f_measures': f_measures, 'recall': recall,
+            'precision': precision}
 
 
 def __load_file(file_path: str, train_parse, test_parse):
@@ -61,102 +64,188 @@ def __load_file(file_path: str, train_parse, test_parse):
     test = []
     train_index = 1
     test_index = 1
-    train_indexes = []
-    test_indexes = []
     with open(file_path) as f:
         for l in f.readlines():
             if "TRAIN" in l:
                 train.append(train_parse(l))
-                train_indexes.append(train_index)
                 train_index += 1
             elif "TEST" in l:
                 test.append(test_parse(l))
-                test_indexes.append(test_index)
                 test_index += 1
         file_name = os.path.basename(f.name)
-    if len(train) == 0 or len(test) == 0:
-        raise ValueError("Empty data")
-    return train, test, train_indexes, test_indexes, file_name
+    return train, test, file_name
 
 
-# OK
-def draw_gain_metric_plot(file_path: str):
-    train, test, train_indexes, test_indexes, file_name = __load_file(file_path, sam_parse_train,
-                                                                      sam_parse_train)
+def draw_plot_return_avg(ax, title, algo_name, algorithm_list: list, execute_measure_function, color_idx):
+    ax.set_title(title)
+    for idx, algo in enumerate(algorithm_list):
+        legend = "{}_{}".format(algo_name, idx)
+        datas = execute_measure_function(algo)
+        indexes = [i for i, _ in enumerate(datas)]
+        plot_color = [0, 0, 0]
+        plot_color[color_idx] = 1
+        plot_color[(color_idx + 1) % 3] = idx * 1 / len(algorithm_list)
+        ax.plot(indexes, datas, label=legend, color=plot_color)
 
-    fig, axes = plt.subplots(8, 2, figsize=(15, 50))
+    lists = []
+    for _, algo in enumerate(algorithm_list):
+        lists.append(execute_measure_function(algo))
+    result = []
+    for epoch in range(0, 200):
+        cnt = 0
+        sm = 0.0
+        for idx in range(len(lists)):
+            if len(lists[idx]) == 0 or len(lists[idx]) <= epoch:
+                continue
+            sm += lists[idx][epoch]
+            cnt += 1
+        if cnt == 0:
+            result.append(0)
+        else:
+            result.append(sm / cnt)
+    return result
+
+
+def draw_plot_avg(ax, title, algo_name, algorithm_list: list, color: list):
+    ax.set_title(title)
+    legend = "{}_avg".format(algo_name)
+    indexes = [i for i, _ in enumerate(algorithm_list)]
+    ax.plot(indexes, algorithm_list, label=legend, color=color)
+
+
+def get_simple_measure_by_name(name):
+    def inner(lst):
+        res = []
+        for i in lst:
+            if name in i:
+                res.append(i[name])
+        return res
+
+    return inner
+
+
+def get_hard_measure_by_name(name1, name2):
+    def inner(lst):
+        res = []
+        for i in lst:
+            if name1 in i and name2 in i[name1]:
+                res.append(i[name1][name2])
+        return res
+
+    return inner
+
+
+def draw_simple_metrics(axes, algorithms: dict):
+    for algo_name, color_idx in zip(algorithms, [0, 1, 2]):
+        metrics = [
+            'Loss_CL',
+            'Loss_M',
+            'Loss_Total',
+            'Loss_L1',
+            'Accuracy_CL'
+        ]
+        for m_idx, m in enumerate(metrics):
+            trains = algorithms[algo_name]['train']
+            loss_cl_avg = draw_plot_return_avg(axes[m_idx][0], m + ' Train', algo_name, trains,
+                                               get_simple_measure_by_name(m),
+                                               color_idx)
+            color = [0, 0, 0]
+            color[color_idx] = 1
+            draw_plot_avg(axes[m_idx][1], m + ' AVG', algo_name, loss_cl_avg, color)
+
+            tests = algorithms[algo_name]['test']
+            loss_cl_avg = draw_plot_return_avg(axes[m_idx][2], m + ' Test', algo_name, tests,
+                                               get_simple_measure_by_name(m),
+                                               color_idx)
+            color = [0, 0, 0]
+            color[color_idx] = 1
+            draw_plot_avg(axes[m_idx][3], m + ' AVG', algo_name, loss_cl_avg, color)
+
+
+def draw_hard_metrics(axes, algorithms: dict):
+    for algo_name, color_idx in zip(algorithms, [0, 1, 2]):
+        metrics = {
+            'f_measures': [
+                'f_1_0',
+                'f_1_1',
+                'f_1_2',
+                'f_1_3',
+                'f_1_4,',
+                'f_1_global'
+            ],
+            'recall': [
+                'recall_0',
+                'recall_1',
+                'recall_2',
+                'recall_3',
+                'recall_4',
+                'recall_global',
+            ],
+            'precision': [
+                'precision_0',
+                'precision_1',
+                'precision_2',
+                'precision_3',
+                'precision_4',
+                'precision_global'
+            ]
+        }
+        for m_idx, m in enumerate(metrics):
+            m_idx *= 6
+            for sub_metrics_idx, sub_metrics in enumerate(metrics[m]):
+                m_idx_1 = m_idx + sub_metrics_idx
+                trains = algorithms[algo_name]['train']
+                loss_cl_avg = draw_plot_return_avg(axes[m_idx_1 + 5][0], sub_metrics + ' Train', algo_name, trains,
+                                                   get_hard_measure_by_name(m, sub_metrics),
+                                                   color_idx)
+                color = [0, 0, 0]
+                color[color_idx] = 1
+                draw_plot_avg(axes[m_idx_1 + 5][1], m + ' AVG', algo_name, loss_cl_avg, color)
+
+                tests = algorithms[algo_name]['test']
+                loss_cl_avg = draw_plot_return_avg(axes[m_idx_1 + 5][2], sub_metrics + ' Test', algo_name, tests,
+                                                   get_hard_measure_by_name(m, sub_metrics),
+                                                   color_idx)
+                color = [0, 0, 0]
+                color[color_idx] = 1
+                draw_plot_avg(axes[m_idx_1 + 5][3], m + ' AVG', algo_name, loss_cl_avg, color)
+
+
+def visualize_algorithms(algorithms: dict, run_name: str):
+    fig, axes = plt.subplots(23, 4, figsize=(50, 100))
     fig.tight_layout()
     plt.subplots_adjust(bottom=0.5, top=2)
 
-    def __set_train_axes(axes_index: int, label_text: str, item_index: int):
-        axes[axes_index][0].set_title(label_text)
-        axes[axes_index][0].plot(train_indexes, list(map(lambda x: x[item_index], train)))
-
-    def __set_test_axes(axes_index: int, label_text: str, item_index: int):
-        axes[axes_index][1].set_title(label_text)
-        axes[axes_index][1].plot(test_indexes, list(map(lambda x: x[item_index], test)))
-
-    def __set_train_measures(axes_index: int, label_text: str, item_index: int):
-        axes[axes_index][0].set_title(label_text)
-        for i in range(0, 6):
-            legend = train[0][item_index][i][0]
-            axes[axes_index][0].plot(train_indexes, list(map(lambda x: x[item_index][i][1], train)), label=legend)
-        axes[axes_index][0].legend(loc='upper left')
-
-    def __set_test_measures(axes_index: int, label_text: str, item_index: int):
-        axes[axes_index][1].set_title(label_text)
-        for i in range(0, 6):
-            legend = test[0][item_index][i][0]
-            axes[axes_index][1].plot(test_indexes, list(map(lambda x: x[item_index][i][1], test)), label=legend)
-        axes[axes_index][1].legend(loc='upper left')
-
-    __set_train_axes(0, "train classification loss", 0)
-    __set_train_axes(1, "train M loss", 1)
-    __set_train_axes(2, "train l1 loss", 2)
-    __set_train_axes(3, "train total loss", 3)
-    __set_train_axes(4, "train accuracy", 4)
-
-    __set_train_measures(5, "f_1_train", 5)
-    __set_train_measures(6, "recall_train", 6)
-    __set_train_measures(7, "precision_train", 7)
-
-    __set_test_axes(0, "test classification loss", 0)
-    __set_test_axes(1, "test M loss", 1)
-    __set_test_axes(2, "test l1 loss", 2)
-    __set_test_axes(3, "test total loss", 3)
-    __set_test_axes(4, "test accuracy", 4)
-
-    __set_test_measures(5, "f_1_test", 5)
-    __set_test_measures(6, "recall_test", 6)
-    __set_test_measures(7, "precision_test", 7)
-
-    for ax in axes[0:7][:].flat:
+    draw_simple_metrics(axes, algorithms)
+    draw_hard_metrics(axes, algorithms)
+    for ax in axes.flat:
         ax.set(xlabel='epoch', ylabel='value')
+        ax.legend(loc='upper left')
 
-    plt.suptitle(file_name, y=1.99)
-    plt.savefig(os.path.join(plot_images_path, file_name.replace(".", "_")[:-4]), bbox_inches='tight')
-    # plt.show()
-
-
-import traceback
+    plt.savefig(os.path.join(plot_images_path, run_name.replace(".", "_")), bbox_inches='tight')
+    plt.show()
 
 
-def visualize_all():
-    for r, d, f in os.walk(logs_path):
-        for file in f:
-            try:
-                if "cl_5" in file:
-                    print("begin", file)
-                    draw_gain_metric_plot(os.path.join(r, file))
-                    print("end", file)
-                elif "__sam" in file:
-                    print("begin", file)
-                    draw_gain_metric_plot(os.path.join(r, file))
-                    print("end", file)
-            except ValueError as e:
-                print("error file: {}".format(file), e)
-                traceback.print_exc()
+def parse_run(run_number="run_01"):
+    algorithms = {}
+    for current_path, folder, file_name in os.walk(os.path.join(logs_path, run_number)):
+        for algorithm in folder:
+            algorithm_list_test = []
+            algorithm_list_train = []
+            algorithms[algorithm] = {'test': algorithm_list_test, 'train': algorithm_list_train}
+
+            for executed_algorithm_path, _, executed_algorithm_list in os.walk(os.path.join(current_path, algorithm)):
+                for executed_algorithm in executed_algorithm_list:
+                    # executed_algorithm_path = os.path.join(executed_algorithm_path, executed_algorithm)
+                    log_path = os.path.join(current_path, algorithm, executed_algorithm)
+                    print('BEGIN READ ' + log_path)
+                    train, test, _ = __load_file(log_path, sam_parse_train,
+                                                 sam_parse_train)
+                    print('END READ ' + log_path)
+                    algorithm_list_test.append(test)
+                    algorithm_list_train.append(train)
+    visualize_algorithms(algorithms, run_number)
 
 
 if __name__ == "__main__":
-    visualize_all()
+    parse_run()
