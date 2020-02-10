@@ -65,7 +65,8 @@ class Classifier:
 
     def train(self, epochs: int, test_each_epochs: int, save_test_roc_each_epochs: int, save_train_roc_each_epochs: int,
               train_data_set, test_data_set,
-              learning_rate=1e-6):
+              learning_rate=1e-6,
+              class_number: int = None):
 
         optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
         self.model.train()
@@ -78,6 +79,9 @@ class Classifier:
             set_size = 0
             for images, _, labels in train_data_set:
                 set_size += 1  # images.size(0)
+
+                if class_number is not None:
+                    labels = labels[:, class_number:class_number + 1]
                 if self.gpu:
                     images, labels = send_to_gpu(self.gpu_device, images, labels)
                 # images, labels = wrap_to_variable(images, labels)
@@ -134,7 +138,7 @@ class Classifier:
             # print(text)
             P.write_to_log(text)
             if epoch % test_each_epochs == 0:
-                test_loss, _ = self.test(test_data_set, epoch, save_test_roc_each_epochs)
+                test_loss, _ = self.test(test_data_set, epoch, save_test_roc_each_epochs, class_number)
                 if best_test_loss is None or test_loss < best_test_loss:
                     best_test_loss = test_loss
                     self.best_test_weights = copy.deepcopy(self.model.state_dict())
@@ -146,15 +150,18 @@ class Classifier:
             self.train_probabilities = [[] for _ in range(self.classes)]
             self.test_probabilities = [[] for _ in range(self.classes)]
 
-        # self.save_model(self.best_test_weights, "classifier_test_weights")
-        # self.save_model(self.best_weights, "classifier_train_weights")
+        self.save_model(self.best_test_weights, "classifier")
+        self.save_model(self.best_weights, "classifier")
 
-    def test(self, test_data_set, epoch: int, save_test_roc_each_epoch: int):
+    def test(self, test_data_set, epoch: int, save_test_roc_each_epoch: int, class_number: int = None):
         test_total_loss_cl = 0
         test_total_cl_acc = 0
         test_size = 0
         for images, _, labels in test_data_set:
-            test_size += 1  # images.size(0)
+            test_size += 1
+            if class_number is not None:
+                labels = labels[:, class_number:class_number + 1]
+
             if self.gpu:
                 images, labels = send_to_gpu(self.gpu_device, images, labels)
             class_label = labels

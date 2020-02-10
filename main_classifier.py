@@ -6,8 +6,8 @@ import torchvision.models as m
 import traceback
 import classifier as cl
 
-
 classes = 5
+class_number = None
 
 if __name__ == "__main__":
     parsed = P.parse_input_commands().parse_args(sys.argv[1:])
@@ -17,12 +17,17 @@ if __name__ == "__main__":
     epochs = int(parsed.epochs)
     run_name = parsed.run_name
     algorithm_name = parsed.algorithm_name
+    use_class_number = int(parsed.use_class_number)
+    if use_class_number != -1:
+        classes = 1
+        class_number = use_class_number
 
-    description = "description-{},train_set-{},epochs-{},classes-{}".format(
+    description = "description-{},train_set-{},epochs-{},classes-{},class_number-{}".format(
         parsed_description,
         train_set_size,
         epochs,
-        classes
+        classes,
+        class_number
     )
 
     P.initialize_log_name(run_name, algorithm_name, description)
@@ -44,8 +49,13 @@ if __name__ == "__main__":
         P.write_to_log(model)
 
         classifier = cl.Classifier(description=description, classes=classes, gpu=True, gpu_device=gpu, model=model)
-        classifier.train(epochs, test_each_epochs=4, save_test_roc_each_epochs=-1, save_train_roc_each_epochs=-1,
-                         train_data_set=train_segments_set, test_data_set=test_set)
+        classifier.train(epochs,
+                         test_each_epochs=4,
+                         save_test_roc_each_epochs=-1,
+                         save_train_roc_each_epochs=-1,
+                         train_data_set=train_segments_set,
+                         test_data_set=test_set,
+                         class_number=class_number)
 
     except BaseException as e:
         print("EXCEPTION", e)

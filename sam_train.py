@@ -35,8 +35,9 @@ class SAM_TRAIN:
                  use_gpu: bool = True,
                  gpu_device: int = 0,
                  description: str = "sam",
-                 change_lr_epochs: int = None):
-
+                 change_lr_epochs: int = None,
+                 class_number: int = None):
+        self.class_number = class_number
         self.train_segments_set = train_segments_set
         self.test_set = test_set
 
@@ -96,7 +97,7 @@ class SAM_TRAIN:
 
             if self.current_epoch <= self.pre_train_epochs:
                 loss_classification_sum_segments, accuracy_classification_sum_segments = self.__train_classifier(
-                     optimizer, self.train_segments_set)
+                    optimizer, self.train_segments_set)
                 loss_classification_sum_classifier, accuracy_classification_sum_classifier = self.__train_classifier(
                     optimizer, self.train_segments_set)
             else:
@@ -125,7 +126,7 @@ class SAM_TRAIN:
                                       f_1_score_text,
                                       recall_score_text,
                                       precision_score_text)
-            print(text)
+
             P.write_to_log(text)
 
             if self.current_epoch % self.test_each_epoch == 0:
@@ -146,15 +147,17 @@ class SAM_TRAIN:
             self.test_trust_answers = [[] for _ in range(self.classes)]
             self.test_probabilities = [[] for _ in range(self.classes)]
 
-        # self.__save_model(self.best_test_weights)
-        # self.__save_model(self.best_weights)
+        self.__save_model(self.best_test_weights)
+        self.__save_model(self.best_weights)
 
     def __train_classifier(self, optimizer: opt.SGD, train_set):
         loss_classification_sum = 0
         accuracy_classification_sum = 0
         without_segments_elements = 0
         for images, _, labels in train_set:
-            labels = labels
+            if self.class_number is not None:
+                labels = labels[:, self.class_number:self.class_number + 1]
+
             images, labels = self.__convert_data_and_label(images, labels)
 
             # calculate and optimize model
@@ -187,8 +190,10 @@ class SAM_TRAIN:
         with_segments_elements = 0
 
         for images, segments, labels in train_set:
-            segments = segments
-            labels = labels
+            if self.class_number is not None:
+                labels = labels[:, self.class_number:self.class_number + 1]
+                segments = segments[:, self.class_number:self.class_number + 1, :, :]
+
             images, labels, segments = self.__convert_data_and_label(images, labels, segments)
             segments = self.puller(segments)
             optimizer.zero_grad()
@@ -226,7 +231,8 @@ class SAM_TRAIN:
         accuracy_classification_sum = 0
         without_segments_elements = 0
         for images, _, labels in self.test_set:
-            labels = labels
+            if self.class_number is not None:
+                labels = labels[:, self.class_number:self.class_number + 1]
             images, labels = self.__convert_data_and_label(images, labels)
             model_classification, _ = self.sam_model(images)
             classification_loss = self.l_loss(model_classification, labels)
@@ -256,7 +262,6 @@ class SAM_TRAIN:
                                                                          recall_score_text,
                                                                          precision_score_text)
         P.write_to_log(text)
-        print(text)
 
         return loss_classification_sum, accuracy_classification_sum
 

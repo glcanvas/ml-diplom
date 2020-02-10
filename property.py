@@ -68,4 +68,5 @@ def parse_input_commands():
     parser.add_argument("--train_set", default="2000")
     parser.add_argument("--run_name")  # require
     parser.add_argument("--algorithm_name")  # require
+    parser.add_argument("--use_class_number", default="-1")
     return parser

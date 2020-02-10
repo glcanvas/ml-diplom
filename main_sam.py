@@ -10,6 +10,7 @@ import sam_train as st
 import cbam_model as cbam
 
 classes = 5
+class_number = None
 
 if __name__ == "__main__":
     parsed = P.parse_input_commands().parse_args(sys.argv[1:])
@@ -21,14 +22,18 @@ if __name__ == "__main__":
     change_lr_epochs = int(parsed.change_lr)
     run_name = parsed.run_name
     algorithm_name = parsed.algorithm_name
+    use_class_number = int(parsed.use_class_number)
+    if use_class_number != -1:
+        classes = 1
+        class_number = use_class_number
 
-    description = "description-{},train_set-{},pre_train_epochs-{},update_lr_epoch-{},epochs-{},classes-{}".format(
+    description = "description-{},train_set-{},pre_train_epochs-{},update_lr_epoch-{},epochs-{},class_number-{}".format(
         parsed_description,
         train_set_size,
         pre_train,
         change_lr_epochs,
         epochs,
-        classes
+        class_number
     )
 
     P.initialize_log_name(run_name, algorithm_name, description)
@@ -54,11 +59,11 @@ if __name__ == "__main__":
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(128, 64, kernel_size=(3, 3), padding=(1, 1)),
             nn.ReLU(),
-            cbam.CBAM(64),
+            # cbam.CBAM(64),
             nn.MaxPool2d(kernel_size=2, stride=2, padding=(1, 1)),
             nn.Conv2d(64, 128, kernel_size=(3, 3), padding=(1, 1)),
             nn.ReLU(),
-            nn.Conv2d(128, 5, kernel_size=(3, 3), padding=(1, 1)),
+            nn.Conv2d(128, classes, kernel_size=(3, 3), padding=(1, 1)),
             nn.Sigmoid()
         )
         model = m.vgg16(pretrained=True)
@@ -69,7 +74,7 @@ if __name__ == "__main__":
 
         merged_branch = model.features[16:]
         merged_branch = nn.Sequential(
-            nn.Conv2d(1280, 256, kernel_size=(1, 1), stride=(1, 1), padding=(1, 1)),
+            nn.Conv2d(256 * classes, 256, kernel_size=(1, 1), stride=(1, 1), padding=(1, 1)),
             *merged_branch
         )
 
@@ -91,8 +96,9 @@ if __name__ == "__main__":
                                  gpu_device=gpu,
                                  train_epochs=epochs,
                                  save_train_logs_epochs=4,
-                                 test_each_epoch=4,
-                                 change_lr_epochs=change_lr_epochs)
+                                 test_each_epoch=1,
+                                 change_lr_epochs=change_lr_epochs,
+                                 class_number=class_number)
         sam_train.train()
 
     except BaseException as e:
