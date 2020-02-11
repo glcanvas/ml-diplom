@@ -7,9 +7,10 @@ import property as P
 import random
 
 composite = transforms.Compose([
+  #  transforms.ToTensor(), 
     transforms.Scale((P.image_size, P.image_size)),
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-    transforms.ToTensor(),
+ transforms.ToTensor(),   
+  #  transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
 
 normalization = transforms.Compose([
@@ -70,7 +71,7 @@ class DatasetLoader:
     def __merge_data(self, input_path, target_path) -> list:
         inputs = self.__get_input_image_list(input_path)
         targets = self.__get_target_image_list(target_path)
-
+        print(inputs)
         def composite_zips(x):
             inp = x[0]
             tar = x[1]
@@ -90,6 +91,7 @@ class DatasetLoader:
         return arrays
 
     def save_images_to_tensors(self):
+        print(self.input_path, self.target_path)
         data = self.__merge_data(self.input_path, self.target_path)
         data_len = len(data)
         for idx, dct in enumerate(data):
@@ -139,6 +141,10 @@ class DatasetLoader:
 
     @staticmethod
     def __save_torch(dct, item, path):
+        # print(dct)
+        # print(item, dct[item])
+        # print(type(Image.open(dct[item])))
+        # print(Image.open(dct[item]))
         composited_image = composite(Image.open(dct[item]))
         name = os.path.basename(dct[item])[:-4] + P.cached_extension
         torch.save(composited_image, os.path.join(path, name))
@@ -319,12 +325,12 @@ def create_torch_tensors():
 
 if __name__ == "__main__":
     # create_torch_tensors()
-    load_all_data(0.2, 0.3, 0.5)
+    # load_all_data(0.2, 0.3, 0.5)
     # loader = DatasetLoader.initial()
     # train = loader.load_tensors(0, 100)
     # test = loader.load_tensors(100, 150)
     # train_set = DataLoader(ImageDataset(train), batch_size=10, shuffle=True, num_workers=4)
     # for i, j, k, l in train_set:
     #    print(l.shape)
-    # loader = DatasetLoader(P.data_inputs_path, P.data_labels_path)
-    # loader.save_images_to_tensors()
+    loader = DatasetLoader(P.data_inputs_path, P.data_labels_path)
+    loader.save_images_to_tensors()
