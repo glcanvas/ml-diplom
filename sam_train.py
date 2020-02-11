@@ -26,7 +26,7 @@ class SAM_TRAIN:
                  train_segments_set=None,
                  test_set=None,
                  l_loss: nn.Module = nn.BCELoss(),
-                 m_loss: nn.Module = nn.MSELoss(),
+                 m_loss: nn.Module = nn.BCELoss(),
                  classes: int = None,
                  pre_train_epochs: int = 100,
                  train_epochs: int = 100,
