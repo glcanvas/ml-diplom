@@ -10,9 +10,15 @@ image_size = 224
 input_attribute = 'input'
 cached_extension = '.torch'
 
-base_data_dir = "/home/nikita/PycharmProjects"
-if not os.path.exists(base_data_dir):
+stupid_flag = False
+
+if os.path.exists("/media/disk1/nduginec"):
     base_data_dir = "/media/disk1/nduginec"
+elif os.path.exists("/media/disk2/nduginec"):
+    base_data_dir = "/media/disk2/nduginec"
+    stupid_flag = True
+else:
+    base_data_dir = "/home/nikita/PycharmProjects"
 
 data_inputs_path = base_data_dir + "/ISIC2018_Task1-2_Training_Input"
 data_labels_path = base_data_dir + "/ISIC2018_Task2_Training_GroundTruth_v3"
@@ -20,7 +26,7 @@ data_labels_path = base_data_dir + "/ISIC2018_Task2_Training_GroundTruth_v3"
 cache_data_inputs_path = base_data_dir + "/ISIC2018_Task1-2_Training_Input/cached"
 cache_data_labels_path = base_data_dir + "/ISIC2018_Task2_Training_GroundTruth_v3/cached"
 
-log_path = base_data_dir + "/logs"
+log_path = base_data_dir + ("/ml-data" if stupid_flag else "") + "/logs"
 
 log = None
 

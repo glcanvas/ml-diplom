@@ -7,10 +7,24 @@ import torch.nn as nn
 import traceback
 import sam_model as ss
 import sam_train as st
-import cbam_model as cbam
 
 classes = 5
 class_number = None
+
+
+def register_weights(weight_class, model):
+    if weight_class == "classifier":
+        a = list(model.classifier_branch.parameters())
+        a.extend(list(model.merged_branch.parameters()))
+        a.extend(list(model.avg_pool.parameters()))
+        a.extend(list(model.classifier.parameters()))
+        return a
+    elif weight_class == "attention":
+        a = list(model.basis.parameters())
+        a.extend(list(model.sam_branch.parameters()))
+        return a
+    raise BaseException("unrecognized param: " + weight_class)
+
 
 if __name__ == "__main__":
     parsed = P.parse_input_commands().parse_args(sys.argv[1:])
@@ -59,7 +73,6 @@ if __name__ == "__main__":
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.Conv2d(128, 64, kernel_size=(3, 3), padding=(1, 1)),
             nn.ReLU(),
-            # cbam.CBAM(64),
             nn.MaxPool2d(kernel_size=2, stride=2, padding=(1, 1)),
             nn.Conv2d(64, 128, kernel_size=(3, 3), padding=(1, 1)),
             nn.ReLU(),
@@ -92,13 +105,15 @@ if __name__ == "__main__":
 
         P.write_to_log(sam_model)
         sam_train = st.SAM_TRAIN(sam_model, train_segments_set, test_set, classes=classes,
-                                 pre_train_epochs=pre_train,
+                                 pre_train_epochs=1,
                                  gpu_device=gpu,
                                  train_epochs=epochs,
                                  save_train_logs_epochs=4,
                                  test_each_epoch=1,
                                  change_lr_epochs=change_lr_epochs,
-                                 class_number=class_number)
+                                 class_number=class_number,
+                                 description=run_name + "_" + description,
+                                 register_weights=register_weights)
         sam_train.train()
 
     except BaseException as e:

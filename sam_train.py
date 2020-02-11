@@ -26,7 +26,7 @@ class SAM_TRAIN:
                  train_segments_set=None,
                  test_set=None,
                  l_loss: nn.Module = nn.BCELoss(),
-                 m_loss: nn.Module = nn.MSELoss(),
+                 m_loss: nn.Module = nn.CrossEntropyLoss(),
                  classes: int = None,
                  pre_train_epochs: int = 100,
                  train_epochs: int = 100,
@@ -36,7 +36,9 @@ class SAM_TRAIN:
                  gpu_device: int = 0,
                  description: str = "sam",
                  change_lr_epochs: int = None,
-                 class_number: int = None):
+                 class_number: int = None,
+                 register_weights=None):
+        self.register_weights = register_weights
         self.class_number = class_number
         self.train_segments_set = train_segments_set
         self.test_set = test_set
@@ -80,9 +82,10 @@ class SAM_TRAIN:
     def train(self):
 
         learning_rate = 1e-6
-        optimizer = torch.optim.Adam(self.sam_model.parameters(),
-                                     lr=learning_rate)
-        # optimizer = opt.SGD(self.sam_model.parameters(), lr=0.1, momentum=0.9)
+        classifier_optimizer = torch.optim.Adam(self.register_weights("classifier", self.sam_model),
+                                                lr=learning_rate)
+        attention_module_optimizer = opt.SGD(self.register_weights("attention", self.sam_model), lr=0.1,
+                                             momentum=0.9)
 
         self.best_weights = copy.deepcopy(self.sam_model.state_dict())
         best_loss = None
@@ -92,21 +95,24 @@ class SAM_TRAIN:
             self.current_epoch = epoch
 
             loss_m_sum = 0
+            accuracy_classification_sum_segments = 0
+            loss_classification_sum_segments = 0
             loss_l1_sum = 0
-            optimizer = self.__apply_adaptive_learning(optimizer, learning_rate, self.current_epoch)
+
+            classifier_optimizer = self.__apply_adaptive_learning(classifier_optimizer, learning_rate,
+                                                                  self.current_epoch)
 
             if self.current_epoch <= self.pre_train_epochs:
-                loss_classification_sum_segments, accuracy_classification_sum_segments = self.__train_classifier(
-                    optimizer, self.train_segments_set)
+                # loss_classification_sum_segments, accuracy_classification_sum_segments = self.__train_classifier(
+                #    classifier_optimizer, self.train_segments_set)
                 loss_classification_sum_classifier, accuracy_classification_sum_classifier = self.__train_classifier(
-                    optimizer, self.train_segments_set)
+                    classifier_optimizer, self.train_segments_set)
             else:
+                loss_classification_sum_classifier, accuracy_classification_sum_classifier = self.__train_classifier(
+                    classifier_optimizer, self.train_segments_set)
 
                 accuracy_classification_sum_segments, loss_classification_sum_segments, loss_m_sum, loss_l1_sum = self.__train_segments(
-                    optimizer, self.train_segments_set)
-
-                loss_classification_sum_classifier, accuracy_classification_sum_classifier = self.__train_classifier(
-                    optimizer, self.train_segments_set)
+                    attention_module_optimizer, self.train_segments_set)
 
             accuracy_total = (accuracy_classification_sum_segments + accuracy_classification_sum_classifier) / 2
             classification_loss_total = (loss_classification_sum_segments + loss_classification_sum_classifier) / 2
@@ -202,8 +208,8 @@ class SAM_TRAIN:
             classification_loss = self.l_loss(model_classification, labels)
             classification_loss.backward(retain_graph=True)
 
-            segmentation_loss = self.m_loss(model_segmentation, segments)
-            l1_loss = self.__add_l1_regularization_loss()
+            segmentation_loss = self.m_loss(model_segmentation, segments.long())
+            l1_loss = self.__add_l1_regularization_loss(self.register_weights("attention", self.sam_model))
             segmentation_l1_loss = segmentation_loss + l1_loss
             segmentation_l1_loss.backward()
 
@@ -327,13 +333,13 @@ class SAM_TRAIN:
         pow_epoch = epoch // self.change_lr_epochs
         if pow_epoch == 0:
             return optimizer
-        return torch.optim.Adam(self.sam_model.parameters(),
+        return torch.optim.Adam(self.register_weights("classifier", self.sam_model),
                                 lr=learning_rate * (0.1 ** pow_epoch))
 
-    def __add_l1_regularization_loss(self):
+    def __add_l1_regularization_loss(self, weights):
         l2_loss = torch.tensor(0.)
         if self.use_gpu:
             l2_loss = l2_loss.cuda(self.gpu_device)
-        for param in self.sam_model.sam_branch.parameters():
+        for param in weights:
             l2_loss += torch.norm(param)
         return 0.5 * l2_loss
