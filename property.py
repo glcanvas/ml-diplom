@@ -10,9 +10,13 @@ image_size = 224
 input_attribute = 'input'
 cached_extension = '.torch'
 
+stupid_flag = False
 base_data_dir = "/home/nikita/PycharmProjects"
-if not os.path.exists(base_data_dir):
+if os.path.exists("/media/disk1/nduginec"):
     base_data_dir = "/media/disk1/nduginec"
+elif os.path.exists("/media/disk2/nduginec"):
+    base_data_dir = "/media/disk2/nduginec" 
+    stupid_flag = True
 
 data_inputs_path = base_data_dir + "/ISIC2018_Task1-2_Training_Input"
 data_labels_path = base_data_dir + "/ISIC2018_Task2_Training_GroundTruth_v3"
@@ -20,9 +24,9 @@ data_labels_path = base_data_dir + "/ISIC2018_Task2_Training_GroundTruth_v3"
 cache_data_inputs_path = base_data_dir + "/ISIC2018_Task1-2_Training_Input/cached"
 cache_data_labels_path = base_data_dir + "/ISIC2018_Task2_Training_GroundTruth_v3/cached"
 
-log_path = base_data_dir + "/logs"
+log_path = base_data_dir + ("/ml-data" if stupid_flag else "") + "/logs"
 
-log = None
+log = "default_log_{}.txt".format(datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S'))
 
 
 def initialize_log_name(run_number: str, algorithm_name: str, value: str):
