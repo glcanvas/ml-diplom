@@ -26,7 +26,7 @@ class SAM_TRAIN:
                  train_segments_set=None,
                  test_set=None,
                  l_loss: nn.Module = nn.BCELoss(),
-                 m_loss: nn.Module = nn.CrossEntropyLoss(),
+                 m_loss: nn.Module = nn.MSELoss(),
                  classes: int = None,
                  pre_train_epochs: int = 100,
                  train_epochs: int = 100,
@@ -208,7 +208,7 @@ class SAM_TRAIN:
             classification_loss = self.l_loss(model_classification, labels)
             classification_loss.backward(retain_graph=True)
 
-            segmentation_loss = self.m_loss(model_segmentation, segments.long())
+            segmentation_loss = self.m_loss(model_segmentation, segments)
             l1_loss = self.__add_l1_regularization_loss(self.register_weights("attention", self.sam_model))
             segmentation_l1_loss = segmentation_loss + l1_loss
             segmentation_l1_loss.backward()
