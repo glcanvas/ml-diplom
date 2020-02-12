@@ -7,6 +7,9 @@ import torch.nn as nn
 import traceback
 import sam_model as ss
 import sam_train as st
+import os
+import torch
+import numpy as np
 
 classes = 5
 class_number = None
@@ -57,6 +60,11 @@ if __name__ == "__main__":
     P.write_to_log("run=" + run_name)
     P.write_to_log("algorithm_name=" + algorithm_name)
 
+    log_name, log_dir = os.path.basename(P.log)[:-4], os.path.dirname(P.log)
+
+    snapshots_path = os.path.join(log_dir, log_name)
+    os.makedirs(snapshots_path, exist_ok=True)
+
     try:
         segments_set, test_set = il.load_data_2(train_set_size)
 
@@ -105,7 +113,7 @@ if __name__ == "__main__":
 
         P.write_to_log(sam_model)
         sam_train = st.SAM_TRAIN(sam_model, train_segments_set, test_set, classes=classes,
-                                 pre_train_epochs=pre_train,
+                                 pre_train_epochs=1,
                                  gpu_device=gpu,
                                  train_epochs=epochs,
                                  save_train_logs_epochs=4,
@@ -113,7 +121,9 @@ if __name__ == "__main__":
                                  change_lr_epochs=change_lr_epochs,
                                  class_number=class_number,
                                  description=run_name + "_" + description,
-                                 register_weights=register_weights)
+                                 register_weights=register_weights,
+                                 snapshot_elements_count=10,
+                                 snapshot_dir=snapshots_path)
         sam_train.train()
 
     except BaseException as e:

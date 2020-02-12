@@ -6,6 +6,8 @@ import property as P
 from datetime import datetime
 import os
 import utils
+import matplotlib.pyplot as plt
+import numpy as np
 
 EPS = 1e-10
 probability_threshold = 0.5
@@ -16,7 +18,8 @@ def scalar(tensor):
 
 
 """
-в претрейне -- обучаюсь без сегментации, но на всем множестве
+ДАННОЕ РЕШЕНИЕ НЕЧЕСТНОЕ!!!!!!!!!!!!!
+ТАК КАК Я УМНОЖАЮ ВЕТКУ КЛАССИФИКАЦИИ НА НАСТОЯЩУЮ МАСКУ, А НЕ НА ТО ЧТО ПОЛУЧИЛОСЬ В attention модуле
 """
 
 
@@ -37,9 +40,17 @@ class SAM_TRAIN:
                  description: str = "sam",
                  change_lr_epochs: int = None,
                  class_number: int = None,
-                 register_weights=None):
+                 register_weights=None,
+                 snapshot_elements_count: int = 11,
+                 snapshot_dir: str = None):
+
+        self.snapshot_elements_count = snapshot_elements_count
+        self.snapshot_dir = snapshot_dir
+
         self.register_weights = register_weights
+
         self.class_number = class_number
+
         self.train_segments_set = train_segments_set
         self.test_set = test_set
 
@@ -136,6 +147,8 @@ class SAM_TRAIN:
             P.write_to_log(text)
 
             if self.current_epoch % self.test_each_epoch == 0:
+                self.__take_snapshot(self.train_segments_set, "TRAIN_{}".format(epoch))
+                self.__take_snapshot(self.test_set, "TEST_{}".format(epoch))
                 test_loss, _ = self.test()
                 if best_test_loss is None or test_loss < best_test_loss:
                     best_test_loss = test_loss
@@ -203,7 +216,7 @@ class SAM_TRAIN:
             images, labels, segments = self.__convert_data_and_label(images, labels, segments)
             segments = self.puller(segments)
             optimizer.zero_grad()
-            model_classification, model_segmentation = self.sam_model(images)
+            model_classification, model_segmentation = self.sam_model(images, segments)
 
             classification_loss = self.l_loss(model_classification, labels)
             classification_loss.backward(retain_graph=True)
@@ -236,13 +249,15 @@ class SAM_TRAIN:
         loss_classification_sum = 0
         accuracy_classification_sum = 0
         without_segments_elements = 0
-        for images, _, labels in self.test_set:
+        for images, _segments, labels in self.test_set:
             if self.class_number is not None:
                 labels = labels[:, self.class_number:self.class_number + 1]
-            images, labels = self.__convert_data_and_label(images, labels)
-            model_classification, _ = self.sam_model(images)
+                _segments = _segments[:, self.class_number:self.class_number + 1, :, :]
+            images, labels, _segments = self.__convert_data_and_label(images, labels, _segments)
+            _segments = self.puller(_segments)
+            model_classification, _ = self.sam_model(images, _segments)
             classification_loss = self.l_loss(model_classification, labels)
-            classification_loss.backward()
+            # classification_loss.backward()
 
             output_probability, output_cl, cl_acc = self.__calculate_accuracy(labels, model_classification,
                                                                               labels.size(0))
@@ -343,3 +358,47 @@ class SAM_TRAIN:
         for param in weights:
             l2_loss += torch.norm(param)
         return 0.5 * l2_loss
+
+    def __take_snapshot(self, data_set, snapshot_name: str = None):
+        cnt = 0
+        model_segments_list = []
+        trust_segments_list = []
+        images_list = []
+
+        for images, segments, labels in data_set:
+
+            if self.class_number is not None:
+                segments = segments[:, self.class_number:self.class_number + 1, :, :]
+
+            images, labels, segments = self.__convert_data_and_label(images, labels, segments)
+            segments = self.puller(segments)
+            _, model_segments = self.sam_model(images, segments)
+            cnt += segments.size(0)
+            images, _, segments = self.__de_convert_data_and_label(images, labels, segments)
+            model_segments = model_segments.cpu()
+            for idx in range(segments.size(0)):
+                images_list.append(images[idx])
+                model_segments_list.append(segments[idx])
+                trust_segments_list.append(model_segments[idx])
+
+            if cnt >= self.snapshot_elements_count:
+                break
+        fig, axes = plt.subplots(len(images_list), model_segments_list[0].size(0) * 2 + 1, figsize=(50, 100))
+        fig.tight_layout()
+        # plt.subplots_adjust(bottom=0.5, top=2)
+        for idx, img in enumerate(images_list):
+            axes[idx][0].imshow(np.transpose(img.numpy(), (1, 2, 0)))
+
+        for idx, (trist_ansv, model_ansv) in enumerate(zip(trust_segments_list, model_segments_list)):
+            for class_number in range(trist_ansv.size(0)):
+                a = trist_ansv[class_number].detach().numpy()
+                a = np.array([a] * 3)
+                axes[idx][1 + class_number * 2].imshow(np.transpose(a, (1, 2, 0)))
+                a = model_ansv[class_number].numpy()
+                a = np.array([a] * 3)
+                axes[idx][1 + class_number * 2 + 1].imshow(np.transpose(a, (1, 2, 0)))
+                axes[idx][1 + class_number * 2].set(xlabel='trust answer class: {}'.format(class_number))
+                axes[idx][1 + class_number * 2 + 1].set(xlabel='model answer class: {}'.format(class_number))
+
+        plt.savefig(os.path.join(self.snapshot_dir, snapshot_name))
+        plt.figure()
