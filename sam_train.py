@@ -216,14 +216,14 @@ class SAM_TRAIN:
             images, labels, segments = self.__convert_data_and_label(images, labels, segments)
             segments = self.puller(segments)
             optimizer.zero_grad()
-            model_classification, model_segmentation = self.sam_model(images, segments)
+            model_classification, model_segmentation = self.sam_model(images)
 
             classification_loss = self.l_loss(model_classification, labels)
             classification_loss.backward(retain_graph=True)
 
             segmentation_loss = self.m_loss(model_segmentation, segments)
-            l1_loss = self.__add_l1_regularization_loss(self.register_weights("attention", self.sam_model))
-            segmentation_l1_loss = segmentation_loss + l1_loss
+            # l1_loss = self.__add_l1_regularization_loss(self.register_weights("attention", self.sam_model))
+            segmentation_l1_loss = segmentation_loss # + l1_loss
             segmentation_l1_loss.backward()
 
             optimizer.step()
@@ -236,7 +236,7 @@ class SAM_TRAIN:
             accuracy_classification_sum += scalar(cl_acc.sum())
             loss_classification_sum += scalar(classification_loss.sum())
             loss_m_sum += scalar(segmentation_loss.sum())
-            loss_l1_sum += scalar(l1_loss.sum())
+            loss_l1_sum += 0 # scalar(l1_loss.sum())
             with_segments_elements += 1  # labels.size(0)
             self.__de_convert_data_and_label(images, labels, segments)
             torch.cuda.empty_cache()
@@ -255,7 +255,7 @@ class SAM_TRAIN:
                 _segments = _segments[:, self.class_number:self.class_number + 1, :, :]
             images, labels, _segments = self.__convert_data_and_label(images, labels, _segments)
             _segments = self.puller(_segments)
-            model_classification, _ = self.sam_model(images, _segments)
+            model_classification, _ = self.sam_model(images)
             classification_loss = self.l_loss(model_classification, labels)
             # classification_loss.backward()
 
@@ -351,13 +351,13 @@ class SAM_TRAIN:
         return torch.optim.Adam(self.register_weights("classifier", self.sam_model),
                                 lr=learning_rate * (0.1 ** pow_epoch))
 
-    def __add_l1_regularization_loss(self, weights):
-        l2_loss = torch.tensor(0.)
-        if self.use_gpu:
-            l2_loss = l2_loss.cuda(self.gpu_device)
-        for param in weights:
-            l2_loss += torch.norm(param)
-        return 0.5 * l2_loss
+    # def __add_l1_regularization_loss(self, weights):
+    #    l2_loss = torch.tensor(0.)
+    #    if self.use_gpu:
+    #        l2_loss = l2_loss.cuda(self.gpu_device)
+    #    for param in weights:
+    #        l2_loss += torch.norm(param)
+    #    return 0.5 * l2_loss
 
     def __take_snapshot(self, data_set, snapshot_name: str = None):
         cnt = 0
