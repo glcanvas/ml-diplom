@@ -113,11 +113,11 @@ if __name__ == "__main__":
 
         P.write_to_log(sam_model)
         sam_train = st.SAM_TRAIN(sam_model, train_segments_set, test_set, classes=classes,
-                                 pre_train_epochs=1,
+                                 pre_train_epochs=pre_train,
                                  gpu_device=gpu,
                                  train_epochs=epochs,
                                  save_train_logs_epochs=4,
-                                 test_each_epoch=1,
+                                 test_each_epoch=4,
                                  change_lr_epochs=change_lr_epochs,
                                  class_number=class_number,
                                  description=run_name + "_" + description,
