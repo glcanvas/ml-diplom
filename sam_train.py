@@ -113,9 +113,11 @@ class SAM_TRAIN:
             classifier_optimizer = self.__apply_adaptive_learning(classifier_optimizer, learning_rate,
                                                                   self.current_epoch)
 
+            div_flag = False
             if self.current_epoch <= self.pre_train_epochs:
                 # loss_classification_sum_segments, accuracy_classification_sum_segments = self.__train_classifier(
                 #    classifier_optimizer, self.train_segments_set)
+                div_flag = True
                 loss_classification_sum_classifier, accuracy_classification_sum_classifier = self.__train_classifier(
                     classifier_optimizer, self.train_segments_set)
             else:
@@ -125,8 +127,10 @@ class SAM_TRAIN:
                 accuracy_classification_sum_segments, loss_classification_sum_segments, loss_m_sum, loss_l1_sum = self.__train_segments(
                     attention_module_optimizer, self.train_segments_set)
 
-            accuracy_total = (accuracy_classification_sum_segments + accuracy_classification_sum_classifier) / 2
-            classification_loss_total = (loss_classification_sum_segments + loss_classification_sum_classifier) / 2
+            accuracy_total = (accuracy_classification_sum_segments + accuracy_classification_sum_classifier) / (
+                1 if div_flag else 2)
+            classification_loss_total = (loss_classification_sum_segments + loss_classification_sum_classifier) / (
+                1 if div_flag else 2)
             loss_total = loss_classification_sum_segments + loss_classification_sum_classifier + loss_m_sum
 
             prefix = "PRETRAIN" if epoch <= self.pre_train_epochs else "TRAIN"
@@ -223,7 +227,7 @@ class SAM_TRAIN:
 
             segmentation_loss = self.m_loss(model_segmentation, segments)
             # l1_loss = self.__add_l1_regularization_loss(self.register_weights("attention", self.sam_model))
-            segmentation_l1_loss = segmentation_loss # + l1_loss
+            segmentation_l1_loss = segmentation_loss  # + l1_loss
             segmentation_l1_loss.backward()
 
             optimizer.step()
@@ -236,7 +240,7 @@ class SAM_TRAIN:
             accuracy_classification_sum += scalar(cl_acc.sum())
             loss_classification_sum += scalar(classification_loss.sum())
             loss_m_sum += scalar(segmentation_loss.sum())
-            loss_l1_sum += 0 # scalar(l1_loss.sum())
+            loss_l1_sum += 0  # scalar(l1_loss.sum())
             with_segments_elements += 1  # labels.size(0)
             self.__de_convert_data_and_label(images, labels, segments)
             torch.cuda.empty_cache()
