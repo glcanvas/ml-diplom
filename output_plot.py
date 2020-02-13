@@ -5,8 +5,28 @@ import re
 from sklearn.metrics import roc_curve, auc, precision_recall_curve, average_precision_score
 import traceback
 
-plot_images_path = "/home/nikita/PycharmProjects/ml-diplom/sam_plots"
-logs_path = "/home/nikita/PycharmProjects/ml-data/logs"
+# plot_images_path = "/home/nikita/PycharmProjects/ml-diplom/sam_plots"
+# logs_path = "/home/nikita/PycharmProjects/ml-data/logs"
+
+stupid_flag = False
+base_data_dir = "/home/nikita/PycharmProjects"
+if os.path.exists("/media/disk1/nduginec"):
+    base_data_dir = "/media/disk1/nduginec"
+elif os.path.exists("/media/disk2/nduginec"):
+    base_data_dir = "/media/disk2/nduginec"
+    stupid_flag = True
+
+data_inputs_path = base_data_dir + "/ISIC2018_Task1-2_Training_Input"
+data_labels_path = base_data_dir + "/ISIC2018_Task2_Training_GroundTruth_v3"
+
+cache_data_inputs_path = base_data_dir + "/ISIC2018_Task1-2_Training_Input/cached"
+cache_data_labels_path = base_data_dir + "/ISIC2018_Task2_Training_GroundTruth_v3/cached"
+
+base_data_dir += "/ml-data" if stupid_flag else ""
+
+logs_path = base_data_dir + "/logs"
+plot_images_path = base_data_dir + "/images"
+os.makedirs(plot_images_path, exist_ok=True)
 
 
 def __load_statistics(dct: dict) -> tuple:
@@ -248,4 +268,14 @@ def parse_run(run_number="run_01"):
 
 
 if __name__ == "__main__":
-    parse_run()
+    runs = [
+        "RUN_01",
+        "RUN_02",
+        "RUN_03",
+        "RUN_04",
+        "RUN_05",
+        "RUN_06",
+        "RUN_07"
+    ]
+    for i in runs:
+        parse_run(i)
