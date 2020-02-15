@@ -214,16 +214,16 @@ class SAM_TRAIN:
 
         for images, segments, labels in train_set:
             if self.class_number is not None:
-                labels = labels[:, self.class_number:self.class_number + 1]
+                # labels = labels[:, self.class_number:self.class_number + 1]
                 segments = segments[:, self.class_number:self.class_number + 1, :, :]
 
             images, labels, segments = self.__convert_data_and_label(images, labels, segments)
             segments = self.puller(segments)
             optimizer.zero_grad()
-            model_classification, model_segmentation = self.sam_model(images)
+            model_classification, model_segmentation = self.sam_model(images, segments)
 
-            classification_loss = self.l_loss(model_classification, labels)
-            classification_loss.backward(retain_graph=True)
+            # classification_loss = self.l_loss(model_classification, labels)
+            # classification_loss.backward(retain_graph=True)
 
             segmentation_loss = self.m_loss(model_segmentation, segments)
             # l1_loss = self.__add_l1_regularization_loss(self.register_weights("attention", self.sam_model))
@@ -238,7 +238,7 @@ class SAM_TRAIN:
 
             # accumulate information
             accuracy_classification_sum += scalar(cl_acc.sum())
-            loss_classification_sum += scalar(classification_loss.sum())
+            loss_classification_sum += 0 # scalar(classification_loss.sum())
             loss_m_sum += scalar(segmentation_loss.sum())
             loss_l1_sum += 0  # scalar(l1_loss.sum())
             with_segments_elements += 1  # labels.size(0)
@@ -259,7 +259,7 @@ class SAM_TRAIN:
                 _segments = _segments[:, self.class_number:self.class_number + 1, :, :]
             images, labels, _segments = self.__convert_data_and_label(images, labels, _segments)
             _segments = self.puller(_segments)
-            model_classification, _ = self.sam_model(images)
+            model_classification, _ = self.sam_model(images, _segments)
             classification_loss = self.l_loss(model_classification, labels)
             # classification_loss.backward()
 
@@ -382,12 +382,12 @@ class SAM_TRAIN:
             model_segments = model_segments.cpu()
             for idx in range(segments.size(0)):
                 images_list.append(images[idx])
-                model_segments_list.append(segments[idx])
-                trust_segments_list.append(model_segments[idx])
+                model_segments_list.append(model_segments[idx])
+                trust_segments_list.append(segments[idx])
 
             if cnt >= self.snapshot_elements_count:
                 break
-        fig, axes = plt.subplots(len(images_list), model_segments_list[0].size(0) * 2 + 1, figsize=(50, 100))
+        fig, axes = plt.subplots(len(images_list), model_segments_list[0].size(0) * 3 + 1, figsize=(50, 100))
         fig.tight_layout()
         # plt.subplots_adjust(bottom=0.5, top=2)
         for idx, img in enumerate(images_list):
@@ -395,14 +395,33 @@ class SAM_TRAIN:
 
         for idx, (trist_ansv, model_ansv) in enumerate(zip(trust_segments_list, model_segments_list)):
             for class_number in range(trist_ansv.size(0)):
+                a = model_ansv[class_number].detach().numpy()
+                a = np.array([a] * 3)
+                axes[idx][1 + class_number * 3].imshow(np.transpose(a, (1, 2, 0)))
+                print("model        idx={}, class={}, sum={}, max={}, min={}".format(idx, class_number, np.sum(a),
+                                                                                     np.max(a),
+                                                                                     np.min(a)))
+                a = (a - np.min(a)) / (np.max(a) - np.min(a))
+                axes[idx][1 + class_number * 3 + 1].imshow(np.transpose(a, (1, 2, 0)))
+                print("model normed idx={}, class={}, sum={}, max={}, min={}".format(idx, class_number, np.sum(a),
+                                                                                     np.max(a), np.min(a)))
+
                 a = trist_ansv[class_number].detach().numpy()
                 a = np.array([a] * 3)
-                axes[idx][1 + class_number * 2].imshow(np.transpose(a, (1, 2, 0)))
-                a = model_ansv[class_number].numpy()
-                a = np.array([a] * 3)
-                axes[idx][1 + class_number * 2 + 1].imshow(np.transpose(a, (1, 2, 0)))
-                axes[idx][1 + class_number * 2].set(xlabel='trust answer class: {}'.format(class_number))
-                axes[idx][1 + class_number * 2 + 1].set(xlabel='model answer class: {}'.format(class_number))
+                axes[idx][1 + class_number * 3 + 2].imshow(np.transpose(a, (1, 2, 0)))
+                print("trust        idx={}, class={}, sum={}, max={}, min={}".format(idx, class_number, np.sum(a),
+                                                                                     np.max(a),
+                                                                                     np.min(a)))
 
+                print("=" * 50)
+
+                axes[idx][1 + class_number * 3].set(xlabel='model answer class: {}'.format(class_number))
+                axes[idx][1 + class_number * 3 + 1].set(xlabel='model normed answer class: {}'.format(class_number))
+                axes[idx][1 + class_number * 3 + 2].set(xlabel='trust answer class: {}'.format(class_number))
+        print("=" * 50)
+        print("=" * 50)
+        print("=" * 50)
+        print("=" * 50)
+        print("=" * 50)
         plt.savefig(os.path.join(self.snapshot_dir, snapshot_name))
-        plt.figure()
+        plt.close(fig)
