@@ -64,8 +64,7 @@ class ATTENTION_MODULE_TRAIN:
         self.change_lr_epochs = change_lr_epochs
 
     def train_attention_module(self):
-        optimizer = opt.SGD(self.register_weights("attention", self.sam_model), lr=0.001,
-                            momentum=1)
+        optimizer = torch.optim.Adam(self.register_weights("attention", self.sam_model), lr=1e-4)
 
         for epoch in range(1, self.train_epochs + 1):
             loss_m_sum = 0

@@ -248,15 +248,17 @@ class SAM_TRAIN:
         loss_classification_sum = 0
         accuracy_classification_sum = 0
         without_segments_elements = 0
-        for images, _, labels in train_set:
+        for images, segments, labels in train_set:
             if self.class_number is not None:
                 labels = labels[:, self.class_number:self.class_number + 1]
+                segments = segments[:, self.class_number:self.class_number + 1, :, :]
 
-            images, labels = self.__convert_data_and_label(images, labels)
+            images, labels, segments = self.__convert_data_and_label(images, labels, segments)
+            segments = self.puller(segments)
 
             # calculate and optimize model
             optimizer.zero_grad()
-            model_classification, _ = self.sam_model(images)
+            model_classification, _ = self.sam_model(images, segments)
             classification_loss = self.l_loss(model_classification, labels)
             classification_loss.backward()
             optimizer.step()
@@ -270,7 +272,7 @@ class SAM_TRAIN:
             accuracy_classification_sum += scalar(cl_acc.sum())
             loss_classification_sum += scalar(classification_loss.sum())
             without_segments_elements += 1  # labels.size(0)
-            self.__de_convert_data_and_label(images, labels)
+            self.__de_convert_data_and_label(images, segments, labels)
             torch.cuda.empty_cache()
 
         return loss_classification_sum / (without_segments_elements + EPS), accuracy_classification_sum / (

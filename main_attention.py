@@ -21,7 +21,7 @@ def register_weights(weight_class, model):
         a.extend(list(model.classifier.parameters()))
         return a
     elif weight_class == "attention":
-        a = [] # list(model.basis.parameters())
+        a = []  # list(model.basis.parameters())
         a.extend(list(model.sam_branch.parameters()))
         return a
     raise BaseException("unrecognized param: " + weight_class)
@@ -71,18 +71,12 @@ if __name__ == "__main__":
         test_set = DataLoader(il.ImageDataset(test_set), batch_size=5)
         print("ok")
 
+        # model_sam = m.vgg16(pretrained=True).features[2:15]
+        # nn.Conv2d(256, classes, kernel_size=(3, 3), padding=(1, 1)),
+        # nn.Sigmoid()
         sam_branch = nn.Sequential(
-            nn.Conv2d(64, 64, kernel_size=(3, 3)),
-            nn.ReLU(),
-            nn.Conv2d(64, 128, kernel_size=(3, 3)),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(128, 64, kernel_size=(3, 3), padding=(1, 1)),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2, padding=(1, 1)),
-            nn.Conv2d(64, 128, kernel_size=(3, 3), padding=(1, 1)),
-            nn.ReLU(),
-            nn.Conv2d(128, classes, kernel_size=(3, 3), padding=(1, 1)),
+            *m.vgg16(pretrained=True).features[2:15],
+            nn.Conv2d(256, classes, kernel_size=(3, 3), padding=(1, 1)),
             nn.Sigmoid()
         )
         model = m.vgg16(pretrained=True)
