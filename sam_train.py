@@ -376,7 +376,7 @@ class SAM_TRAIN:
 
             images, labels, segments = self.__convert_data_and_label(images, labels, segments)
             segments = self.puller(segments)
-            _, model_segments = self.sam_model(images, segments)
+            _, model_segments = self.sam_model(images)
             cnt += segments.size(0)
             images, _, segments = self.__de_convert_data_and_label(images, labels, segments)
             model_segments = model_segments.cpu()
@@ -398,30 +398,30 @@ class SAM_TRAIN:
                 a = model_ansv[class_number].detach().numpy()
                 a = np.array([a] * 3)
                 axes[idx][1 + class_number * 3].imshow(np.transpose(a, (1, 2, 0)))
-                print("model        idx={}, class={}, sum={}, max={}, min={}".format(idx, class_number, np.sum(a),
+                P.write_to_log("model        idx={}, class={}, sum={}, max={}, min={}".format(idx, class_number, np.sum(a),
                                                                                      np.max(a),
                                                                                      np.min(a)))
                 a = (a - np.min(a)) / (np.max(a) - np.min(a))
                 axes[idx][1 + class_number * 3 + 1].imshow(np.transpose(a, (1, 2, 0)))
-                print("model normed idx={}, class={}, sum={}, max={}, min={}".format(idx, class_number, np.sum(a),
+                P.write_to_log("model normed idx={}, class={}, sum={}, max={}, min={}".format(idx, class_number, np.sum(a),
                                                                                      np.max(a), np.min(a)))
 
                 a = trist_ansv[class_number].detach().numpy()
                 a = np.array([a] * 3)
                 axes[idx][1 + class_number * 3 + 2].imshow(np.transpose(a, (1, 2, 0)))
-                print("trust        idx={}, class={}, sum={}, max={}, min={}".format(idx, class_number, np.sum(a),
+                P.write_to_log("trust        idx={}, class={}, sum={}, max={}, min={}".format(idx, class_number, np.sum(a),
                                                                                      np.max(a),
                                                                                      np.min(a)))
 
-                print("=" * 50)
+                P.write_to_log("=" * 50)
 
                 axes[idx][1 + class_number * 3].set(xlabel='model answer class: {}'.format(class_number))
                 axes[idx][1 + class_number * 3 + 1].set(xlabel='model normed answer class: {}'.format(class_number))
                 axes[idx][1 + class_number * 3 + 2].set(xlabel='trust answer class: {}'.format(class_number))
-        print("=" * 50)
-        print("=" * 50)
-        print("=" * 50)
-        print("=" * 50)
-        print("=" * 50)
+        P.write_to_log("=" * 50)
+        P.write_to_log("=" * 50)
+        P.write_to_log("=" * 50)
+        P.write_to_log("=" * 50)
+        P.write_to_log("=" * 50)
         plt.savefig(os.path.join(self.snapshot_dir, snapshot_name))
         plt.close(fig)

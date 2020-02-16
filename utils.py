@@ -14,27 +14,23 @@ def __to_global(a, b):
 def calculate_metric(classes, trust_answers, model_answer):
     f_1_score_text = ""
     for i in range(classes):
-        f_1_score_text += "f_1_{}={:.5f} ".format(i,
-                                                  metrics.f1_score(trust_answers[i],
-                                                                   model_answer[i])
-                                                  )
+        f_1_score_text += "f_1_{}={:.5f} ".format(i, metrics.f1_score(trust_answers[i],
+                                                                      model_answer[i], average='micro'))
     recall_score_text = ""
     for i in range(classes):
-        recall_score_text += "recall_{}={:.5f} ".format(i,
-                                                        metrics.recall_score(trust_answers[i],
-                                                                             model_answer[i])
-                                                        )
+        recall_score_text += "recall_{}={:.5f} ".format(i, metrics.recall_score(trust_answers[i],
+                                                                                model_answer[i], average='micro'))
 
     precision_score_text = ""
     for i in range(classes):
-        precision_score_text += "precision_{}={:.5f} ".format(i,
-                                                              metrics.precision_score(trust_answers[i],
-                                                                                      model_answer[i])
-                                                              )
+        precision_score_text += "precision_{}={:.5f} ".format(i, metrics.precision_score(trust_answers[i],
+                                                                                         model_answer[i],
+                                                                                         average='micro'))
 
-    # trust_answer, model_answer = __to_global(trust_answers, model_answer)
+    trust_answer_1, model_answer_1 = __to_global(trust_answers, model_answer)
+    # assert trust_answer_1 == trust_answers[0]
 
-    f_1_score_text += "f_1_global={:.5f}".format(metrics.f1_score(trust_answers, model_answer, average='micro'))
+    f_1_score_text += "f_1_global={:.5f}".format(metrics.f1_score(trust_answer_1, model_answer_1, average='micro'))
     recall_score_text += "recall_global={:.5f}".format(
         metrics.recall_score(trust_answers, model_answer, average='micro'))
     precision_score_text += "precision_global={:.5f}".format(

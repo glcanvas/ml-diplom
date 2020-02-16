@@ -21,7 +21,7 @@ def register_weights(weight_class, model):
         a.extend(list(model.classifier.parameters()))
         return a
     elif weight_class == "attention":
-        a = list(model.basis.parameters())
+        a = [] # list(model.basis.parameters())
         a.extend(list(model.sam_branch.parameters()))
         return a
     raise BaseException("unrecognized param: " + weight_class)
