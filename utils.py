@@ -32,7 +32,7 @@ def calculate_metric(classes, trust_answers, model_answer):
 
     f_1_score_text += "f_1_global={:.5f}".format(metrics.f1_score(trust_answer_1, model_answer_1, average='micro'))
     recall_score_text += "recall_global={:.5f}".format(
-        metrics.recall_score(trust_answers, model_answer, average='micro'))
+        metrics.recall_score(trust_answer_1, model_answer_1, average='micro'))
     precision_score_text += "precision_global={:.5f}".format(
-        metrics.precision_score(trust_answers, model_answer, average='micro'))
+        metrics.precision_score(trust_answer_1, model_answer_1, average='micro'))
     return f_1_score_text, recall_score_text, precision_score_text
