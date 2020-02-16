@@ -170,7 +170,7 @@ class SAM_TRAIN:
             loss_l1_sum = 0
 
             # turn on gradients in model
-            enable_gradient_model(self.sam_model)
+            # enable_gradient_model(self.sam_model)
             classifier_optimizer = self.__apply_adaptive_learning(classifier_optimizer, learning_rate,
                                                                   self.current_epoch)
 
@@ -188,22 +188,21 @@ class SAM_TRAIN:
             else:
 
                 # disable attention module gradient
-                disable_gradient("attention", self.sam_model)
+                # disable_gradient("attention", self.sam_model)
                 loss_classification_sum_classifier, accuracy_classification_sum_classifier = self.__train_classifier(
                     classifier_optimizer, self.train_segments_set)
 
                 # disable classifier branch
                 # enable  attention module gradient
-                enable_gradient("attention", self.sam_model)
-                disable_gradient("classifier", self.sam_model)
-                accuracy_classification_sum_segments, loss_classification_sum_segments, loss_m_sum, loss_l1_sum = self.__train_segments(
+                # enable_gradient("attention", self.sam_model)
+                # disable_gradient("classifier", self.sam_model)
+                accuracy_classification_sum_segments, loss_m_sum, loss_l1_sum = self.__train_segments(
                     attention_module_optimizer, self.train_segments_set)
 
             accuracy_total = (accuracy_classification_sum_segments + accuracy_classification_sum_classifier) / (
                 1 if div_flag else 2)
-            classification_loss_total = (loss_classification_sum_segments + loss_classification_sum_classifier) / (
-                1 if div_flag else 2)
-            loss_total = loss_classification_sum_segments + loss_classification_sum_classifier + loss_m_sum
+            classification_loss_total = loss_classification_sum_classifier
+            loss_total = loss_classification_sum_classifier + loss_m_sum
 
             prefix = "PRETRAIN" if epoch <= self.pre_train_epochs else "TRAIN"
             f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
@@ -259,8 +258,8 @@ class SAM_TRAIN:
             optimizer.zero_grad()
             model_classification, _ = self.sam_model(images)
             classification_loss = self.l_loss(model_classification, labels)
-            classification_loss.backward() ### TODO HERE
-            optimizer.step() ### TODO HERE
+            classification_loss.backward()
+            optimizer.step()
 
             output_probability, output_cl, cl_acc = self.__calculate_accuracy(labels, model_classification,
                                                                               labels.size(0))
@@ -279,14 +278,13 @@ class SAM_TRAIN:
 
     def __train_segments(self, optimizer: opt.SGD, train_set):
         accuracy_classification_sum = 0
-        loss_classification_sum = 0
         loss_m_sum = 0
         loss_l1_sum = 0
         with_segments_elements = 0
 
         for images, segments, labels in train_set:
             if self.class_number is not None:
-                # labels = labels[:, self.class_number:self.class_number + 1]
+                labels = labels[:, self.class_number:self.class_number + 1]
                 segments = segments[:, self.class_number:self.class_number + 1, :, :]
 
             images, labels, segments = self.__convert_data_and_label(images, labels, segments)
@@ -310,16 +308,14 @@ class SAM_TRAIN:
 
             # accumulate information
             accuracy_classification_sum += scalar(cl_acc.sum())
-            loss_classification_sum += 0  # scalar(classification_loss.sum())
             loss_m_sum += scalar(segmentation_loss.sum())
             loss_l1_sum += 0  # scalar(l1_loss.sum())
             with_segments_elements += 1  # labels.size(0)
             self.__de_convert_data_and_label(images, labels, segments)
             torch.cuda.empty_cache()
 
-        return accuracy_classification_sum / (with_segments_elements + EPS), loss_classification_sum / (
-                with_segments_elements + EPS), loss_m_sum / (with_segments_elements + EPS), \
-               loss_l1_sum / (with_segments_elements + EPS)
+        return accuracy_classification_sum / (with_segments_elements + EPS), \
+               loss_m_sum / (with_segments_elements + EPS), loss_l1_sum / (with_segments_elements + EPS)
 
     def test(self):
         loss_classification_sum = 0
@@ -470,33 +466,33 @@ class SAM_TRAIN:
                 a = model_ansv[class_number].detach().numpy()
                 a = np.array([a] * 3)
                 axes[idx][1 + class_number * 3].imshow(np.transpose(a, (1, 2, 0)))
-                P.write_to_log(
+                print(
                     "model        idx={}, class={}, sum={}, max={}, min={}".format(idx, class_number, np.sum(a),
                                                                                    np.max(a),
                                                                                    np.min(a)))
                 a = (a - np.min(a)) / (np.max(a) - np.min(a))
                 axes[idx][1 + class_number * 3 + 1].imshow(np.transpose(a, (1, 2, 0)))
-                P.write_to_log(
+                print(
                     "model normed idx={}, class={}, sum={}, max={}, min={}".format(idx, class_number, np.sum(a),
                                                                                    np.max(a), np.min(a)))
 
                 a = trist_ansv[class_number].detach().numpy()
                 a = np.array([a] * 3)
                 axes[idx][1 + class_number * 3 + 2].imshow(np.transpose(a, (1, 2, 0)))
-                P.write_to_log(
+                print(
                     "trust        idx={}, class={}, sum={}, max={}, min={}".format(idx, class_number, np.sum(a),
                                                                                    np.max(a),
                                                                                    np.min(a)))
 
-                P.write_to_log("=" * 50)
+                print("=" * 50)
 
                 axes[idx][1 + class_number * 3].set(xlabel='model answer class: {}'.format(class_number))
                 axes[idx][1 + class_number * 3 + 1].set(xlabel='model normed answer class: {}'.format(class_number))
                 axes[idx][1 + class_number * 3 + 2].set(xlabel='trust answer class: {}'.format(class_number))
-        P.write_to_log("=" * 50)
-        P.write_to_log("=" * 50)
-        P.write_to_log("=" * 50)
-        P.write_to_log("=" * 50)
-        P.write_to_log("=" * 50)
+        print("=" * 50)
+        print("=" * 50)
+        print("=" * 50)
+        print("=" * 50)
+        print("=" * 50)
         plt.savefig(os.path.join(self.snapshot_dir, snapshot_name))
         plt.close(fig)
