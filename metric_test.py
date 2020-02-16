@@ -12,13 +12,11 @@ def __to_global(a, b):
 
 
 if __name__ == "__main__":
-    a_true = [0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0]
-    a_pred = [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+    a_true = [0, 0, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+    a_pred = [0, 1, 0, 4, 1, 0, 0, 0, 0, 0, 0, 0]
 
     a, b = __to_global([a_true], [a_pred])
     print(a, b)
-    print(metrics.f1_score(a_true, a_pred, pos_label=1))
-
     print(metrics.f1_score(a_true, a_pred, average='micro'))
-
     print(metrics.f1_score(a_true, a_pred, average='macro'))
+    print(metrics.f1_score(a_true, a_pred))
