@@ -17,6 +17,68 @@ def scalar(tensor):
     return tensor.data.cpu().item()
 
 
+#           sam branch
+#     basis   ----------
+# inp -----            -------- |||   ----------
+#           ----------- merged  avg   classifier
+#           classifier
+
+def classifier_weights(model):
+    a = list(model.classifier_branch.parameters())
+    a.extend(list(model.merged_branch.parameters()))
+    a.extend(list(model.avg_pool.parameters()))
+    a.extend(list(model.classifier.parameters()))
+    return a
+
+
+def attention_module_weights(model):
+    a = []  # list(model.basis.parameters())
+    a.extend(list(model.sam_branch.parameters()))
+    return a
+
+
+def register_weights(weight_class, model):
+    if weight_class == "classifier":
+        return classifier_weights(model)
+    elif weight_class == "attention":
+        return attention_module_weights(model)
+    raise BaseException("unrecognized param: " + weight_class)
+
+
+def disable_gradient(weight_class, model):
+    if weight_class == "classifier":
+        for param in classifier_weights(model):
+            param.requires_grad = False
+        return
+    elif weight_class == "attention":
+        for param in attention_module_weights(model):
+            param.requires_grad = False
+        return
+    raise BaseException("unrecognized param: " + weight_class)
+
+
+def enable_gradient(weight_class, model):
+    if weight_class == "classifier":
+        for param in classifier_weights(model):
+            param.requires_grad = True
+        return
+    elif weight_class == "attention":
+        for param in attention_module_weights(model):
+            param.requires_grad = True
+        return
+    raise BaseException("unrecognized param: " + weight_class)
+
+
+def enable_gradient_model(model):
+    for param in model.parameters():
+        param.requires_grad = True
+
+
+def disable_gradient_model(model):
+    for param in model.parameters():
+        param.requires_grad = False
+
+
 """
 ДАННОЕ РЕШЕНИЕ НЕЧЕСТНОЕ!!!!!!!!!!!!!
 ТАК КАК Я УМНОЖАЮ ВЕТКУ КЛАССИФИКАЦИИ НА НАСТОЯЩУЮ МАСКУ, А НЕ НА ТО ЧТО ПОЛУЧИЛОСЬ В attention модуле
@@ -40,14 +102,11 @@ class SAM_TRAIN:
                  description: str = "sam",
                  change_lr_epochs: int = None,
                  class_number: int = None,
-                 register_weights=None,
                  snapshot_elements_count: int = 11,
                  snapshot_dir: str = None):
 
         self.snapshot_elements_count = snapshot_elements_count
         self.snapshot_dir = snapshot_dir
-
-        self.register_weights = register_weights
 
         self.class_number = class_number
 
@@ -93,9 +152,9 @@ class SAM_TRAIN:
     def train(self):
 
         learning_rate = 1e-6
-        classifier_optimizer = torch.optim.Adam(self.register_weights("classifier", self.sam_model),
+        classifier_optimizer = torch.optim.Adam(register_weights("classifier", self.sam_model),
                                                 lr=learning_rate)
-        attention_module_optimizer = opt.SGD(self.register_weights("attention", self.sam_model), lr=0.1,
+        attention_module_optimizer = opt.SGD(register_weights("attention", self.sam_model), lr=0.1,
                                              momentum=0.9)
 
         self.best_weights = copy.deepcopy(self.sam_model.state_dict())
@@ -110,20 +169,33 @@ class SAM_TRAIN:
             loss_classification_sum_segments = 0
             loss_l1_sum = 0
 
+            # turn on gradients in model
+            enable_gradient_model(self.sam_model)
             classifier_optimizer = self.__apply_adaptive_learning(classifier_optimizer, learning_rate,
                                                                   self.current_epoch)
 
             div_flag = False
+
             if self.current_epoch <= self.pre_train_epochs:
                 # loss_classification_sum_segments, accuracy_classification_sum_segments = self.__train_classifier(
                 #    classifier_optimizer, self.train_segments_set)
+
+                # disable attention module gradient
+                disable_gradient("attention", self.sam_model)
                 div_flag = True
                 loss_classification_sum_classifier, accuracy_classification_sum_classifier = self.__train_classifier(
                     classifier_optimizer, self.train_segments_set)
             else:
+
+                # disable attention module gradient
+                disable_gradient("attention", self.sam_model)
                 loss_classification_sum_classifier, accuracy_classification_sum_classifier = self.__train_classifier(
                     classifier_optimizer, self.train_segments_set)
 
+                # disable classifier branch
+                # enable  attention module gradient
+                enable_gradient("attention", self.sam_model)
+                disable_gradient("classifier", self.sam_model)
                 accuracy_classification_sum_segments, loss_classification_sum_segments, loss_m_sum, loss_l1_sum = self.__train_segments(
                     attention_module_optimizer, self.train_segments_set)
 
@@ -226,7 +298,7 @@ class SAM_TRAIN:
             # classification_loss.backward(retain_graph=True)
 
             segmentation_loss = self.m_loss(model_segmentation, segments)
-            # l1_loss = self.__add_l1_regularization_loss(self.register_weights("attention", self.sam_model))
+            # l1_loss = self.__add_l1_regularization_loss(register_weights("attention", self.sam_model))
             segmentation_l1_loss = segmentation_loss  # + l1_loss
             segmentation_l1_loss.backward()
 
@@ -238,7 +310,7 @@ class SAM_TRAIN:
 
             # accumulate information
             accuracy_classification_sum += scalar(cl_acc.sum())
-            loss_classification_sum += 0 # scalar(classification_loss.sum())
+            loss_classification_sum += 0  # scalar(classification_loss.sum())
             loss_m_sum += scalar(segmentation_loss.sum())
             loss_l1_sum += 0  # scalar(l1_loss.sum())
             with_segments_elements += 1  # labels.size(0)
@@ -352,7 +424,7 @@ class SAM_TRAIN:
         pow_epoch = epoch // self.change_lr_epochs
         if pow_epoch == 0:
             return optimizer
-        return torch.optim.Adam(self.register_weights("classifier", self.sam_model),
+        return torch.optim.Adam(register_weights("classifier", self.sam_model),
                                 lr=learning_rate * (0.1 ** pow_epoch))
 
     # def __add_l1_regularization_loss(self, weights):
@@ -398,20 +470,23 @@ class SAM_TRAIN:
                 a = model_ansv[class_number].detach().numpy()
                 a = np.array([a] * 3)
                 axes[idx][1 + class_number * 3].imshow(np.transpose(a, (1, 2, 0)))
-                P.write_to_log("model        idx={}, class={}, sum={}, max={}, min={}".format(idx, class_number, np.sum(a),
-                                                                                     np.max(a),
-                                                                                     np.min(a)))
+                P.write_to_log(
+                    "model        idx={}, class={}, sum={}, max={}, min={}".format(idx, class_number, np.sum(a),
+                                                                                   np.max(a),
+                                                                                   np.min(a)))
                 a = (a - np.min(a)) / (np.max(a) - np.min(a))
                 axes[idx][1 + class_number * 3 + 1].imshow(np.transpose(a, (1, 2, 0)))
-                P.write_to_log("model normed idx={}, class={}, sum={}, max={}, min={}".format(idx, class_number, np.sum(a),
-                                                                                     np.max(a), np.min(a)))
+                P.write_to_log(
+                    "model normed idx={}, class={}, sum={}, max={}, min={}".format(idx, class_number, np.sum(a),
+                                                                                   np.max(a), np.min(a)))
 
                 a = trist_ansv[class_number].detach().numpy()
                 a = np.array([a] * 3)
                 axes[idx][1 + class_number * 3 + 2].imshow(np.transpose(a, (1, 2, 0)))
-                P.write_to_log("trust        idx={}, class={}, sum={}, max={}, min={}".format(idx, class_number, np.sum(a),
-                                                                                     np.max(a),
-                                                                                     np.min(a)))
+                P.write_to_log(
+                    "trust        idx={}, class={}, sum={}, max={}, min={}".format(idx, class_number, np.sum(a),
+                                                                                   np.max(a),
+                                                                                   np.min(a)))
 
                 P.write_to_log("=" * 50)
 

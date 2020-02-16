@@ -14,21 +14,6 @@ import numpy as np
 classes = 5
 class_number = None
 
-
-def register_weights(weight_class, model):
-    if weight_class == "classifier":
-        a = list(model.classifier_branch.parameters())
-        a.extend(list(model.merged_branch.parameters()))
-        a.extend(list(model.avg_pool.parameters()))
-        a.extend(list(model.classifier.parameters()))
-        return a
-    elif weight_class == "attention":
-        a = list(model.basis.parameters())
-        a.extend(list(model.sam_branch.parameters()))
-        return a
-    raise BaseException("unrecognized param: " + weight_class)
-
-
 if __name__ == "__main__":
     parsed = P.parse_input_commands().parse_args(sys.argv[1:])
     gpu = int(parsed.gpu)
@@ -121,7 +106,6 @@ if __name__ == "__main__":
                                  change_lr_epochs=change_lr_epochs,
                                  class_number=class_number,
                                  description=run_name + "_" + description,
-                                 register_weights=register_weights,
                                  snapshot_elements_count=10,
                                  snapshot_dir=snapshots_path)
         sam_train.train()
