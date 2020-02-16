@@ -259,8 +259,8 @@ class SAM_TRAIN:
             optimizer.zero_grad()
             model_classification, _ = self.sam_model(images)
             classification_loss = self.l_loss(model_classification, labels)
-            classification_loss.backward()
-            optimizer.step()
+            classification_loss.backward() ### TODO HERE
+            optimizer.step() ### TODO HERE
 
             output_probability, output_cl, cl_acc = self.__calculate_accuracy(labels, model_classification,
                                                                               labels.size(0))
