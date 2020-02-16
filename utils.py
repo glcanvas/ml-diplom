@@ -12,7 +12,7 @@ def __to_global(a, b):
 
 
 def calculate_metric(classes, trust_answers, model_answer):
-    class_metric = 'binary' if len(classes) == 1 else 'macro'
+    class_metric = 'binary' if classes == 1 else 'macro'
 
     f_1_score_text = ""
     for i in range(classes):
