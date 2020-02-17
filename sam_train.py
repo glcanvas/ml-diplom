@@ -258,7 +258,7 @@ class SAM_TRAIN:
 
             # calculate and optimize model
             optimizer.zero_grad()
-            model_classification, _ = self.sam_model(images, segments)
+            model_classification, _ = self.sam_model(images)
             classification_loss = self.l_loss(model_classification, labels)
             classification_loss.backward()
             optimizer.step()
@@ -292,7 +292,7 @@ class SAM_TRAIN:
             images, labels, segments = self.__convert_data_and_label(images, labels, segments)
             segments = self.puller(segments)
             optimizer.zero_grad()
-            model_classification, model_segmentation = self.sam_model(images, segments)
+            model_classification, model_segmentation = self.sam_model(images)
 
             # classification_loss = self.l_loss(model_classification, labels)
             # classification_loss.backward(retain_graph=True)
@@ -329,7 +329,7 @@ class SAM_TRAIN:
                 _segments = _segments[:, self.class_number:self.class_number + 1, :, :]
             images, labels, _segments = self.__convert_data_and_label(images, labels, _segments)
             _segments = self.puller(_segments)
-            model_classification, _ = self.sam_model(images, _segments)
+            model_classification, _ = self.sam_model(images)
             classification_loss = self.l_loss(model_classification, labels)
             # classification_loss.backward()
 

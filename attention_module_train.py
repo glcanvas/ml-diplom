@@ -88,7 +88,7 @@ class ATTENTION_MODULE_TRAIN:
                 optimizer.step()
             P.write_to_log("TEST={}, Loss_M={:.5f}".format(epoch, loss_m_sum / (with_segments_elements + EPS)))
             self.__take_snapshot(self.train_segments_set, "TRAIN_{}".format(epoch))
-            # self.__take_snapshot(self.test_set, "TEST_{}".format(epoch))
+            self.__take_snapshot(self.test_set, "TEST_{}".format(epoch))
 
     def __convert_data_and_label(self, data, label, segments=None):
         if self.use_gpu:
