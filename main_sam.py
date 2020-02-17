@@ -59,17 +59,8 @@ if __name__ == "__main__":
         print("ok")
 
         sam_branch = nn.Sequential(
-            nn.Conv2d(64, 64, kernel_size=(3, 3)),
-            nn.ReLU(),
-            nn.Conv2d(64, 128, kernel_size=(3, 3)),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(128, 64, kernel_size=(3, 3), padding=(1, 1)),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2, padding=(1, 1)),
-            nn.Conv2d(64, 128, kernel_size=(3, 3), padding=(1, 1)),
-            nn.ReLU(),
-            nn.Conv2d(128, classes, kernel_size=(3, 3), padding=(1, 1)),
+            *m.vgg16(pretrained=True).features[2:15],
+            nn.Conv2d(256, classes, kernel_size=(3, 3), padding=(1, 1)),
             nn.Sigmoid()
         )
         model = m.vgg16(pretrained=True)

@@ -71,9 +71,6 @@ if __name__ == "__main__":
         test_set = DataLoader(il.ImageDataset(test_set), batch_size=5)
         print("ok")
 
-        # model_sam = m.vgg16(pretrained=True).features[2:15]
-        # nn.Conv2d(256, classes, kernel_size=(3, 3), padding=(1, 1)),
-        # nn.Sigmoid()
         sam_branch = nn.Sequential(
             *m.vgg16(pretrained=True).features[2:15],
             nn.Conv2d(256, classes, kernel_size=(3, 3), padding=(1, 1)),

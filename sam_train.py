@@ -80,8 +80,7 @@ def disable_gradient_model(model):
 
 
 """
-ДАННОЕ РЕШЕНИЕ НЕЧЕСТНОЕ!!!!!!!!!!!!!
-ТАК КАК Я УМНОЖАЮ ВЕТКУ КЛАССИФИКАЦИИ НА НАСТОЯЩУЮ МАСКУ, А НЕ НА ТО ЧТО ПОЛУЧИЛОСЬ В attention модуле
+ДАННОЕ РЕШЕНИЕ ЧЕСТНОЕ!!!!!!!!!!!!!
 """
 
 
@@ -154,8 +153,7 @@ class SAM_TRAIN:
         learning_rate = 1e-6
         classifier_optimizer = torch.optim.Adam(register_weights("classifier", self.sam_model),
                                                 lr=learning_rate)
-        attention_module_optimizer = opt.SGD(register_weights("attention", self.sam_model), lr=0.1,
-                                             momentum=0.9)
+        attention_module_optimizer = torch.optim.Adam(register_weights("attention", self.sam_model), lr=1e-4)
 
         self.best_weights = copy.deepcopy(self.sam_model.state_dict())
         best_loss = None
