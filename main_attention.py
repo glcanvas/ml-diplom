@@ -12,21 +12,6 @@ import os
 classes = 5
 class_number = None
 
-
-def register_weights(weight_class, model):
-    if weight_class == "classifier":
-        a = list(model.classifier_branch.parameters())
-        a.extend(list(model.merged_branch.parameters()))
-        a.extend(list(model.avg_pool.parameters()))
-        a.extend(list(model.classifier.parameters()))
-        return a
-    elif weight_class == "attention":
-        a = []  # list(model.basis.parameters())
-        a.extend(list(model.sam_branch.parameters()))
-        return a
-    raise BaseException("unrecognized param: " + weight_class)
-
-
 if __name__ == "__main__":
     parsed = P.parse_input_commands().parse_args(sys.argv[1:])
     gpu = int(parsed.gpu)
@@ -42,14 +27,14 @@ if __name__ == "__main__":
         classes = 1
         class_number = use_class_number
 
-    description = "ATTENTION_MODULE_ONLY_description-{},train_set-{},pre_train_epochs-{}," \
-                  "update_lr_epoch-{},epochs-{},class_number-{}".format(parsed_description,
-                                                                        train_set_size,
-                                                                        pre_train,
-                                                                        change_lr_epochs,
-                                                                        epochs,
-                                                                        class_number
-                                                                        )
+    description = "description-{},train_set-{},pre_train_epochs-{},update_lr_epoch-{},epochs-{},class_number-{}".format(
+        parsed_description,
+        train_set_size,
+        pre_train,
+        change_lr_epochs,
+        epochs,
+        class_number
+    )
 
     P.initialize_log_name(run_name, algorithm_name, description)
 
@@ -101,16 +86,18 @@ if __name__ == "__main__":
                            classifier)
 
         P.write_to_log(sam_model)
-        sam_train = amt.ATTENTION_MODULE_TRAIN(sam_model, train_segments_set, test_set, classes=classes,
-                                               gpu_device=gpu,
-                                               train_epochs=epochs,
-                                               change_lr_epochs=change_lr_epochs,
-                                               class_number=class_number,
-                                               description=run_name + "_" + description,
-                                               register_weights=register_weights,
-                                               snapshot_elements_count=10,
-                                               snapshot_dir=snapshots_path)
-        sam_train.train_attention_module()
+        sam_train = amt.ATTENTION_MODULE(sam_model, train_segments_set, test_set, classes=classes,
+                                         pre_train_epochs=pre_train,
+                                         gpu_device=gpu,
+                                         train_epochs=epochs,
+                                         save_train_logs_epochs=4,
+                                         test_each_epoch=4,
+                                         change_lr_epochs=change_lr_epochs,
+                                         class_number=class_number,
+                                         description=run_name + "_" + description,
+                                         snapshot_elements_count=10,
+                                         snapshot_dir=snapshots_path)
+        sam_train.train()
 
     except BaseException as e:
         print("EXCEPTION", e)
