@@ -164,25 +164,27 @@ class ATTENTION_MODULE:
 
             accuracy_classification_sum_classifier = 0
             loss_classification_sum_classifier = 0
-            
+            accuracy_classification_sum_segments = 0
+            loss_classification_sum_classifier = 0
+            loss_m_sum = 0
+            loss_l1_sum = 0
             classifier_optimizer = self.__apply_adaptive_learning(classifier_optimizer, learning_rate,
                                                                   self.current_epoch)
 
             div_flag = False
 
             if self.current_epoch <= self.pre_train_epochs:
-                div_flag = True
+                # div_flag = True
                 accuracy_classification_sum_segments, loss_m_sum, loss_l1_sum = self.__train_segments(
                     attention_module_optimizer, self.train_segments_set)
             else:
-                accuracy_classification_sum_segments, loss_m_sum, loss_l1_sum = self.__train_segments(
-                    attention_module_optimizer, self.train_segments_set)
+                # accuracy_classification_sum_segments, loss_m_sum, loss_l1_sum = self.__train_segments(
+                #     attention_module_optimizer, self.train_segments_set)
 
                 loss_classification_sum_classifier, accuracy_classification_sum_classifier = self.__train_classifier(
                     classifier_optimizer, self.train_segments_set)
 
-            accuracy_total = (accuracy_classification_sum_segments + accuracy_classification_sum_classifier) / (
-                1 if div_flag else 2)
+            accuracy_total = accuracy_classification_sum_segments + accuracy_classification_sum_classifier
             classification_loss_total = loss_classification_sum_classifier
             loss_total = loss_classification_sum_classifier + loss_m_sum
 
