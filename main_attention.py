@@ -95,7 +95,7 @@ if __name__ == "__main__":
                                          change_lr_epochs=change_lr_epochs,
                                          class_number=class_number,
                                          description=run_name + "_" + description,
-                                         snapshot_elements_count=10,
+                                         snapshot_elements_count=20,
                                          snapshot_dir=snapshots_path)
         sam_train.train()
 

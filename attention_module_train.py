@@ -11,6 +11,7 @@ import numpy as np
 
 EPS = 1e-10
 probability_threshold = 0.5
+TRY_CALCULATE_MODEL = 500
 
 
 def scalar(tensor):
@@ -163,26 +164,17 @@ class ATTENTION_MODULE:
             self.current_epoch = epoch
 
             accuracy_classification_sum_classifier = 0
-            loss_classification_sum_classifier = 0
             accuracy_classification_sum_segments = 0
-            loss_classification_sum_classifier = 0
-            loss_m_sum = 0
             loss_l1_sum = 0
             classifier_optimizer = self.__apply_adaptive_learning(classifier_optimizer, learning_rate,
                                                                   self.current_epoch)
 
-            div_flag = False
-
             if self.current_epoch <= self.pre_train_epochs:
-                # div_flag = True
-                accuracy_classification_sum_segments, loss_m_sum, loss_l1_sum = self.__train_segments(
-                    attention_module_optimizer, self.train_segments_set)
+                accuracy_classification_sum_segments, loss_m_sum, loss_l1_sum, loss_classification_sum_classifier = \
+                    self.__train_segments(attention_module_optimizer, self.train_segments_set)
             else:
-                # accuracy_classification_sum_segments, loss_m_sum, loss_l1_sum = self.__train_segments(
-                #     attention_module_optimizer, self.train_segments_set)
-
-                loss_classification_sum_classifier, accuracy_classification_sum_classifier = self.__train_classifier(
-                    classifier_optimizer, self.train_segments_set)
+                loss_classification_sum_classifier, accuracy_classification_sum_classifier, loss_m_sum = \
+                    self.__train_classifier(classifier_optimizer, self.train_segments_set)
 
             accuracy_total = accuracy_classification_sum_segments + accuracy_classification_sum_classifier
             classification_loss_total = loss_classification_sum_classifier
@@ -230,8 +222,10 @@ class ATTENTION_MODULE:
 
     def __train_classifier(self, optimizer: opt.SGD, train_set):
         loss_classification_sum = 0
+        loss_segmentation_sum = 0
         accuracy_classification_sum = 0
         without_segments_elements = 0
+
         for images, segments, labels in train_set:
             if self.class_number is not None:
                 labels = labels[:, self.class_number:self.class_number + 1]
@@ -242,7 +236,18 @@ class ATTENTION_MODULE:
 
             # calculate and optimize model
             optimizer.zero_grad()
-            model_classification, _ = self.sam_model(images)
+            flag = True
+            cnt = 0
+            while cnt != TRY_CALCULATE_MODEL and flag:
+                try:
+                    cnt += 1
+                    model_classification, model_segmentation = self.sam_model(images)
+                    flag = False
+                except RuntimeError as e:
+                    P.write_to_log("Can't execute model, CUDA out of memory", e)
+
+            segmentation_loss = self.m_loss(model_segmentation, segments)
+
             classification_loss = self.l_loss(model_classification, labels)
             classification_loss.backward()
             optimizer.step()
@@ -255,17 +260,19 @@ class ATTENTION_MODULE:
             # accumulate information
             accuracy_classification_sum += scalar(cl_acc.sum())
             loss_classification_sum += scalar(classification_loss.sum())
+            loss_segmentation_sum += scalar(segmentation_loss.sum())
             without_segments_elements += 1  # labels.size(0)
             self.__de_convert_data_and_label(images, segments, labels)
             torch.cuda.empty_cache()
 
         return loss_classification_sum / (without_segments_elements + EPS), accuracy_classification_sum / (
-                without_segments_elements + EPS)
+                without_segments_elements + EPS), loss_segmentation_sum / (without_segments_elements + EPS)
 
     def __train_segments(self, optimizer: torch.optim.Adam, train_set):
         accuracy_classification_sum = 0
         loss_m_sum = 0
         loss_l1_sum = 0
+        loss_classification_sum = 0
         with_segments_elements = 0
 
         for images, segments, labels in train_set:
@@ -276,9 +283,17 @@ class ATTENTION_MODULE:
             images, labels, segments = self.__convert_data_and_label(images, labels, segments)
             segments = self.puller(segments)
             optimizer.zero_grad()
-            model_classification, model_segmentation = self.sam_model(images)
+            flag = True
+            cnt = 0
+            while cnt != TRY_CALCULATE_MODEL and flag:
+                try:
+                    cnt += 1
+                    model_classification, model_segmentation = self.sam_model(images)
+                    flag = False
+                except RuntimeError as e:
+                    P.write_to_log("Can't execute model, CUDA out of memory", e)
 
-            # classification_loss = self.l_loss(model_classification, labels)
+            classification_loss = self.l_loss(model_classification, labels)
             # classification_loss.backward(retain_graph=True)
 
             segmentation_loss = self.m_loss(model_segmentation, segments)
@@ -296,15 +311,19 @@ class ATTENTION_MODULE:
             accuracy_classification_sum += scalar(cl_acc.sum())
             loss_m_sum += scalar(segmentation_loss.sum())
             loss_l1_sum += 0  # scalar(l1_loss.sum())
+            loss_classification_sum += scalar(classification_loss.sum())
             with_segments_elements += 1  # labels.size(0)
             self.__de_convert_data_and_label(images, labels, segments)
             torch.cuda.empty_cache()
 
         return accuracy_classification_sum / (with_segments_elements + EPS), \
-               loss_m_sum / (with_segments_elements + EPS), loss_l1_sum / (with_segments_elements + EPS)
+               loss_m_sum / (with_segments_elements + EPS), \
+               loss_l1_sum / (with_segments_elements + EPS), \
+               loss_classification_sum / (with_segments_elements + EPS)
 
     def test(self):
         loss_classification_sum = 0
+        loss_segmentation_sum = 0
         accuracy_classification_sum = 0
         without_segments_elements = 0
         for images, _segments, labels in self.test_set:
@@ -313,9 +332,18 @@ class ATTENTION_MODULE:
                 _segments = _segments[:, self.class_number:self.class_number + 1, :, :]
             images, labels, _segments = self.__convert_data_and_label(images, labels, _segments)
             _segments = self.puller(_segments)
-            model_classification, _ = self.sam_model(images)
+            flag = True
+            cnt = 0
+            while cnt != TRY_CALCULATE_MODEL and flag:
+                try:
+                    cnt += 1
+                    model_classification, model_segmentation = self.sam_model(images)
+                    flag = False
+                except RuntimeError as e:
+                    P.write_to_log("Can't execute model, CUDA out of memory", e)
+
             classification_loss = self.l_loss(model_classification, labels)
-            # classification_loss.backward()
+            segmentation_loss = self.m_loss(model_segmentation, _segments)
 
             output_probability, output_cl, cl_acc = self.__calculate_accuracy(labels, model_classification,
                                                                               labels.size(0))
@@ -325,6 +353,7 @@ class ATTENTION_MODULE:
             # accumulate information
             accuracy_classification_sum += scalar(cl_acc.sum())
             loss_classification_sum += scalar(classification_loss.sum())
+            loss_segmentation_sum += scalar(segmentation_loss.sum())
             without_segments_elements += 1  # labels.size(0)
             self.__de_convert_data_and_label(images, labels)
             torch.cuda.empty_cache()
@@ -335,11 +364,13 @@ class ATTENTION_MODULE:
 
         loss_classification_sum /= without_segments_elements + EPS
         accuracy_classification_sum /= without_segments_elements + EPS
-        text = 'TEST Loss_CL={:.5f} Accuracy_CL={:.5f} {} {} {} '.format(loss_classification_sum,
-                                                                         accuracy_classification_sum,
-                                                                         f_1_score_text,
-                                                                         recall_score_text,
-                                                                         precision_score_text)
+        loss_segmentation_sum /= without_segments_elements + EPS
+        text = 'TEST Loss_CL={:.5f} Loss_M={:.5f} Accuracy_CL={:.5f} {} {} {} '.format(loss_classification_sum,
+                                                                                       loss_segmentation_sum,
+                                                                                       accuracy_classification_sum,
+                                                                                       f_1_score_text,
+                                                                                       recall_score_text,
+                                                                                       precision_score_text)
         P.write_to_log(text)
 
         return loss_classification_sum, accuracy_classification_sum
@@ -409,14 +440,6 @@ class ATTENTION_MODULE:
         return torch.optim.Adam(register_weights("classifier", self.sam_model),
                                 lr=learning_rate * (0.1 ** pow_epoch))
 
-    # def __add_l1_regularization_loss(self, weights):
-    #    l2_loss = torch.tensor(0.)
-    #    if self.use_gpu:
-    #        l2_loss = l2_loss.cuda(self.gpu_device)
-    #    for param in weights:
-    #        l2_loss += torch.norm(param)
-    #    return 0.5 * l2_loss
-
     def __take_snapshot(self, data_set, snapshot_name: str = None):
         cnt = 0
         model_segments_list = []
@@ -430,7 +453,16 @@ class ATTENTION_MODULE:
 
             images, labels, segments = self.__convert_data_and_label(images, labels, segments)
             segments = self.puller(segments)
-            _, model_segments = self.sam_model(images)
+            flag = True
+            cnt1 = 0
+            while cnt1 != TRY_CALCULATE_MODEL or flag:
+                try:
+                    cnt1 += 1
+                    _, model_segments = self.sam_model(images)
+                    flag = False
+                except RuntimeError as e:
+                    P.write_to_log("Can't execute model, CUDA out of memory", e)
+
             cnt += segments.size(0)
             images, _, segments = self.__de_convert_data_and_label(images, labels, segments)
             model_segments = model_segments.cpu()

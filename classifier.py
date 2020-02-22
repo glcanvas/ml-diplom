@@ -12,7 +12,7 @@ import os
 import utils
 
 probability_threshold = 0.5
-
+TRY_CALCULATE_MODEL = 500
 
 def scalar(tensor):
     return tensor.data.cpu().item()
@@ -88,7 +88,16 @@ class Classifier:
                 class_label = labels
                 train_batch_size = labels.shape[0]
                 self.model.zero_grad()
-                output_cl = self.model(images)
+
+                flag = True
+                cnt = 0
+                while cnt != TRY_CALCULATE_MODEL and flag:
+                    try:
+                        cnt += 1
+                        output_cl = self.model(images)
+                        flag = False
+                    except RuntimeError as e:
+                        P.write_to_log("Can't execute model, CUDA out of memory", e)
 
                 sigmoid = nn.Sigmoid()  # used for calculate accuracy
                 output_cl = sigmoid(output_cl)
@@ -166,7 +175,16 @@ class Classifier:
                 images, labels = send_to_gpu(self.gpu_device, images, labels)
             class_label = labels
             batch_size = labels.shape[0]
-            output_cl = self.model(images)
+
+            flag = True
+            cnt = 0
+            while cnt != TRY_CALCULATE_MODEL and flag:
+                try:
+                    cnt += 1
+                    output_cl = self.model(images)
+                    flag = False
+                except RuntimeError as e:
+                    P.write_to_log("Can't execute model, CUDA out of memory", e)
 
             grad_target = output_cl * class_label
             grad_target.backward(gradient=class_label * output_cl, retain_graph=True)

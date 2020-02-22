@@ -11,6 +11,7 @@ import numpy as np
 
 EPS = 1e-10
 probability_threshold = 0.5
+TRY_CALCULATE_MODEL = 500
 
 
 def scalar(tensor):
@@ -151,8 +152,7 @@ class SAM_TRAIN:
     def train(self):
 
         learning_rate = 1e-6
-        classifier_optimizer = torch.optim.Adam(register_weights("classifier", self.sam_model),
-                                                lr=learning_rate)
+        classifier_optimizer = torch.optim.Adam(self.sam_model.parameters(), lr=learning_rate)
         attention_module_optimizer = torch.optim.Adam(register_weights("attention", self.sam_model), lr=1e-4)
 
         self.best_weights = copy.deepcopy(self.sam_model.state_dict())
@@ -179,7 +179,7 @@ class SAM_TRAIN:
                 #    classifier_optimizer, self.train_segments_set)
 
                 # disable attention module gradient
-                disable_gradient("attention", self.sam_model)
+                # disable_gradient("attention", self.sam_model)
                 div_flag = True
                 loss_classification_sum_classifier, accuracy_classification_sum_classifier = self.__train_classifier(
                     classifier_optimizer, self.train_segments_set)
@@ -256,7 +256,16 @@ class SAM_TRAIN:
 
             # calculate and optimize model
             optimizer.zero_grad()
-            model_classification, _ = self.sam_model(images)
+            flag = True
+            cnt = 0
+            while cnt != TRY_CALCULATE_MODEL and flag:
+                try:
+                    cnt += 1
+                    model_classification, model_segmentation = self.sam_model(images)
+                    flag = False
+                except RuntimeError as e:
+                    P.write_to_log("Can't execute model, CUDA out of memory", e)
+
             classification_loss = self.l_loss(model_classification, labels)
             classification_loss.backward()
             optimizer.step()
@@ -290,7 +299,16 @@ class SAM_TRAIN:
             images, labels, segments = self.__convert_data_and_label(images, labels, segments)
             segments = self.puller(segments)
             optimizer.zero_grad()
-            model_classification, model_segmentation = self.sam_model(images)
+
+            flag = True
+            cnt = 0
+            while cnt != TRY_CALCULATE_MODEL and flag:
+                try:
+                    cnt += 1
+                    model_classification, model_segmentation = self.sam_model(images)
+                    flag = False
+                except RuntimeError as e:
+                    P.write_to_log("Can't execute model, CUDA out of memory", e)
 
             # classification_loss = self.l_loss(model_classification, labels)
             # classification_loss.backward(retain_graph=True)
@@ -327,7 +345,17 @@ class SAM_TRAIN:
                 _segments = _segments[:, self.class_number:self.class_number + 1, :, :]
             images, labels, _segments = self.__convert_data_and_label(images, labels, _segments)
             _segments = self.puller(_segments)
-            model_classification, _ = self.sam_model(images)
+
+            flag = True
+            cnt = 0
+            while cnt != TRY_CALCULATE_MODEL and flag:
+                try:
+                    cnt += 1
+                    model_classification, model_segmentation = self.sam_model(images)
+                    flag = False
+                except RuntimeError as e:
+                    P.write_to_log("Can't execute model, CUDA out of memory", e)
+
             classification_loss = self.l_loss(model_classification, labels)
             # classification_loss.backward()
 
@@ -444,7 +472,17 @@ class SAM_TRAIN:
 
             images, labels, segments = self.__convert_data_and_label(images, labels, segments)
             segments = self.puller(segments)
-            _, model_segments = self.sam_model(images)
+
+            flag = True
+            cnt = 0
+            while cnt != TRY_CALCULATE_MODEL and flag:
+                try:
+                    cnt += 1
+                    model_classification, model_segments = self.sam_model(images)
+                    flag = False
+                except RuntimeError as e:
+                    P.write_to_log("Can't execute model, CUDA out of memory", e)
+
             cnt += segments.size(0)
             images, _, segments = self.__de_convert_data_and_label(images, labels, segments)
             model_segments = model_segments.cpu()
