@@ -152,9 +152,9 @@ class AbstractTrain:
             classification_loss = l_loss(model_classification, labels)
             segmentation_loss = m_loss(model_segmentation, segments)
 
-            # segmentation_l1_loss = segmentation_loss
+
             torch.cuda.empty_cache()
-            # segmentation_l1_loss.backward()
+            segmentation_loss.backward()
             optimizer.step()
 
             output_probability, output_cl, cl_acc = self.calculate_accuracy(labels, model_classification,
