@@ -1,7 +1,7 @@
 ALGORITHM_NAME=TWO_LOSS_WITH_AM
 
 SCRIPT_PATH=ml2/ml-diplom
-SCRIPT_NAME=executors/main_alternate.py
+SCRIPT_NAME=main_alternate.py
 
 DESCRIPTION=TWO_LOSSES_FAIR_BIG_AM
 

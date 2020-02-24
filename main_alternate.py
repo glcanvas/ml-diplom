@@ -4,7 +4,7 @@ import property as P
 import sys
 import traceback
 import am_model as ss
-from trains import first_attention_module_train as amt
+import alternate_attention_module_train as st
 import os
 
 classes = 5
@@ -17,6 +17,7 @@ if __name__ == "__main__":
     pre_train = int(parsed.pre_train)
     train_set_size = int(parsed.train_set)
     epochs = int(parsed.epochs)
+
     run_name = parsed.run_name
     algorithm_name = parsed.algorithm_name
     use_class_number = int(parsed.use_class_number)
@@ -55,17 +56,17 @@ if __name__ == "__main__":
         am_model = ss.build_attention_module_model(classes)
 
         P.write_to_log(am_model)
-        am_train = amt.AttentionModule(am_model, train_segments_set, test_set, classes=classes,
-                                       pre_train_epochs=pre_train,
-                                       gpu_device=gpu,
-                                       train_epochs=epochs,
-                                       save_train_logs_epochs=4,
-                                       test_each_epoch=4,
-                                       class_number=class_number,
-                                       description=run_name + "_" + description,
-                                       snapshot_elements_count=20,
-                                       snapshot_dir=snapshots_path)
-        am_train.train()
+        sam_train = st.AlternateModuleTrain(am_model, train_segments_set, test_set, classes=classes,
+                                            pre_train_epochs=pre_train,
+                                            gpu_device=gpu,
+                                            train_epochs=epochs,
+                                            save_train_logs_epochs=4,
+                                            test_each_epoch=4,
+                                            class_number=class_number,
+                                            description=run_name + "_" + description,
+                                            snapshot_elements_count=20,
+                                            snapshot_dir=snapshots_path)
+        sam_train.train()
 
     except BaseException as e:
         print("EXCEPTION", e)

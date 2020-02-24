@@ -7,7 +7,7 @@ import property as p
 import torch.nn as nn
 import copy
 import utils
-import trains.abstract_train as at
+import abstract_train as at
 
 
 class Classifier(at.AbstractTrain):

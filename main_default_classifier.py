@@ -4,7 +4,7 @@ import property as P
 import sys
 import torchvision.models as m
 import traceback
-from trains import classifier_vgg16_train as cl
+import classifier_vgg16_train as cl
 
 classes = 5
 class_number = None

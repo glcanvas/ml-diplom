@@ -1,24 +1,13 @@
 import torch
 import torch.nn as nn
 import copy
-import property as p
-from trains import abstract_train as at
-import gradient_registers as gr
+import property as P
 import utils
-
-"""
-по сути тоже что и alternate_attention_module_train.py, но здесь я сначала предобучаю только AM потом уже все остальное
-"""
+import abstract_train as at
+import gradient_registers as gr
 
 
-#           sam branch
-#     basis   ----------
-# inp -----            -------- |||   ----------
-#           ----------- merged  avg   classifier
-#           classifier
-
-
-class AttentionModule(at.AbstractTrain):
+class AlternateModuleTrain(at.AbstractTrain):
     """
         implementation train where at first only am module train, then only classification
     """
@@ -40,10 +29,10 @@ class AttentionModule(at.AbstractTrain):
                  snapshot_elements_count: int = 11,
                  snapshot_dir: str = None):
 
-        super(AttentionModule, self).__init__(classes, pre_train_epochs, train_epochs, save_train_logs_epochs,
-                                              test_each_epoch, use_gpu,
-                                              gpu_device, description, class_number, snapshot_elements_count,
-                                              snapshot_dir)
+        super(AlternateModuleTrain, self).__init__(classes, pre_train_epochs, train_epochs, save_train_logs_epochs,
+                                                   test_each_epoch, use_gpu,
+                                                   gpu_device, description, class_number, snapshot_elements_count,
+                                                   snapshot_dir)
 
         self.train_segments_set = train_segments_set
         self.test_set = test_set
@@ -62,8 +51,7 @@ class AttentionModule(at.AbstractTrain):
     def train(self):
 
         learning_rate = 1e-6
-        classifier_optimizer = torch.optim.Adam(gr.register_weights("classifier", self.am_model),
-                                                lr=learning_rate)
+        classifier_optimizer = torch.optim.Adam(self.am_model.parameters(), lr=learning_rate)
         attention_module_optimizer = torch.optim.Adam(gr.register_weights("attention", self.am_model), lr=1e-4)
 
         self.best_weights = copy.deepcopy(self.am_model.state_dict())
@@ -73,31 +61,42 @@ class AttentionModule(at.AbstractTrain):
         for epoch in range(1, self.train_epochs + 1):
             self.current_epoch = epoch
 
-            accuracy_classification_sum_classifier = 0
+            loss_m_sum = 0
             accuracy_classification_sum_segments = 0
+            loss_classification_sum_from_segm = 0
             loss_l1_sum = 0
-            # classifier_optimizer = self.apply_adaptive_learning(classifier_optimizer, learning_rate,
-            #                                                       self.current_epoch)
+
+            div_flag = False
 
             if self.current_epoch <= self.pre_train_epochs:
-                accuracy_classification_sum_segments, loss_m_sum, loss_l1_sum, loss_classification_sum_classifier = \
-                    self.train_segments(self.am_model, self.l_loss, self.m_loss, attention_module_optimizer,
-                                        self.train_segments_set)
+                div_flag = True
+                loss_classification_sum_classifier, accuracy_classification_sum_classifier, loss_segmentation_sum = \
+                    self.train_classifier(self.am_model, self.l_loss, self.m_loss, classifier_optimizer,
+                                          self.train_segments_set)
             else:
-                loss_classification_sum_classifier, accuracy_classification_sum_classifier, loss_m_sum = \
+
+                loss_classification_sum_classifier, accuracy_classification_sum_classifier, loss_segmentation_sum = \
                     self.train_classifier(self.am_model, self.l_loss, self.m_loss, classifier_optimizer,
                                           self.train_segments_set)
 
-            accuracy_total = accuracy_classification_sum_segments + accuracy_classification_sum_classifier
-            loss_total = loss_classification_sum_classifier + loss_m_sum
+                accuracy_classification_sum_segments, loss_m_sum, loss_l1_sum, loss_classification_sum_from_segm = \
+                    self.train_segments(self.am_model, self.l_loss, self.m_loss, attention_module_optimizer,
+                                        self.train_segments_set)
 
+            accuracy_total = (accuracy_classification_sum_segments + accuracy_classification_sum_classifier) / (
+                1 if div_flag else 2)
+            classification_loss_total = (loss_classification_sum_classifier + loss_classification_sum_from_segm) / (
+                1 if div_flag else 2)
+            loss_m_sum = (loss_segmentation_sum + loss_m_sum) / (1 if div_flag else 2)
+
+            loss_total = loss_classification_sum_classifier + loss_m_sum + loss_classification_sum_from_segm
             prefix = "PRETRAIN" if epoch <= self.pre_train_epochs else "TRAIN"
             f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
                                                                                              self.train_trust_answers,
                                                                                              self.train_model_answers)
 
             text = "{}={} Loss_CL={:.5f} Loss_M={:.5f} Loss_L1={:.5f} Loss_Total={:.5f} Accuracy_CL={:.5f} " \
-                   "{} {} {} ".format(prefix, self.current_epoch, loss_classification_sum_classifier,
+                   "{} {} {} ".format(prefix, self.current_epoch, classification_loss_total,
                                       loss_m_sum,
                                       loss_l1_sum,
                                       loss_total,
@@ -106,7 +105,7 @@ class AttentionModule(at.AbstractTrain):
                                       recall_score_text,
                                       precision_score_text)
 
-            p.write_to_log(text)
+            P.write_to_log(text)
 
             if self.current_epoch % self.test_each_epoch == 0:
                 self.take_snapshot(self.train_segments_set, self.am_model, "TRAIN_{}".format(epoch))
@@ -119,6 +118,7 @@ class AttentionModule(at.AbstractTrain):
             if best_loss is None or loss_total < best_loss:
                 best_loss = loss_total
                 self.best_weights = copy.deepcopy(self.am_model.state_dict())
+
             self.clear_temp_metrics()
 
         self.save_model(self.best_test_weights)
