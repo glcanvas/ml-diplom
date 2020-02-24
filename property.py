@@ -3,6 +3,11 @@ from datetime import datetime
 import sys
 import argparse
 
+# for train model
+EPS = 1e-10
+PROBABILITY_THRESHOLD = 0.5
+TRY_CALCULATE_MODEL = 500
+
 prefix = 'ISIC_'
 attribute = '_attribute_'
 image_size = 224
@@ -68,7 +73,6 @@ def parse_input_commands():
     parser.add_argument("--gradient_layer_name", default="features.28")
     parser.add_argument("--from_gradient_layer", default="False")
     parser.add_argument("--epochs", default="100")
-    parser.add_argument("--change_lr", default="15")
     parser.add_argument("--train_set", default="2000")
     parser.add_argument("--run_name")  # require
     parser.add_argument("--algorithm_name")  # require

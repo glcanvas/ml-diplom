@@ -1,10 +1,6 @@
 import torch
-import torch.nn.functional as F
-import torchvision.models as m
 import torch.nn as nn
-
-EPS = 1e-10
-probability_threshold = 0.5
+import torchvision.models as m
 
 """
 Давайте разобьем модель на 4 + части
@@ -19,7 +15,45 @@ probability_threshold = 0.5
 """
 
 
-class SAM(nn.Module):
+def build_attention_module_model(classes: int):
+    """
+    build model MAIN FUNCTION HERE!!!!
+    :param classes:  class count
+    :return: builded model
+    """
+    sam_branch = nn.Sequential(
+        *m.vgg16(pretrained=True).features[2:15],
+        nn.Conv2d(256, classes, kernel_size=(3, 3), padding=(1, 1)),
+        nn.Sigmoid()
+    )
+    model = m.vgg16(pretrained=True)
+    basis_branch = model.features[:4]
+
+    # parallel
+    classifier_branch = model.features[4:16]
+
+    merged_branch = model.features[16:]
+    merged_branch = nn.Sequential(
+        nn.Conv2d(256 * classes, 256, kernel_size=(1, 1), stride=(1, 1), padding=(1, 1)),
+        *merged_branch
+    )
+
+    avg_pool = model.avgpool
+    classifier = nn.Sequential(*model.classifier,
+                               nn.Linear(1000, classes),
+                               nn.Sigmoid())
+
+    sam_model = AttentionModuleModel(basis_branch,
+                                     sam_branch,
+                                     classifier_branch,
+                                     merged_branch,
+                                     avg_pool,
+                                     classifier)
+
+    return sam_model
+
+
+class AttentionModuleModel(nn.Module):
     """
     basis_branch: nn.Module
     sam_branch: nn.Module
@@ -37,7 +71,7 @@ class SAM(nn.Module):
                  avg_pool: nn.Module,
                  classification_pool: nn.Module
                  ):
-        super(SAM, self).__init__()
+        super(AttentionModuleModel, self).__init__()
         self.basis = basis_branch
         # parallel
         self.classifier_branch = classification_branch

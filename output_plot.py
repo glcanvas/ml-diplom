@@ -16,12 +16,6 @@ elif os.path.exists("/media/disk2/nduginec"):
     base_data_dir = "/media/disk2/nduginec"
     stupid_flag = True
 
-data_inputs_path = base_data_dir + "/ISIC2018_Task1-2_Training_Input"
-data_labels_path = base_data_dir + "/ISIC2018_Task2_Training_GroundTruth_v3"
-
-cache_data_inputs_path = base_data_dir + "/ISIC2018_Task1-2_Training_Input/cached"
-cache_data_labels_path = base_data_dir + "/ISIC2018_Task2_Training_GroundTruth_v3/cached"
-
 base_data_dir += "/ml-data" if stupid_flag else ""
 
 logs_path = base_data_dir + "/logs"
@@ -64,15 +58,11 @@ def __to_dict(input: str) -> dict:
 
 def sam_parse_train(input: str):
     dct = __to_dict(input)
-    Loss_CL = float(dct['Loss_CL'])
+    Loss_CL = float(dct['Loss_CL']) if 'Loss_CL' in dct else -1
     Loss_M = float(dct['Loss_M']) if 'Loss_M' in dct else -1
     Loss_L1 = float(dct['Loss_L1']) if 'Loss_L1' in dct else -1
     Loss_Total = float(dct['Loss_Total']) if 'Loss_Total' in dct else -1
-    Accuracy_CL = dct['Accuracy_CL']
-    if Accuracy_CL[0] == "=":
-        Accuracy_CL = float(Accuracy_CL[1:])
-    else:
-        Accuracy_CL = float(Accuracy_CL)
+    Accuracy_CL = float(dct['Accuracy_CL']) if 'Accuracy_CL' in dct else -1
     f_measures, recall, precision = __load_statistics(dct)
     return {'Loss_CL': Loss_CL, 'Loss_M': Loss_M, 'Loss_L1': Loss_L1,
             'Loss_Total': Loss_Total, 'Accuracy_CL': Accuracy_CL, 'f_measures': f_measures, 'recall': recall,
@@ -96,15 +86,15 @@ def __load_file(file_path: str, train_parse, test_parse):
     return train, test, file_name
 
 
-def draw_plot_return_avg(ax, title, algo_name, algorithm_list: list, execute_measure_function, color_idx):
+def draw_plot_return_avg(ax, title, algo_name, algorithm_list: list, execute_measure_function, plot_color):
     ax.set_title(title)
     for idx, algo in enumerate(algorithm_list):
         legend = "{}_{}".format(algo_name, idx)
         datas = execute_measure_function(algo)
         indexes = [i for i, _ in enumerate(datas)]
-        plot_color = [0, 0, 0]
-        plot_color[color_idx] = 1
-        plot_color[(color_idx + 1) % 3] = idx * 1 / len(algorithm_list)
+        # plot_color = [0, 0, 0]
+        # plot_color[color_idx] = 1
+        # plot_color[(color_idx + 1) % 3] = 1 # idx * 1 / len(algorithm_list)
         ax.plot(indexes, datas, label=legend, color=plot_color)
 
     lists = []
@@ -155,8 +145,16 @@ def get_hard_measure_by_name(name1, name2):
     return inner
 
 
+def to_color_array(color_idx) -> list:
+    color = [0, 0, 0]
+    for i in range(0, 3):
+        if (1 << i) & color_idx:
+            color[i] = 1
+    return color
+
+
 def draw_simple_metrics(axes, algorithms: dict):
-    for algo_name, color_idx in zip(algorithms, [0, 1, 2]):
+    for algo_name, color_idx in zip(algorithms, [0, 1, 2, 3, 4, 5, 6]):
         metrics = [
             'Loss_CL',
             'Loss_M',
@@ -168,22 +166,22 @@ def draw_simple_metrics(axes, algorithms: dict):
             trains = algorithms[algo_name]['train']
             loss_cl_avg = draw_plot_return_avg(axes[m_idx][0], m + ' Train', algo_name, trains,
                                                get_simple_measure_by_name(m),
-                                               color_idx)
-            color = [0, 0, 0]
-            color[color_idx] = 1
-            draw_plot_avg(axes[m_idx][1], m + ' AVG', algo_name, loss_cl_avg, color)
+                                               to_color_array(color_idx))
+            # color = [0, 0, 0]
+            # color[color_idx] = 1
+            draw_plot_avg(axes[m_idx][1], m + ' AVG', algo_name, loss_cl_avg, to_color_array(color_idx))
 
             tests = algorithms[algo_name]['test']
             loss_cl_avg = draw_plot_return_avg(axes[m_idx][2], m + ' Test', algo_name, tests,
                                                get_simple_measure_by_name(m),
-                                               color_idx)
-            color = [0, 0, 0]
-            color[color_idx] = 1
-            draw_plot_avg(axes[m_idx][3], m + ' AVG', algo_name, loss_cl_avg, color)
+                                               to_color_array(color_idx))
+            # color = [0, 0, 0]
+            # color[color_idx] = 1
+            draw_plot_avg(axes[m_idx][3], m + ' AVG', algo_name, loss_cl_avg, to_color_array(color_idx))
 
 
 def draw_hard_metrics(axes, algorithms: dict):
-    for algo_name, color_idx in zip(algorithms, [0, 1, 2]):
+    for algo_name, color_idx in zip(algorithms, [0, 1, 2, 3, 4, 5, 6, 7]):
         metrics = {
             'f_measures': [
                 'f_1_0',
@@ -217,18 +215,19 @@ def draw_hard_metrics(axes, algorithms: dict):
                 trains = algorithms[algo_name]['train']
                 loss_cl_avg = draw_plot_return_avg(axes[m_idx_1 + 5][0], sub_metrics + ' Train', algo_name, trains,
                                                    get_hard_measure_by_name(m, sub_metrics),
-                                                   color_idx)
-                color = [0, 0, 0]
-                color[color_idx] = 1
-                draw_plot_avg(axes[m_idx_1 + 5][1], m + ' AVG', algo_name, loss_cl_avg, color)
+                                                   to_color_array(color_idx))
+                # color = [0, 0, 0]
+                # color[color_idx] = 1
+                draw_plot_avg(axes[m_idx_1 + 5][1], m + ' AVG', algo_name, loss_cl_avg, to_color_array(color_idx))
 
                 tests = algorithms[algo_name]['test']
                 loss_cl_avg = draw_plot_return_avg(axes[m_idx_1 + 5][2], sub_metrics + ' Test', algo_name, tests,
                                                    get_hard_measure_by_name(m, sub_metrics),
-                                                   color_idx)
-                color = [0, 0, 0]
-                color[color_idx] = 1
-                draw_plot_avg(axes[m_idx_1 + 5][3], m + ' AVG', algo_name, loss_cl_avg, color)
+                                                   to_color_array(color_idx))
+                # color = [0, 0, 0]
+                # color[color_idx] = 1
+                draw_plot_avg(axes[m_idx_1 + 5][3], sub_metrics + ' AVG', algo_name, loss_cl_avg,
+                              to_color_array(color_idx))
 
 
 def visualize_algorithms(algorithms: dict, run_name: str):
@@ -258,6 +257,8 @@ def parse_run(run_number="run_01"):
                 for executed_algorithm in executed_algorithm_list:
                     # executed_algorithm_path = os.path.join(executed_algorithm_path, executed_algorithm)
                     log_path = os.path.join(current_path, algorithm, executed_algorithm)
+                    if '.txt' not in log_path:
+                        continue
                     print('BEGIN READ ' + log_path)
                     train, test, _ = __load_file(log_path, sam_parse_train,
                                                  sam_parse_train)
@@ -269,13 +270,7 @@ def parse_run(run_number="run_01"):
 
 if __name__ == "__main__":
     runs = [
-        "RUN_01",
-        "RUN_02",
-        "RUN_03",
-        "RUN_04",
-        "RUN_05",
-        "RUN_06",
-        "RUN_07"
+        "RUN_20_CL_0"
     ]
     for i in runs:
         parse_run(i)
