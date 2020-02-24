@@ -1,7 +1,7 @@
 ALGORITHM_NAME=AM_AT_FIRST_THEN_CL_TWO_LOSS
 
 SCRIPT_PATH=ml2/ml-diplom
-SCRIPT_NAME=execturors/main_first_attention.py
+SCRIPT_NAME=executors/main_first_attention.py
 
 DESCRIPTION=FAIR_BIG_AM_AM_TRAIN_FIRST_THEN_CLASSIFIER_ONLY
 

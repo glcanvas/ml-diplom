@@ -1,7 +1,7 @@
 ALGORITHM_NAME=VGG16
 
 SCRIPT_PATH=ml2/ml-diplom
-SCRIPT_NAME=execturors/main_default_classifier.py
+SCRIPT_NAME=executors/main_default_classifier.py
 
 DESCRIPTION=BASE_LINE_CLASSIFIER
 
