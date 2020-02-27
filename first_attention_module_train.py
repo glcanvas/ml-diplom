@@ -5,6 +5,7 @@ import property as p
 import abstract_train as at
 import gradient_registers as gr
 import utils
+import am_loss_function as amlf
 
 """
 по сути тоже что и alternate_attention_module_train.py, но здесь я сначала предобучаю только AM потом уже все остальное
@@ -27,7 +28,7 @@ class AttentionModule(at.AbstractTrain):
                  train_segments_set=None,
                  test_set=None,
                  l_loss: nn.Module = nn.BCELoss(),
-                 m_loss: nn.Module = nn.BCELoss(),
+                 m_loss: nn.Module = amlf.AmLossFunction(),
                  classes: int = None,
                  pre_train_epochs: int = 100,
                  train_epochs: int = 100,

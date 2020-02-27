@@ -5,6 +5,7 @@ import property as P
 import utils
 import abstract_train as at
 import gradient_registers as gr
+import am_loss_function as amlf
 
 
 class AlternateModuleTrain(at.AbstractTrain):
@@ -16,7 +17,7 @@ class AlternateModuleTrain(at.AbstractTrain):
                  train_segments_set=None,
                  test_set=None,
                  l_loss: nn.Module = nn.BCELoss(),
-                 m_loss: nn.Module = nn.BCELoss(),
+                 m_loss: nn.Module = amlf.AmLossFunction(),
                  classes: int = None,
                  pre_train_epochs: int = 100,
                  train_epochs: int = 100,
