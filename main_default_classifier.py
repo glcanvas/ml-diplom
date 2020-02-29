@@ -52,7 +52,7 @@ if __name__ == "__main__":
                                    train_segments_set,
                                    test_set,
                                    classes=classes,
-                                   # test_each_epoch=2,
+                                   test_each_epoch=4,
                                    gpu_device=gpu,
                                    train_epochs=epochs,
                                    class_number=class_number,
