@@ -17,7 +17,7 @@ class AlternateModuleTrain(at.AbstractTrain):
                  train_segments_set=None,
                  test_set=None,
                  l_loss: nn.Module = nn.BCELoss(),
-                 m_loss: nn.Module = amlf.AmLossFunction(),
+                 m_loss: nn.Module = nn.BCELoss(),
                  classes: int = None,
                  pre_train_epochs: int = 100,
                  train_epochs: int = 100,
