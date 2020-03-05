@@ -5,6 +5,7 @@ import sys
 import torchvision.models as m
 import traceback
 import classifier_vgg16_train as cl
+import os
 
 classes = 5
 class_number = None
@@ -12,6 +13,7 @@ class_number = None
 if __name__ == "__main__":
     parsed = P.parse_input_commands().parse_args(sys.argv[1:])
     gpu = int(parsed.gpu)
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
     parsed_description = parsed.description
     train_set_size = int(parsed.train_set)
     epochs = int(parsed.epochs)

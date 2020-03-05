@@ -13,6 +13,7 @@ class_number = None
 if __name__ == "__main__":
     parsed = P.parse_input_commands().parse_args(sys.argv[1:])
     gpu = int(parsed.gpu)
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
     parsed_description = parsed.description
     pre_train = int(parsed.pre_train)
     train_set_size = int(parsed.train_set)

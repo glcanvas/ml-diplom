@@ -121,6 +121,8 @@ def draw_plot_avg(ax, title, algo_name, algorithm_list: list, color: list):
     legend = "{}_avg".format(algo_name)
     indexes = [i for i, _ in enumerate(algorithm_list)]
     ax.plot(indexes, algorithm_list, label=legend, color=color)
+    max_values = [max(algorithm_list) for _ in algorithm_list]
+    ax.plot(indexes, max_values, label=legend + "_max_line", color=color)
 
 
 def get_simple_measure_by_name(name):
@@ -239,7 +241,7 @@ def visualize_algorithms(algorithms: dict, run_name: str):
     draw_hard_metrics(axes, algorithms)
     for ax in axes.flat:
         ax.set(xlabel='epoch', ylabel='value')
-        ax.legend(loc='upper left')
+        ax.legend(loc='lower left')
 
     plt.savefig(os.path.join(plot_images_path, run_name.replace(".", "_")), bbox_inches='tight')
     plt.show()
@@ -270,7 +272,7 @@ def parse_run(run_number="run_01"):
 
 if __name__ == "__main__":
     runs = [
-        "RUN_20_CL_0"
+        "run_01"
     ]
     for i in runs:
         parse_run(i)
