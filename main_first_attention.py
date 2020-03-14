@@ -7,8 +7,6 @@ import am_model as ss
 import first_attention_module_train as amt
 import os
 
-classes = 5
-class_number = None
 
 if __name__ == "__main__":
     parsed = P.parse_input_commands().parse_args(sys.argv[1:])
@@ -20,17 +18,16 @@ if __name__ == "__main__":
     epochs = int(parsed.epochs)
     run_name = parsed.run_name
     algorithm_name = parsed.algorithm_name
-    use_class_number = int(parsed.use_class_number)
-    if use_class_number != -1:
-        classes = 1
-        class_number = use_class_number
+    left_class_number = int(parsed.left_class_number)
+    right_class_number = int(parsed.right_class_number)
+    classes = right_class_number - left_class_number
 
-    description = "description-{},train_set-{},pre_train_epochs-{},epochs-{},class_number-{}".format(
+    description = "description-{},train_set-{},epochs-{},l-{},r-{}".format(
         parsed_description,
         train_set_size,
-        pre_train,
         epochs,
-        class_number
+        left_class_number,
+        right_class_number
     )
 
     P.initialize_log_name(run_name, algorithm_name, description)
@@ -62,7 +59,8 @@ if __name__ == "__main__":
                                        train_epochs=epochs,
                                        save_train_logs_epochs=4,
                                        test_each_epoch=4,
-                                       class_number=class_number,
+                                       left_class_number=left_class_number,
+                                       right_class_number=right_class_number,
                                        description=run_name + "_" + description,
                                        snapshot_elements_count=20,
                                        snapshot_dir=snapshots_path)

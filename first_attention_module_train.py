@@ -37,14 +37,15 @@ class AttentionModule(at.AbstractTrain):
                  use_gpu: bool = True,
                  gpu_device: int = 0,
                  description: str = "am",
-                 class_number: int = None,
+                 left_class_number: int = None,
+                 right_class_number: int = None,
                  snapshot_elements_count: int = 11,
                  snapshot_dir: str = None):
 
         super(AttentionModule, self).__init__(classes, pre_train_epochs, train_epochs, save_train_logs_epochs,
                                               test_each_epoch, use_gpu,
-                                              gpu_device, description, class_number, snapshot_elements_count,
-                                              snapshot_dir)
+                                              gpu_device, description, left_class_number, right_class_number,
+                                              snapshot_elements_count, snapshot_dir)
 
         self.train_segments_set = train_segments_set
         self.test_set = test_set

@@ -22,18 +22,9 @@ def scalar(tensor):
     return tensor.data.cpu().item()
 
 
-def reduce_to_class_number(class_number, labels, segments):
-    """
-    if class number not none then return subset contains only this number
-    :param class_number: index of class
-    :param labels: bs x 5
-    :param segments: bs x 5 x h x v
-    :return: tuple of labels, segments
-    """
-    if class_number is not None:
-        labels = labels[:, class_number:class_number + 1]
-        segments = segments[:, class_number:class_number + 1, :, :]
-        return labels, segments
+def reduce_to_class_number(l: int, r: int, labels, segments):
+    labels = labels[:, l:r]
+    segments = segments[:, l:r, :, :]
     return labels, segments
 
 

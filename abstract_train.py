@@ -26,7 +26,8 @@ class AbstractTrain:
                  use_gpu: bool = True,
                  gpu_device: int = 0,
                  description: str = "am",
-                 class_number: int = None,
+                 left_class_number: int = None,
+                 right_class_number: int = None,
                  snapshot_elements_count: int = 11,
                  snapshot_dir: str = None):
         self.snapshot_elements_count = snapshot_elements_count
@@ -37,7 +38,10 @@ class AbstractTrain:
 
         self.description = description
         self.classes = classes
-        self.class_number = class_number
+
+        self.left_class_number = left_class_number
+        self.right_class_number = right_class_number
+        # self.class_number = class_number
 
         self.pre_train_epochs = pre_train_epochs
         self.train_epochs = train_epochs
@@ -60,7 +64,8 @@ class AbstractTrain:
         accuracy_classification_sum = 0
         batch_count = 0
         for images, segments, labels in test_set:
-            labels, segments = utils.reduce_to_class_number(self.class_number, labels, segments)
+            labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
+                                                            segments)
             images, labels, segments = self.convert_data_and_label(images, labels, segments)
             segments = self.PULLER(segments)
             model_classification, model_segmentation = utils.wait_while_can_execute(model, images)
@@ -105,7 +110,8 @@ class AbstractTrain:
         batch_count = 0
 
         for images, segments, labels in train_set:
-            labels, segments = utils.reduce_to_class_number(self.class_number, labels, segments)
+            labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
+                                                            segments)
             images, labels, segments = self.convert_data_and_label(images, labels, segments)
             segments = self.PULLER(segments)
 
@@ -143,7 +149,8 @@ class AbstractTrain:
         batch_count = 0
 
         for images, segments, labels in train_set:
-            labels, segments = utils.reduce_to_class_number(self.class_number, labels, segments)
+            labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
+                                                            segments)
             images, labels, segments = self.convert_data_and_label(images, labels, segments)
             segments = self.PULLER(segments)
             optimizer.zero_grad()
@@ -151,7 +158,6 @@ class AbstractTrain:
 
             classification_loss = l_loss(model_classification, labels)
             segmentation_loss = m_loss(model_segmentation, segments)
-
 
             torch.cuda.empty_cache()
             segmentation_loss.backward()
@@ -256,8 +262,7 @@ class AbstractTrain:
 
         for images, segments, labels in data_set:
 
-            if self.class_number is not None:
-                segments = segments[:, self.class_number:self.class_number + 1, :, :]
+            segments = segments[:, self.left_class_number:self.right_class_number, :, :]
 
             images, labels, segments = self.convert_data_and_label(images, labels, segments)
             segments = self.PULLER(segments)
