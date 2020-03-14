@@ -125,8 +125,8 @@ def draw_plot_avg(ax, title, algo_name, algorithm_list: list, color: list):
     ax.plot(indexes, max_values, label=legend + "_max_line", color=color)
     ###
     print("=" * 40)
-    print(legend + " title " + str(algorithm_list))
-    print(legend + "title_max_line " + str(max_values[0]))
+    print(legend + title + " " + str(algorithm_list))
+    print(legend + title + "_max_line " + str(max_values[0]))
 
 
 def get_simple_measure_by_name(name):
@@ -276,7 +276,7 @@ def parse_run(run_number="run_01"):
 
 if __name__ == "__main__":
     runs = [
-        "run_01"
+        "RUN_60"
     ]
     for i in runs:
         parse_run(i)
