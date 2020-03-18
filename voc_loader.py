@@ -5,10 +5,13 @@ import torch
 import torch.utils.data.dataset
 from torchvision import transforms
 from PIL import Image
+import copy
 
 import property as P
 import random
 import xml.etree.ElementTree as ET
+import matplotlib.pyplot as plt
+import numpy as np
 
 composite = transforms.Compose([
     #  transforms.ToTensor(),
@@ -24,12 +27,40 @@ normalization = transforms.Compose([
 
 class VocDataLoader:
 
-    def __init__(self, root_path: str, object_types: list):
+    def __init__(self, root_path: str, object_names: list, object_indexes: list):
         self.root_path = root_path
+        self.object_indexes = object_indexes
         self.images_with_segment = self.__images_with_segment()
-        self.image_objects = [self.__load_images_contains_object(i) for i in object_types]
+        self.image_objects = [self.__load_images_contains_object(i) for i in object_names]
         self.segmented_labels, self.unsegmented_labels = self.__merge_all_to_torch_tensor(self.images_with_segment,
                                                                                           self.image_objects)
+
+        self.train_data = list(zip(map(lambda x: x[1], self.segmented_labels),
+                                   self.__load_torch_images(self.segmented_labels, "JPEGImages_cached"),
+                                   map(self.__convert_to_segment_tensor,
+                                       self.__load_torch_images(self.segmented_labels, "SegmentationClass_cached"))))
+
+        self.test_data = list(zip(map(lambda x: x[1], self.unsegmented_labels),
+                                  self.__load_torch_images(self.unsegmented_labels, "JPEGImages_cached")))
+
+
+        print("Done")
+
+    def __show_by_idx(self, idx: int):
+        plt.imshow(
+            np.transpose(torch.cat((self.train_data[idx][2], self.train_data[idx][2], self.train_data[idx][2])).numpy(),
+                         (1, 2, 0)))
+
+    def __convert_to_segment_tensor(self, tensor_segment):
+        list_of_segments = []
+        for idx in self.object_indexes:
+            indexes_value = idx / 255
+            cloned = copy.deepcopy(tensor_segment)
+            cloned[cloned >= indexes_value + P.VOC_EPS] = 0.0
+            cloned[cloned <= indexes_value - P.VOC_EPS] = 0.0
+            cloned[cloned != 0.0] = 1.0
+            list_of_segments.append(cloned)
+        return torch.cat(list_of_segments)
 
     def __images_with_segment(self) -> set:
         segment_label = os.path.join(self.root_path, "ImageSets", "Segmentation")
@@ -37,6 +68,7 @@ class VocDataLoader:
         with open(segment_label) as f:
             return set(map(lambda x: x.split()[0], f.readlines()))
 
+    # 2010_001692 0.01569 0.02353
     def __load_images_contains_object(self, object_name: str) -> map:
         images_label = os.path.join(self.root_path, "ImageSets", "Main")
         images_label = os.path.join(images_label, object_name + "_trainval.txt")
@@ -52,14 +84,7 @@ class VocDataLoader:
         # first load objects with segment
         # then all without segment
         tensor_for_segment = self.__build_set(segmented_images, images_by_name)
-        """
-        for segment_id in segmented_images:
-            tensor = torch.tensor([0.0 for _ in range(len(images_by_name))])
-            for obj_idx, obj in enumerate(images_by_name):
-                if segment_id in obj and obj[segment_id] == 1:
-                    tensor[obj_idx] = 1.0
-            tensor_for_segment.append((segment_id, tensor))
-        """
+
         not_used_images_id = set()
         for obj in images_by_name:
             for index in obj:
@@ -68,15 +93,16 @@ class VocDataLoader:
                 not_used_images_id.add(index)
 
         tensor_without_segment = self.__build_set(not_used_images_id, images_by_name)
-        """
-        for image_without_segment_id in not_used_images_id:
-            tensor = torch.tensor([0.0 for _ in range(len(images_by_name))])
-            for obj_idx, obj in enumerate(images_by_name):
-                if image_without_segment_id in obj and obj[image_without_segment_id] == 1:
-                    tensor[obj_idx] = 1.0
-            tensor_without_segment.append((image_without_segment_id, tensor))
-        """
         return tensor_for_segment, tensor_without_segment
+
+    def __load_torch_images(self, lst: list, prefix) -> list:
+        res = []
+        dir = os.path.join(self.root_path, prefix)
+        for name, label in lst:
+            full_dir = os.path.join(dir, name + ".torch")
+            torch_tensor = torch.load(full_dir)
+            res.append(torch_tensor)
+        return res
 
     @staticmethod
     def __build_set(segmented_images, images_by_name):
@@ -123,4 +149,5 @@ def convert_to_torch(path_to_voc: str):
 
 if __name__ == "__main__":
     # convert_to_torch(P.voc_data_path)
-    v = VocDataLoader(P.voc_data_path, ['person', 'aeroplane', 'chair', 'car', 'cow', 'horse'])
+    v = VocDataLoader(P.voc_data_path, ['person', 'aeroplane', 'chair', 'car', 'cow', 'horse'],
+                      [15, 1, 9, 7, 10, 13])

@@ -5,12 +5,35 @@ import argparse
 
 # for train model
 EPS = 1e-10
+VOC_EPS = 0.0005
 PROBABILITY_THRESHOLD = 0.5
 TRY_CALCULATE_MODEL = 500
 
 prefix = 'ISIC_'
 attribute = '_attribute_'
 image_size = 224
+voc_classes = [
+    'aeroplane'  # 1
+    , 'bicycle'  # 2
+    , 'bird'  # 3
+    , 'boat'  # 4
+    , 'bottle'  # 5
+    , 'bus'  # 6
+    , 'car'  # 7
+    , 'cat'  # 8
+    , 'chair'  # 9
+    , 'cow'  # 10
+    , 'diningtable'  # 11
+    , 'dog'  # 12
+    , 'horse'  # 13
+    , 'motorbike'  # 14
+    , 'person'  # 15
+    , 'pottedplant'  # 16
+    , 'sheep'  # 17
+    , 'sofa'  # 18
+    , 'train'  # 19
+      'tvmonitor'  # 20
+]
 
 input_attribute = 'input'
 cached_extension = '.torch'
