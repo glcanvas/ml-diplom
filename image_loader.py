@@ -25,7 +25,7 @@ class DatasetLoader:
 
     @staticmethod
     def initial():
-        return DatasetLoader(P.data_inputs_path, P.data_labels_path, P.cache_data_inputs_path, P.cache_data_labels_path)
+        return DatasetLoader(P.isic_data_images_path, P.isic_data_labels_path, P.isic_cache_data_images_path, P.isic_cache_data_labels_path)
 
     def __init__(self, input_path: str = None, target_path: str = None, cache_input_path: str = None,
                  cache_target_path: str = None, image_suffixes: list = ['.jpg', '.png', P.cached_extension]):
@@ -244,10 +244,10 @@ class ImageDataset(torch.utils.data.Dataset):
 
 
 def create_torch_tensors():
-    loader = DatasetLoader(P.data_inputs_path, P.data_labels_path)
+    loader = DatasetLoader(P.isic_data_images_path, P.isic_data_labels_path)
     loader.save_images_to_tensors()
 
 
 if __name__ == "__main__":
-    loader = DatasetLoader(P.data_inputs_path, P.data_labels_path)
+    loader = DatasetLoader(P.isic_data_images_path, P.isic_data_labels_path)
     loader.save_images_to_tensors()

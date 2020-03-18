@@ -23,11 +23,13 @@ elif os.path.exists("/media/disk2/nduginec"):
     base_data_dir = "/media/disk2/nduginec"
     stupid_flag = True
 
-data_inputs_path = base_data_dir + "/ISIC2018_Task1-2_Training_Input"
-data_labels_path = base_data_dir + "/ISIC2018_Task2_Training_GroundTruth_v3"
+isic_data_images_path = base_data_dir + "/ISIC2018_Task1-2_Training_Input"
+isic_data_labels_path = base_data_dir + "/ISIC2018_Task2_Training_GroundTruth_v3"
 
-cache_data_inputs_path = base_data_dir + "/ISIC2018_Task1-2_Training_Input/cached"
-cache_data_labels_path = base_data_dir + "/ISIC2018_Task2_Training_GroundTruth_v3/cached"
+isic_cache_data_images_path = base_data_dir + "/ISIC2018_Task1-2_Training_Input/cached"
+isic_cache_data_labels_path = base_data_dir + "/ISIC2018_Task2_Training_GroundTruth_v3/cached"
+
+voc_data_path = base_data_dir + "/VOCdevkit/VOC2012"
 
 log_path = base_data_dir + ("/ml-data" if stupid_flag else "") + "/logs"
 
