@@ -25,6 +25,17 @@ normalization = transforms.Compose([
 ])
 
 
+class VocDataset(torch.utils.data.Dataset):
+    def __init__(self, data_set: list):
+        self.data_set = data_set
+
+    def __len__(self):
+        return len(self.data_set)
+
+    def __getitem__(self, item):
+        return self.data_set[item]
+
+
 class VocDataLoader:
 
     def __init__(self, root_path: str, object_names: list, object_indexes: list):
@@ -35,14 +46,14 @@ class VocDataLoader:
         self.segmented_labels, self.unsegmented_labels = self.__merge_all_to_torch_tensor(self.images_with_segment,
                                                                                           self.image_objects)
 
-        self.train_data = list(zip(map(lambda x: x[1], self.segmented_labels),
-                                   self.__load_torch_images(self.segmented_labels, "JPEGImages_cached"),
+        self.train_data = list(zip(self.__load_torch_images(self.segmented_labels, "JPEGImages_cached"),
                                    map(self.__convert_to_segment_tensor,
-                                       self.__load_torch_images(self.segmented_labels, "SegmentationClass_cached"))))
+                                       self.__load_torch_images(self.segmented_labels, "SegmentationClass_cached")),
+                                   map(lambda x: x[1], self.segmented_labels)))
 
-        self.test_data = list(zip(map(lambda x: x[1], self.unsegmented_labels),
-                                  self.__load_torch_images(self.unsegmented_labels, "JPEGImages_cached")))
-
+        self.test_data = list(zip(self.__load_torch_images(self.unsegmented_labels, "JPEGImages_cached"),
+                                  map(lambda x: x[1], self.unsegmented_labels),
+                                  [0 for _ in self.unsegmented_labels]))
 
         print("Done")
 
