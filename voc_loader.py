@@ -1,5 +1,4 @@
 import os
-from collections import Set
 
 import torch
 import torch.utils.data.dataset
@@ -8,10 +7,9 @@ from PIL import Image
 import copy
 
 import property as P
-import random
-import xml.etree.ElementTree as ET
 import matplotlib.pyplot as plt
 import numpy as np
+import random
 
 composite = transforms.Compose([
     #  transforms.ToTensor(),
@@ -50,11 +48,11 @@ class VocDataLoader:
                                    map(self.__convert_to_segment_tensor,
                                        self.__load_torch_images(self.segmented_labels, "SegmentationClass_cached")),
                                    map(lambda x: x[1], self.segmented_labels)))
-
+        random.shuffle(self.train_data)
         self.test_data = list(zip(self.__load_torch_images(self.unsegmented_labels, "JPEGImages_cached"),
-                                  map(lambda x: x[1], self.unsegmented_labels),
-                                  [0 for _ in self.unsegmented_labels]))
-
+                                  [0 for _ in self.unsegmented_labels],
+                                  map(lambda x: x[1], self.unsegmented_labels)))
+        random.shuffle(self.test_data)
         print("Done")
 
     def __show_by_idx(self, idx: int):

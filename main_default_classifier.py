@@ -1,4 +1,4 @@
-import image_loader as il
+import voc_loader as vl
 from torch.utils.data import DataLoader
 import property as P
 import sys
@@ -14,20 +14,21 @@ if __name__ == "__main__":
     gpu = 0
     parsed_description = parsed.description
     train_set_size = int(parsed.train_set)
+    test_set_size = int(parsed.test_set)
     epochs = int(parsed.epochs)
     run_name = parsed.run_name
     algorithm_name = parsed.algorithm_name
-    left_class_number = int(parsed.left_class_number)
-    right_class_number = int(parsed.right_class_number)
-    classes = right_class_number - left_class_number
+    voc_items = list(filter(lambda x: len(x) > 0, parsed.voc_items.split(",")))
 
-    description = "description-{},train_set-{},epochs-{},l-{},r-{}".format(
+    description = "description-{},train_set-{},test_set-{},epochs-{},voc-{}".format(
         parsed_description,
         train_set_size,
+        test_set_size,
         epochs,
-        left_class_number,
-        right_class_number
+        ",".join(voc_items)
     )
+
+    classes = len(voc_items)
 
     P.initialize_log_name(run_name, algorithm_name, description)
 
@@ -36,25 +37,20 @@ if __name__ == "__main__":
     P.write_to_log("algorithm_name=" + algorithm_name)
 
     try:
-        segments_set, test_set = il.load_data(train_set_size)
-
-        train_segments_set = DataLoader(il.ImageDataset(segments_set), batch_size=5, shuffle=True)
-        print("ok")
-        test_set = DataLoader(il.ImageDataset(test_set), batch_size=5)
-        print("ok")
+        v = vl.VocDataLoader(P.voc_data_path, voc_items, P.voc_list_to_indexes(voc_items))
+        train_data_set = DataLoader(vl.VocDataset(v.train_data[0:train_set_size]), batch_size=5, shuffle=True)
+        test_data_set = DataLoader(vl.VocDataset(v.test_data[0:test_set_size]), batch_size=5)
 
         model = m.vgg16(pretrained=True)
         P.write_to_log(model)
 
         classifier = cl.Classifier(model,
-                                   train_segments_set,
-                                   test_set,
+                                   train_data_set,
+                                   test_data_set,
                                    classes=classes,
                                    test_each_epoch=4,
                                    gpu_device=gpu,
                                    train_epochs=epochs,
-                                   left_class_number=left_class_number,
-                                   right_class_number=right_class_number,
                                    description=run_name + "_" + description)
         classifier.train()
 

@@ -35,6 +35,16 @@ voc_classes = [
       'tvmonitor'  # 20
 ]
 
+
+def voc_list_to_indexes(l: list) -> list:
+    list_zip = list(zip([i for i in range(1, 100)], voc_classes))
+    result = []
+    for item in l:
+        idx, _ = list(filter(lambda x: x[1] == item, list_zip))[0]
+        result.append(idx)
+    return result
+
+
 input_attribute = 'input'
 cached_extension = '.torch'
 
@@ -99,9 +109,8 @@ def parse_input_commands():
     parser.add_argument("--from_gradient_layer", default="False")
     parser.add_argument("--epochs", default="100")
     parser.add_argument("--train_set", default="2000")
+    parser.add_argument("--test_set", default="2000")
     parser.add_argument("--run_name")  # require
     parser.add_argument("--algorithm_name")  # require
-    parser.add_argument("--left_class_number", default="0")  # inclusive
-    parser.add_argument("--right_class_number", default="5")  # exclusive
-
+    parser.add_argument("--voc_items", default="person")
     return parser

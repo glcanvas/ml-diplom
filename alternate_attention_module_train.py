@@ -26,14 +26,12 @@ class AlternateModuleTrain(at.AbstractTrain):
                  use_gpu: bool = True,
                  gpu_device: int = 0,
                  description: str = "am",
-                 left_class_number: int = None,
-                 right_class_number: int = None,
                  snapshot_elements_count: int = 11,
                  snapshot_dir: str = None):
 
         super(AlternateModuleTrain, self).__init__(classes, pre_train_epochs, train_epochs, save_train_logs_epochs,
                                                    test_each_epoch, use_gpu,
-                                                   gpu_device, description, left_class_number, right_class_number,
+                                                   gpu_device, description,
                                                    snapshot_elements_count, snapshot_dir)
 
         self.train_segments_set = train_segments_set
@@ -110,8 +108,8 @@ class AlternateModuleTrain(at.AbstractTrain):
             P.write_to_log(text)
 
             if self.current_epoch % self.test_each_epoch == 0:
-                self.take_snapshot(self.train_segments_set, self.am_model, "TRAIN_{}".format(epoch))
-                self.take_snapshot(self.test_set, self.am_model, "TEST_{}".format(epoch))
+                self.take_snapshot_with_trust_segment(self.train_segments_set, self.am_model, "TRAIN_{}".format(epoch))
+                self.take_snapshot_without_trusted_segment(self.test_set, self.am_model, "TEST_{}".format(epoch))
                 test_loss, _ = self.test(self.am_model, self.test_set, self.l_loss, self.m_loss)
                 if best_test_loss is None or test_loss < best_test_loss:
                     best_test_loss = test_loss

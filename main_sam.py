@@ -56,16 +56,11 @@ if __name__ == "__main__":
     epochs = int(parsed.epochs)
     run_name = parsed.run_name
     algorithm_name = parsed.algorithm_name
-    left_class_number = int(parsed.left_class_number)
-    right_class_number = int(parsed.right_class_number)
-    classes = right_class_number - left_class_number
 
-    description = "description-{},train_set-{},epochs-{},l-{},r-{}".format(
+    description = "description-{},train_set-{},epochs-{}".format(
         parsed_description,
         train_set_size,
-        epochs,
-        left_class_number,
-        right_class_number
+        epochs
     )
 
     P.initialize_log_name(run_name, algorithm_name, description)

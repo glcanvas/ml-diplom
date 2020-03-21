@@ -26,8 +26,6 @@ class AbstractTrain:
                  use_gpu: bool = True,
                  gpu_device: int = 0,
                  description: str = "am",
-                 left_class_number: int = None,
-                 right_class_number: int = None,
                  snapshot_elements_count: int = 11,
                  snapshot_dir: str = None):
         self.snapshot_elements_count = snapshot_elements_count
@@ -39,8 +37,6 @@ class AbstractTrain:
         self.description = description
         self.classes = classes
 
-        self.left_class_number = left_class_number
-        self.right_class_number = right_class_number
         # self.class_number = class_number
 
         self.pre_train_epochs = pre_train_epochs
@@ -109,17 +105,17 @@ class AbstractTrain:
         accuracy_classification_sum = 0
         batch_count = 0
 
-        for images, segments, labels in train_set:
-            labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
-                                                            segments)
-            images, labels, segments = self.convert_data_and_label(images, labels, segments)
-            segments = self.PULLER(segments)
+        for images, _, labels in train_set:
+            # labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
+            #                                                segments)
+            images, labels = self.convert_data_and_label(images, labels)
+            # segments = self.PULLER(segments)
 
             # calculate and optimize model
             optimizer.zero_grad()
 
             model_classification, model_segmentation = utils.wait_while_can_execute(model, images)
-            segmentation_loss = m_loss(model_segmentation, segments)
+            # segmentation_loss = m_loss(model_segmentation, segments)
             classification_loss = l_loss(model_classification, labels)
             torch.cuda.empty_cache()
             classification_loss.backward()
@@ -133,9 +129,9 @@ class AbstractTrain:
             # accumulate information
             accuracy_classification_sum += utils.scalar(cl_acc.sum())
             loss_classification_sum += utils.scalar(classification_loss.sum())
-            loss_segmentation_sum += utils.scalar(segmentation_loss.sum())
+            loss_segmentation_sum += 0  # utils.scalar(segmentation_loss.sum())
             batch_count += 1
-            self.de_convert_data_and_label(images, segments, labels)
+            self.de_convert_data_and_label(images, labels)
             torch.cuda.empty_cache()
 
         return loss_classification_sum / (batch_count + p.EPS), accuracy_classification_sum / (
@@ -149,8 +145,8 @@ class AbstractTrain:
         batch_count = 0
 
         for images, segments, labels in train_set:
-            labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
-                                                            segments)
+            #labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
+            #                                                segments)
             images, labels, segments = self.convert_data_and_label(images, labels, segments)
             segments = self.PULLER(segments)
             optimizer.zero_grad()
@@ -254,16 +250,13 @@ class AbstractTrain:
     #    return torch.optim.Adam(register_weights("classifier", self.model),
     #                            lr=learning_rate * (0.1 ** pow_epoch))
 
-    def take_snapshot(self, data_set, model, snapshot_name: str = None):
+    def take_snapshot_with_trust_segment(self, data_set, model, snapshot_name: str = None):
         cnt = 0
         model_segments_list = []
         trust_segments_list = []
         images_list = []
 
         for images, segments, labels in data_set:
-
-            segments = segments[:, self.left_class_number:self.right_class_number, :, :]
-
             images, labels, segments = self.convert_data_and_label(images, labels, segments)
             segments = self.PULLER(segments)
             _, model_segmentation = utils.wait_while_can_execute(model, images)
@@ -311,6 +304,63 @@ class AbstractTrain:
                 axes[idx][1 + class_number * 3].set(xlabel='model answer class: {}'.format(class_number))
                 axes[idx][1 + class_number * 3 + 1].set(xlabel='model normed answer class: {}'.format(class_number))
                 axes[idx][1 + class_number * 3 + 2].set(xlabel='trust answer class: {}'.format(class_number))
+        print("=" * 50)
+        print("=" * 50)
+        print("=" * 50)
+        print("=" * 50)
+        print("=" * 50)
+        plt.savefig(os.path.join(self.snapshot_dir, snapshot_name))
+        plt.close(fig)
+
+    def take_snapshot_without_trusted_segment(self, data_set, model, snapshot_name: str = None):
+        cnt = 0
+        model_segments_list = []
+        # trust_segments_list = []
+        images_list = []
+
+        for images, _, labels in data_set:
+
+            # segments = segments[:, self.left_class_number:self.right_class_number, :, :]
+
+            images, labels = self.convert_data_and_label(images, labels)
+            # segments = self.PULLER(segments)
+            _, model_segmentation = utils.wait_while_can_execute(model, images)
+
+            cnt += model_segmentation.size(0)
+            images, _ = self.de_convert_data_and_label(images, labels)
+            model_segmentation = model_segmentation.cpu()
+            for idx in range(model_segmentation.size(0)):
+                images_list.append(images[idx])
+                model_segments_list.append(model_segmentation[idx])
+                # trust_segments_list.append(segments[idx])
+
+            if cnt >= self.snapshot_elements_count:
+                break
+        fig, axes = plt.subplots(len(images_list), model_segments_list[0].size(0) * 2 + 1, figsize=(50, 100))
+        fig.tight_layout()
+        for idx, img in enumerate(images_list):
+            axes[idx][0].imshow(np.transpose(img.numpy(), (1, 2, 0)))
+
+        for idx, model_answer in enumerate(model_segments_list):
+            for class_number in range(model_answer.size(0)):
+                a = model_answer[class_number].detach().numpy()
+                a = np.array([a] * 3)
+                axes[idx][1 + class_number * 2].imshow(np.transpose(a, (1, 2, 0)))
+                p.write_to_log(
+                    "model        idx={}, class={}, sum={}, max={}, min={}".format(idx, class_number, np.sum(a),
+                                                                                   np.max(a),
+                                                                                   np.min(a)))
+                a = (a - np.min(a)) / (np.max(a) - np.min(a))
+                axes[idx][1 + class_number * 2 + 1].imshow(np.transpose(a, (1, 2, 0)))
+                p.write_to_log(
+                    "model normed idx={}, class={}, sum={}, max={}, min={}".format(idx, class_number, np.sum(a),
+                                                                                   np.max(a), np.min(a)))
+
+                p.write_to_log("=" * 50)
+
+                axes[idx][1 + class_number * 2].set(xlabel='model answer class: {}'.format(class_number))
+                axes[idx][1 + class_number * 2 + 1].set(xlabel='model normed answer class: {}'.format(class_number))
+
         print("=" * 50)
         print("=" * 50)
         print("=" * 50)

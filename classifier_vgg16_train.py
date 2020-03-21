@@ -24,11 +24,9 @@ class Classifier(at.AbstractTrain):
                  train_epochs: int = 100,
                  use_gpu: bool = True,
                  gpu_device: int = 0,
-                 description: str = "sam",
-                 left_class_number: int = None,
-                 right_class_number: int = None):
+                 description: str = "sam"):
         super(Classifier, self).__init__(classes, None, None, None, test_each_epoch, use_gpu, gpu_device, description,
-                                         left_class_number, right_class_number, None, None)
+                                         None, None)
 
         self.train_epochs = train_epochs
         self.train_segments_set = train_segments_set
@@ -71,8 +69,8 @@ class Classifier(at.AbstractTrain):
             batch_count = 0
 
             for images, segments, labels in self.train_segments_set:
-                labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
-                                                                segments)
+                # labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
+                #                                                segments)
                 images, labels, segments = self.convert_data_and_label(images, labels, segments)
                 segments = self.PULLER(segments)
 
@@ -132,10 +130,10 @@ class Classifier(at.AbstractTrain):
         loss_classification_sum = 0
         accuracy_classification_sum = 0
         batch_count = 0
-        for images, segments, labels in test_set:
-            labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
-                                                            segments)
-            images, labels, segments = self.convert_data_and_label(images, labels, segments)
+        for images, _, labels in test_set:
+            # labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
+            #                                                segments)
+            images, labels = self.convert_data_and_label(images, labels)
             model_classification = utils.wait_while_can_execute_single(model, images)
 
             sigmoid = nn.Sigmoid()  # used for calculate accuracy
