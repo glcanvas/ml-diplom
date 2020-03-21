@@ -1,49 +1,95 @@
+import mo.hw1.task1 as t1
+from functools import partial
+from itertools import zip_longest
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from mpl_toolkits.mplot3d import Axes3D
+from scipy.linalg import cho_factor, cho_solve
+from scipy.special import expit
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sympy import *
+
+
+def get_name(method):
+    return method.__name__.replace('_', ' ').capitalize()
+
+
+# %% md
+
+### 2. Реализуйте метод градиентного спуска и процедуру линейного поиска. Оцените, как меняется скорость сходимости, если для поиска величины шага использовать различные методы одномерного поиска.
+
+# %% md
+
+#### 2.1 Реализация процедуры линейного поиска:
+
 # %%
 
-# градиентный спуск
-# x_k+1 = x_k - a * f'(x_k)
-import math
-
-f = lambda x: x * x - 4
-f_grad = lambda x: 2 * x
-
-EPS = 1e-10
-
-
-def simple_grad_descent(x_k, alpha, step):
-    x_k_1 = x_k - alpha * f(x_k)
-    st = 0
-    while st < step and math.fabs(f(x_k) - f(x_k_1)) > EPS:
-        x_k = x_k_1
-        x_k_1 = x_k - alpha * f(x_k)
-        st += 1
-    return x_k, st
+# для минимизации альфы на к-ом шаге
+# т.е. условный наискорейший градиентный спуск
+def line_search(f, x_cur, df_x):
+    grad = []
+    for i in range(0, len(df_x)):
+        grad.append(df_x[i](*x_cur))
+    alpha = 0.5
+    beta = 0.9
+    stp = 1.0
+    grad = np.array(grad)
+    p = np.dot(grad, grad)
+    # формула 9, стр 4 условие армихо
+    while (f(*x_cur) - (f(*(x_cur - stp * np.array(grad))) + alpha * stp * p)) < 0:
+        stp *= beta
+    return stp
 
 
-def grad_descent_with_div(x_k, alpha, div, step):
-    x_k_1 = x_k - alpha * f(x_k)
-    st = 0
-    while st < step and math.fabs(f(x_k) - f(x_k_1)) > EPS:
-        x_k = x_k_1
-        x_k_1 = x_k - alpha * f(x_k)
-        st += 1
-        alpha /= div
-    return x_k, st
+# %% md
+
+#### 2.2 Реализация градиентного спуска:
+
+# %%
+
+def to_step_arg(f, x, x_prime, lmd):
+    args = []
+    dim = len(x)
+    for i in range(dim):
+        args.append(x[i] - lmd * x_prime[i](*x))
+    return f(*args)
 
 
-def fast_gradient_descent(x_k, alpha, step):
-    l_k = f(x_k - alpha * f_grad(x_k))
-    x_k_1 = x_k - l_k * f(x_k)
-    st = 0
-    while st < step and math.fabs(f(x_k) - f(x_k_1)) > EPS:
-        x_k = x_k_1
-        x_k_1 = x_k - alpha * f(x_k)
-        st += 1
-        # alph# /= div
-    return x_k, st
+def get_symbol(dim):
+    return list(map(Symbol, {
+        1: ['x'],
+        2: ['x', 'y'],
+        3: ['x', 'y', 'z']
+    }.get(dim, ['x' + str(i) for i in range(1, dim + 1)])))
 
 
-import numpy as np
+def gradient_descent(f, *x, eps, max_iter_num, step_f):
+    dim = len(x)
+    symbol = get_symbol(dim)
 
-if __name__ == "__main__":
-    print(np.random.uniform(1, 99))
+    x_prime = [lambdify(symbol, f(*symbol).diff(smb)) for smb in symbol]
+
+    x_cur = [*x]
+    xs = [x_cur]
+    iter_num = 0
+    while True:
+        if step_f is line_search:
+            step = step_f(f, np.array(x_cur), x_prime)
+        else:
+            step = step_f(lambda lmd: to_step_arg(f, x_cur, x_prime, lmd))
+
+        x_next = [0] * dim
+        for i in range(dim):
+            x_next[i] = x_cur[i] - step * x_prime[i](*x_cur)
+        xs.append(x_next)
+
+        if abs(f(*x_next) - f(*x_cur)) < eps or iter_num == max_iter_num:
+            return np.array(xs), iter_num
+
+        x_cur = x_next.copy()
+        iter_num += 1
+
+
