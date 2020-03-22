@@ -4,7 +4,9 @@ import property as p
 import numpy as np
 
 
-def __to_global(a, b):
+def __to_global(a, b, classes):
+    if classes == 1:
+        return a[0], b[0]
     aa = np.moveaxis(np.array(a), 0, -1)
     bb = np.moveaxis(np.array(b), 0, -1)
     return aa, bb
@@ -93,7 +95,7 @@ def calculate_metric(classes, trust_answers, model_answer):
                                                                                          model_answer[i],
                                                                                          average=class_metric_for_one_class))
 
-    trust_answer_1, model_answer_1 = __to_global(trust_answers, model_answer)
+    trust_answer_1, model_answer_1 = __to_global(trust_answers, model_answer, classes)
     # assert trust_answer_1 == trust_answers[0]
 
     f_1_score_text += "f_1_global={:.5f}".format(metrics.f1_score(trust_answer_1, model_answer_1, average=class_metric))
