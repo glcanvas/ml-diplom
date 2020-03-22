@@ -50,10 +50,14 @@ class AlternateModuleTrain(at.AbstractTrain):
         self.l_loss = l_loss
         self.m_loss = m_loss
 
-    def train(self):
+    def train(self, use_all_params: bool):
 
         learning_rate = 1e-6
-        classifier_optimizer = torch.optim.Adam(self.am_model.parameters(), lr=learning_rate)
+        if use_all_params:
+            classifier_optimizer = torch.optim.Adam(self.am_model.parameters(), lr=learning_rate)
+        else:
+            classifier_optimizer = torch.optim.Adam(gr.register_weights("classifier", self.am_model),
+                                                    lr=learning_rate)
         attention_module_optimizer = torch.optim.Adam(gr.register_weights("attention", self.am_model), lr=1e-4)
 
         self.best_weights = copy.deepcopy(self.am_model.state_dict())

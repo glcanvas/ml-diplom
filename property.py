@@ -78,5 +78,5 @@ def parse_input_commands():
     parser.add_argument("--algorithm_name")  # require
     parser.add_argument("--left_class_number", default="0")  # inclusive
     parser.add_argument("--right_class_number", default="5")  # exclusive
-
+    parser.add_argument("--learning_rate", default="1e-6")
     return parser

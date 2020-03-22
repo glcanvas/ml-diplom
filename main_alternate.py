@@ -7,7 +7,6 @@ import am_model as ss
 import alternate_attention_module_train as st
 import os
 
-
 if __name__ == "__main__":
     parsed = P.parse_input_commands().parse_args(sys.argv[1:])
     gpu = int(parsed.gpu)
@@ -67,7 +66,10 @@ if __name__ == "__main__":
                                             description=run_name + "_" + description,
                                             snapshot_elements_count=20,
                                             snapshot_dir=snapshots_path)
-        sam_train.train()
+        
+        # если только и делаем что делаем претрейн, то надо обучать ВСЕ-ВСЕ веса
+        is_used_only_one_loss = pre_train >= epochs
+        sam_train.train(is_used_only_one_loss)
 
     except BaseException as e:
         print("EXCEPTION", e)
