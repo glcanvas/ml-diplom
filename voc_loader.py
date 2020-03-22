@@ -43,6 +43,10 @@ class VocDataLoader:
         self.image_objects = [self.__load_images_contains_object(i) for i in object_names]
         self.segmented_labels, self.unsegmented_labels = self.__merge_all_to_torch_tensor(self.images_with_segment,
                                                                                           self.image_objects)
+        for i1, j1 in self.segmented_labels:
+            for i2, j2 in self.unsegmented_labels:
+                if i1 == i2:
+                    raise BaseException(i1 + " " + i2)
 
         self.train_data = list(zip(self.__load_torch_images(self.segmented_labels, "JPEGImages_cached"),
                                    map(self.__convert_to_segment_tensor,
