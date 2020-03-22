@@ -1,26 +1,13 @@
-import image_loader as il
 import voc_loader as vl
 from torch.utils.data import DataLoader
 import property as P
 import sys
 import traceback
-import am_model as ss
-import first_attention_module_train as amt
-import argparse
 import os
-import shutil
-import time
-import random
-
-import torch.nn.parallel
-import torch.backends.cudnn as cudnn
-import torch.optim
-import torch.utils.data
-import torchvision.transforms as transforms
-import torchvision.datasets as datasets
 import torchvision.models as models
 from MODELS.model_resnet import *
 from PIL import ImageFile
+import classifier_vgg16_train as cl
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 model_names = sorted(name for name in models.__dict__
@@ -28,45 +15,32 @@ model_names = sorted(name for name in models.__dict__
                      and callable(models.__dict__[name]))
 
 if __name__ == "__main__":
-    # default parser
-    parser = P.parse_input_commands()
-
-    # extend parser
-    parser.add_argument('--lr', '--learning-rate', default=0.1, type=float,
-                        metavar='LR', help='initial learning rate')
-    parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
-                        help='momentum')
-    parser.add_argument('--weight-decay', '--wd', default=1e-4, type=float,
-                        metavar='W', help='weight decay (default: 1e-4)')
-    parser.add_argument('--att-type', type=str, choices=['BAM', 'CBAM'], default=None)
-    # parser.add_argument('--arch', '-a', metavar='ARCH', default='resnet',
-    #                     help='model architecture: ' +
-    #                          ' | '.join(model_names) +
-    #                          ' (default: resnet18)')
-    parser.add_argument('--depth', default=50, type=int, metavar='D',
-                        help='model depth')
-
-    parsed = parser.parse_args(sys.argv[1:])
+    parsed = P.parse_input_commands().parse_args(sys.argv[1:])
     gpu = int(parsed.gpu)
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
     gpu = 0
     parsed_description = parsed.description
     pre_train = int(parsed.pre_train)
     train_set_size = int(parsed.train_set)
+    test_set_size = int(parsed.test_set)
     epochs = int(parsed.epochs)
     run_name = parsed.run_name
     algorithm_name = parsed.algorithm_name
+    voc_items = list(filter(lambda x: len(x) > 0, parsed.voc_items.split(",")))
 
-    description = "description-{},train_set-{},epochs-{}".format(
+    description = "description-{},train_set-{},test_set-{},epochs-{},voc-{}".format(
         parsed_description,
         train_set_size,
-        epochs
+        test_set_size,
+        epochs,
+        ",".join(voc_items)
     )
+
+    classes = len(voc_items)
 
     P.initialize_log_name(run_name, algorithm_name, description)
 
     P.write_to_log("description={}".format(description))
-    P.write_to_log("classes={}".format(classes))
     P.write_to_log("run=" + run_name)
     P.write_to_log("algorithm_name=" + algorithm_name)
 
@@ -75,10 +49,24 @@ if __name__ == "__main__":
     snapshots_path = os.path.join(log_dir, log_name)
     os.makedirs(snapshots_path, exist_ok=True)
 
-    model = ResidualNet('ImageNet', parsed.depth, classes, parsed.att_type)
-    P.write_to_log(model)
+    try:
+        v = vl.VocDataLoader(P.voc_data_path, voc_items, P.voc_list_to_indexes(voc_items))
+        train_data_set = DataLoader(vl.VocDataset(v.train_data[0:train_set_size]), batch_size=5, shuffle=True)
+        test_data_set = DataLoader(vl.VocDataset(v.test_data[0:test_set_size]), batch_size=5)
 
-    v = vl.VocDataLoader(P.voc_data_path, ['bus'], [6])
-    train_data_set = DataLoader(vl.VocDataset(v.train_data), batch_size=5, shuffle=True)
-    test_data_set = DataLoader(vl.VocDataset(v.test_data), batch_size=5)
+        m = ResidualNet('ImageNet', 18, classes, 'CBAM')
+        sam_model = cl.Classifier(m, train_data_set, test_data_set,
+                                  classes=classes,
+                                  gpu_device=gpu,
+                                  train_epochs=epochs,
+                                  test_each_epoch=4,
+                                  description=run_name + "_" + description)
+        sam_model.train()
 
+    except BaseException as e:
+        print("EXCEPTION", e)
+        print(type(e))
+        P.write_to_log("EXCEPTION", e, type(e))
+        traceback.print_stack()
+
+        raise e

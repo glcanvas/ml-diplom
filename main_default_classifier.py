@@ -6,6 +6,7 @@ import torchvision.models as m
 import traceback
 import classifier_vgg16_train as cl
 import os
+import torch.nn as nn
 
 if __name__ == "__main__":
     parsed = P.parse_input_commands().parse_args(sys.argv[1:])
@@ -43,6 +44,9 @@ if __name__ == "__main__":
 
         model = m.vgg16(pretrained=True)
         P.write_to_log(model)
+
+        num_features = model.classifier[6].in_features
+        model.classifier[6] = nn.Linear(num_features, classes)
 
         classifier = cl.Classifier(model,
                                    train_data_set,

@@ -205,5 +205,6 @@ def ResidualNet(network_type, depth, num_classes, att_type):
 
     elif depth == 101:
         model = ResNet(Bottleneck, [3, 4, 23, 3], network_type, num_classes, att_type)
-
+    else:
+        raise Exception("AAAA")
     return model

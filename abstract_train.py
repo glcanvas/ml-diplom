@@ -54,7 +54,7 @@ class AbstractTrain:
         self.test_trust_answers = [[] for _ in range(self.classes)]
         self.test_probabilities = [[] for _ in range(self.classes)]
 
-    def test(self, model, test_set, l_loss, m_loss):
+    def test(self, model, test_set, l_loss):
         loss_classification_sum = 0
         loss_segmentation_sum = 0
         accuracy_classification_sum = 0
@@ -99,7 +99,7 @@ class AbstractTrain:
 
         return loss_classification_sum, accuracy_classification_sum
 
-    def train_classifier(self, model, l_loss, m_loss, optimizer, train_set):
+    def train_classifier(self, model, l_loss, optimizer, train_set):
         loss_classification_sum = 0
         loss_segmentation_sum = 0
         accuracy_classification_sum = 0

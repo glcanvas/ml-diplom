@@ -71,12 +71,12 @@ class AlternateModuleTrain(at.AbstractTrain):
             if self.current_epoch <= self.pre_train_epochs:
                 div_flag = True
                 loss_classification_sum_classifier, accuracy_classification_sum_classifier, loss_segmentation_sum = \
-                    self.train_classifier(self.am_model, self.l_loss, self.m_loss, classifier_optimizer,
+                    self.train_classifier(self.am_model, self.l_loss, classifier_optimizer,
                                           self.train_segments_set)
             else:
 
                 loss_classification_sum_classifier, accuracy_classification_sum_classifier, loss_segmentation_sum = \
-                    self.train_classifier(self.am_model, self.l_loss, self.m_loss, classifier_optimizer,
+                    self.train_classifier(self.am_model, self.l_loss, classifier_optimizer,
                                           self.train_segments_set)
 
                 accuracy_classification_sum_segments, loss_m_sum, loss_l1_sum, loss_classification_sum_from_segm = \
@@ -110,7 +110,7 @@ class AlternateModuleTrain(at.AbstractTrain):
             if self.current_epoch % self.test_each_epoch == 0:
                 self.take_snapshot_with_trust_segment(self.train_segments_set, self.am_model, "TRAIN_{}".format(epoch))
                 self.take_snapshot_without_trusted_segment(self.test_set, self.am_model, "TEST_{}".format(epoch))
-                test_loss, _ = self.test(self.am_model, self.test_set, self.l_loss, self.m_loss)
+                test_loss, _ = self.test(self.am_model, self.test_set, self.l_loss)
                 if best_test_loss is None or test_loss < best_test_loss:
                     best_test_loss = test_loss
                     self.best_test_weights = copy.deepcopy(self.am_model.state_dict())
