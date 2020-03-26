@@ -5,9 +5,6 @@ import re
 from sklearn.metrics import roc_curve, auc, precision_recall_curve, average_precision_score
 import traceback
 
-# plot_images_path = "/home/nikita/PycharmProjects/ml-diplom/sam_plots"
-# logs_path = "/home/nikita/PycharmProjects/ml-data/logs"
-
 stupid_flag = False
 base_data_dir = "/home/nikita/PycharmProjects"
 if os.path.exists("/media/disk1/nduginec"):
@@ -29,18 +26,18 @@ def __load_statistics(dct: dict) -> tuple:
     precision = {}
     for i in range(0, 5):
         key = 'f_1_{}'.format(i)
-        f_measures[key] = float(dct[key]) if key in dct else -1
-    f_measures['f_1_global'] = float(dct['f_1_global']) if 'f_1_global' in dct else -1
+        f_measures[key] = float(dct[key]) if key in dct else 0
+    f_measures['f_1_global'] = float(dct['f_1_global']) if 'f_1_global' in dct else 0
 
     for i in range(0, 5):
         key = 'recall_{}'.format(i)
-        recall[key] = float(dct[key]) if key in dct else -1
-    recall['recall_global'] = float(dct['recall_global']) if 'recall_global' in dct else -1
+        recall[key] = float(dct[key]) if key in dct else 0
+    recall['recall_global'] = float(dct['recall_global']) if 'recall_global' in dct else 0
 
     for i in range(0, 5):
         key = 'precision_{}'.format(i)
-        precision[key] = float(dct[key]) if key in dct else -1
-    precision['precision_global'] = float(dct['precision_global']) if 'precision_global' in dct else -1
+        precision[key] = float(dct[key]) if key in dct else 0
+    precision['precision_global'] = float(dct['precision_global']) if 'precision_global' in dct else 0
     return f_measures, recall, precision
 
 
@@ -58,11 +55,11 @@ def __to_dict(input: str) -> dict:
 
 def sam_parse_train(input: str):
     dct = __to_dict(input)
-    Loss_CL = float(dct['Loss_CL']) if 'Loss_CL' in dct else -1
-    Loss_M = float(dct['Loss_M']) if 'Loss_M' in dct else -1
-    Loss_L1 = float(dct['Loss_L1']) if 'Loss_L1' in dct else -1
-    Loss_Total = float(dct['Loss_Total']) if 'Loss_Total' in dct else -1
-    Accuracy_CL = float(dct['Accuracy_CL']) if 'Accuracy_CL' in dct else -1
+    Loss_CL = float(dct['Loss_CL']) if 'Loss_CL' in dct else 0
+    Loss_M = float(dct['Loss_M']) if 'Loss_M' in dct else 0
+    Loss_L1 = float(dct['Loss_L1']) if 'Loss_L1' in dct else 0
+    Loss_Total = float(dct['Loss_Total']) if 'Loss_Total' in dct else 0
+    Accuracy_CL = float(dct['Accuracy_CL']) if 'Accuracy_CL' in dct else 0
     f_measures, recall, precision = __load_statistics(dct)
     return {'Loss_CL': Loss_CL, 'Loss_M': Loss_M, 'Loss_L1': Loss_L1,
             'Loss_Total': Loss_Total, 'Accuracy_CL': Accuracy_CL, 'f_measures': f_measures, 'recall': recall,
@@ -86,17 +83,20 @@ def __load_file(file_path: str, train_parse, test_parse):
     return train, test, file_name
 
 
-def draw_plot_return_avg(ax, title, algo_name, algorithm_list: list, execute_measure_function, plot_color):
+def draw_plot_return_avg(ax, title, algo_name, algorithm_list: list, execute_measure_function, plot_color,
+                         mull_index=1):
     ax.set_title(title)
-    for idx, algo in enumerate(algorithm_list):
-        legend = "{}_{}".format(algo_name, idx)
-        datas = execute_measure_function(algo)
-        indexes = [i for i, _ in enumerate(datas)]
-        # plot_color = [0, 0, 0]
-        # plot_color[color_idx] = 1
-        # plot_color[(color_idx + 1) % 3] = 1 # idx * 1 / len(algorithm_list)
-        ax.plot(indexes, datas, label=legend, color=plot_color)
 
+    use_legend = True
+    for idx, algo in enumerate(algorithm_list):
+        legend = algo_name
+        datas = execute_measure_function(algo)
+        indexes = [i * mull_index for i, _ in enumerate(datas)]
+        if use_legend:
+            ax.plot(indexes, datas, label=legend, color=plot_color)
+            use_legend = False
+        else:
+            ax.plot(indexes, datas, color=plot_color)
     lists = []
     for _, algo in enumerate(algorithm_list):
         lists.append(execute_measure_function(algo))
@@ -116,17 +116,19 @@ def draw_plot_return_avg(ax, title, algo_name, algorithm_list: list, execute_mea
     return result
 
 
-def draw_plot_avg(ax, title, algo_name, algorithm_list: list, color: list):
+def draw_plot_avg(ax, title, algo_name, algorithm_list: list, color: list, mull_index=1):
     ax.set_title(title)
-    legend = "{}_avg".format(algo_name)
-    indexes = [i for i, _ in enumerate(algorithm_list)]
-    ax.plot(indexes, algorithm_list, label=legend, color=color)
+    legend = algo_name
+    algorithm_list = [] if len(algorithm_list) == 0 else [algorithm_list[0]] + list(
+        filter(lambda x: x > 0.0, algorithm_list[1:]))
+    indexes = [i * mull_index for i, _ in enumerate(algorithm_list)]
+
     max_values = [max(algorithm_list) for _ in algorithm_list]
-    ax.plot(indexes, max_values, label=legend + "_max_line", color=color)
-    ###
-    print("=" * 40)
-    print(legend + title + " " + str(algorithm_list))
-    print(legend + title + "_max_line " + str(max_values[0]))
+    ax.plot(indexes, max_values, label=legend + " max", linestyle=':',
+            linewidth=2,
+            color=(abs(color[0] - 0.4), abs(color[1] - 0.4), abs(color[2] - 0.4)))
+
+    ax.plot(indexes, algorithm_list, label=legend, color=color)
 
 
 def get_simple_measure_by_name(name):
@@ -180,10 +182,11 @@ def draw_simple_metrics(axes, algorithms: dict):
             tests = algorithms[algo_name]['test']
             loss_cl_avg = draw_plot_return_avg(axes[m_idx][2], m + ' Test', algo_name, tests,
                                                get_simple_measure_by_name(m),
-                                               to_color_array(color_idx))
+                                               to_color_array(color_idx),
+                                               mull_index=4)
             # color = [0, 0, 0]
             # color[color_idx] = 1
-            draw_plot_avg(axes[m_idx][3], m + ' AVG', algo_name, loss_cl_avg, to_color_array(color_idx))
+            draw_plot_avg(axes[m_idx][3], m + ' AVG', algo_name, loss_cl_avg, to_color_array(color_idx), mull_index=4)
 
 
 def draw_hard_metrics(axes, algorithms: dict):
@@ -224,16 +227,18 @@ def draw_hard_metrics(axes, algorithms: dict):
                                                    to_color_array(color_idx))
                 # color = [0, 0, 0]
                 # color[color_idx] = 1
-                draw_plot_avg(axes[m_idx_1 + 5][1], m + ' AVG', algo_name, loss_cl_avg, to_color_array(color_idx))
+                draw_plot_avg(axes[m_idx_1 + 5][1], sub_metrics + ' AVG', algo_name, loss_cl_avg,
+                              to_color_array(color_idx))
 
                 tests = algorithms[algo_name]['test']
                 loss_cl_avg = draw_plot_return_avg(axes[m_idx_1 + 5][2], sub_metrics + ' Test', algo_name, tests,
                                                    get_hard_measure_by_name(m, sub_metrics),
-                                                   to_color_array(color_idx))
+                                                   to_color_array(color_idx),
+                                                   mull_index=4)
                 # color = [0, 0, 0]
                 # color[color_idx] = 1
                 draw_plot_avg(axes[m_idx_1 + 5][3], sub_metrics + ' AVG', algo_name, loss_cl_avg,
-                              to_color_array(color_idx))
+                              to_color_array(color_idx), mull_index=4)
 
 
 def visualize_algorithms(algorithms: dict, run_name: str):
@@ -247,13 +252,16 @@ def visualize_algorithms(algorithms: dict, run_name: str):
         ax.set(xlabel='epoch', ylabel='value')
         ax.legend(loc='lower left')
 
+    for ax in axes.flat[12:]:
+        ax.set_ylim((0, 1))
     plt.savefig(os.path.join(plot_images_path, run_name.replace(".", "_")), bbox_inches='tight')
     plt.show()
 
 
 def parse_run(run_number="run_01"):
     algorithms = {}
-    for current_path, folder, file_name in os.walk(os.path.join(logs_path, run_number)):
+    for current_path, folder, _ in os.walk(os.path.join(logs_path, run_number)):
+        # print(folder)
         for algorithm in folder:
             algorithm_list_test = []
             algorithm_list_train = []
@@ -271,12 +279,13 @@ def parse_run(run_number="run_01"):
                     print('END READ ' + log_path)
                     algorithm_list_test.append(test)
                     algorithm_list_train.append(train)
+        break
     visualize_algorithms(algorithms, run_number)
 
 
 if __name__ == "__main__":
     runs = [
-        "RUN_60"
+        "run_02"
     ]
     for i in runs:
         parse_run(i)

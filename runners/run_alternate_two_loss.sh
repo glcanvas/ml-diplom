@@ -20,7 +20,7 @@ do
     --run_name $(prop RUN_NAME)\
     --algorithm_name $ALGORITHM_NAME\
     --epochs $(prop EPOCHS_COUNT)\
-    --pre_train $PRE_TRAIN_EPOCHS
+    --pre_train $PRE_TRAIN_EPOCHS\
     --gpu $GPU\
     --train_set $(prop TRAIN_SIZE)\
     --left_class_number $(prop LEFT_CLASS)\
