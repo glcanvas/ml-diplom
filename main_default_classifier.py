@@ -23,14 +23,16 @@ if __name__ == "__main__":
     classifier_learning_rate = float(parsed.classifier_learning_rate)
     attention_module_learning_rate = float(parsed.attention_module_learning_rate)
 
-    description = "description-{},train_set-{},epochs-{},l-{},r-{},clr-{},amlr-{}".format(
+    seed = int(parsed.seed)
+    description = "description-{},train_set-{},epochs-{},l-{},r-{},clr-{},amlr-{},seed-{}".format(
         parsed_description,
         train_set_size,
         epochs,
         left_class_number,
         right_class_number,
         classifier_learning_rate,
-        attention_module_learning_rate
+        attention_module_learning_rate,
+        seed
     )
 
     P.initialize_log_name(run_name, algorithm_name, description)
@@ -40,7 +42,7 @@ if __name__ == "__main__":
     P.write_to_log("algorithm_name=" + algorithm_name)
 
     try:
-        segments_set, test_set = il.load_data(train_set_size)
+        segments_set, test_set = il.load_data(train_set_size, seed)
 
         train_segments_set = DataLoader(il.ImageDataset(segments_set), batch_size=5, shuffle=True)
         print("ok")

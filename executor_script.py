@@ -1,5 +1,6 @@
 import sys
 import os
+import random as r
 import executor_nvsmi as nsmi
 import property as p
 import time
@@ -27,6 +28,8 @@ TRAIN_SIZE = 1900
 EPOCHS_COUNT = 150
 LOOP_COUNT = 10
 PYTHON_FILE_NAME_DIR = os.path.dirname(os.path.realpath(__file__))
+
+SEED_LIST = [r.randint(1, 500) for _ in range(LOOP_COUNT)]
 
 ALGORITHM_LIST = [
     {
@@ -64,18 +67,19 @@ def execute_algorithm(algorithm_dict: dict, run_id: int, gpu: int, left_border: 
     script_name = os.path.join(PYTHON_FILE_NAME_DIR, algorithm_dict['name'])
     run_name = "RUN_{}_LEFT:{}_RIGHT:{}_TRAIN_SIZE:{}_LOOP_COUNT:{}".format(run_id, left_border, right_border,
                                                                             TRAIN_SIZE, LOOP_COUNT)
-    args = [PYTHON_EXECUTOR_NAME, script_name, '--run_name', run_name,
-            '--algorithm_name', str(algorithm_dict['algorithm_name']),
-            '--epochs', str(algorithm_dict['epochs']),
-            '--pre_train', str(algorithm_dict['pre_train']),
-            '--gpu', str(gpu),
-            '--train_set', str(algorithm_dict['train_set']),
-            '--left_class_number', str(left_border),
-            '--right_class_number', str(right_border)
-            ]
-    cmd = " ".join(args)
 
     for i in range(LOOP_COUNT):
+        args = [PYTHON_EXECUTOR_NAME, script_name, '--run_name', run_name,
+                '--algorithm_name', str(algorithm_dict['algorithm_name']),
+                '--epochs', str(algorithm_dict['epochs']),
+                '--pre_train', str(algorithm_dict['pre_train']),
+                '--gpu', str(gpu),
+                '--train_set', str(algorithm_dict['train_set']),
+                '--left_class_number', str(left_border),
+                '--right_class_number', str(right_border),
+                '--seed', str(SEED_LIST[i])
+                ]
+        cmd = " ".join(args)
         os.system(cmd)
 
 

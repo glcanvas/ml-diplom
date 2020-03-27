@@ -110,7 +110,6 @@ class DatasetLoader:
                      use_norm: bool = False):
         if self.data is None:
             self.data = self.__merge_data(self.cache_input_path, self.cache_target_path)
-            random.shuffle(self.data)
         data_len = len(self.data)
         lower_bound = 0 if lower_bound is None else lower_bound
         upper_bound = data_len if upper_bound is None else upper_bound
@@ -202,12 +201,12 @@ def count_size(x):
     return cnt
 
 
-def load_data(train_size: int):
+def load_data(train_size: int, seed:int):
     loader = DatasetLoader.initial()
     all_data = prepare_data(loader.load_tensors())
     log = "set size: {}, set by classes: {}".format(len(all_data), count_size(all_data))
     P.write_to_log(log)
-    random.shuffle(all_data)
+    random.Random(seed).shuffle(all_data)
     test_set = all_data[train_size:]
     train_set = all_data[:train_size]
     log = "TEST set size: {}, test set by classes: {}".format(len(test_set), count_size(test_set))
