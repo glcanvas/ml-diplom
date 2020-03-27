@@ -21,16 +21,22 @@ if __name__ == "__main__":
     algorithm_name = parsed.algorithm_name
     left_class_number = int(parsed.left_class_number)
     right_class_number = int(parsed.right_class_number)
+    freeze_list = parsed.freeze_list
+    classifier_learning_rate = float(parsed.classifier_learning_rate)
+    attention_module_learning_rate = float(parsed.attention_module_learning_rate)
+
     classes = right_class_number - left_class_number
 
-    description = "description-{},train_set-{},epochs-{},l-{},r-{}".format(
+    description = "description-{},train_set-{},epochs-{},l-{},r-{},clr-{},amlr-{},freeze-{}".format(
         parsed_description,
         train_set_size,
         epochs,
         left_class_number,
-        right_class_number
+        right_class_number,
+        classifier_learning_rate,
+        attention_module_learning_rate,
+        freeze_list
     )
-
     P.initialize_log_name(run_name, algorithm_name, description)
 
     P.write_to_log("description={}".format(description))
@@ -65,8 +71,10 @@ if __name__ == "__main__":
                                             right_class_number=right_class_number,
                                             description=run_name + "_" + description,
                                             snapshot_elements_count=20,
-                                            snapshot_dir=snapshots_path)
-        
+                                            snapshot_dir=snapshots_path,
+                                            classifier_learning_rate=classifier_learning_rate,
+                                            attention_module_learning_rate=attention_module_learning_rate)
+
         # если только и делаем что делаем претрейн, то надо обучать ВСЕ-ВСЕ веса
         is_used_only_one_loss = pre_train >= epochs
         sam_train.train(is_used_only_one_loss)

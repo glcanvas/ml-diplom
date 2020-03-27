@@ -197,7 +197,7 @@ def draw_hard_metrics(axes, algorithms: dict):
                 'f_1_1',
                 'f_1_2',
                 'f_1_3',
-                'f_1_4,',
+                'f_1_4',
                 'f_1_global'
             ],
             'recall': [

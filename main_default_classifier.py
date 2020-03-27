@@ -20,13 +20,17 @@ if __name__ == "__main__":
     left_class_number = int(parsed.left_class_number)
     right_class_number = int(parsed.right_class_number)
     classes = right_class_number - left_class_number
+    classifier_learning_rate = float(parsed.classifier_learning_rate)
+    attention_module_learning_rate = float(parsed.attention_module_learning_rate)
 
-    description = "description-{},train_set-{},epochs-{},l-{},r-{}".format(
+    description = "description-{},train_set-{},epochs-{},l-{},r-{},clr-{},amlr-{}".format(
         parsed_description,
         train_set_size,
         epochs,
         left_class_number,
-        right_class_number
+        right_class_number,
+        classifier_learning_rate,
+        attention_module_learning_rate
     )
 
     P.initialize_log_name(run_name, algorithm_name, description)
@@ -55,7 +59,9 @@ if __name__ == "__main__":
                                    train_epochs=epochs,
                                    left_class_number=left_class_number,
                                    right_class_number=right_class_number,
-                                   description=run_name + "_" + description)
+                                   description=run_name + "_" + description,
+                                   classifier_learning_rate=classifier_learning_rate,
+                                   attention_module_learning_rate=attention_module_learning_rate)
         classifier.train()
 
     except BaseException as e:

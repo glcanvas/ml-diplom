@@ -26,9 +26,12 @@ class Classifier(at.AbstractTrain):
                  gpu_device: int = 0,
                  description: str = "sam",
                  left_class_number: int = None,
-                 right_class_number: int = None):
+                 right_class_number: int = None,
+                 classifier_learning_rate: float = None,
+                 attention_module_learning_rate: float = None):
         super(Classifier, self).__init__(classes, None, None, None, test_each_epoch, use_gpu, gpu_device, description,
-                                         left_class_number, right_class_number, None, None)
+                                         left_class_number, right_class_number, None, None,
+                                         classifier_learning_rate, attention_module_learning_rate)
 
         self.train_epochs = train_epochs
         self.train_segments_set = train_segments_set
@@ -56,9 +59,9 @@ class Classifier(at.AbstractTrain):
         if self.use_gpu:
             self.model = self.model.cuda(self.gpu_device, )
 
-    def train(self, learning_rate=1e-6):
+    def train(self):
 
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.classifier_learning_rate)
         self.model.train()
         best_loss = None
         best_test_loss = None

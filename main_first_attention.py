@@ -7,7 +7,6 @@ import am_model as ss
 import first_attention_module_train as amt
 import os
 
-
 if __name__ == "__main__":
     parsed = P.parse_input_commands().parse_args(sys.argv[1:])
     gpu = int(parsed.gpu)
@@ -23,12 +22,17 @@ if __name__ == "__main__":
     right_class_number = int(parsed.right_class_number)
     classes = right_class_number - left_class_number
 
-    description = "description-{},train_set-{},epochs-{},l-{},r-{}".format(
+    classifier_learning_rate = float(parsed.classifier_learning_rate)
+    attention_module_learning_rate = float(parsed.attention_module_learning_rate)
+
+    description = "description-{},train_set-{},epochs-{},l-{},r-{},clr-{},amlr-{}".format(
         parsed_description,
         train_set_size,
         epochs,
         left_class_number,
-        right_class_number
+        right_class_number,
+        classifier_learning_rate,
+        attention_module_learning_rate
     )
 
     P.initialize_log_name(run_name, algorithm_name, description)
@@ -64,7 +68,9 @@ if __name__ == "__main__":
                                        right_class_number=right_class_number,
                                        description=run_name + "_" + description,
                                        snapshot_elements_count=20,
-                                       snapshot_dir=snapshots_path)
+                                       snapshot_dir=snapshots_path,
+                                       classifier_learning_rate=classifier_learning_rate,
+                                       attention_module_learning_rate=attention_module_learning_rate)
         am_train.train()
 
     except BaseException as e:

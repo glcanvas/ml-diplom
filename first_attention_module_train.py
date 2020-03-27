@@ -40,12 +40,16 @@ class AttentionModule(at.AbstractTrain):
                  left_class_number: int = None,
                  right_class_number: int = None,
                  snapshot_elements_count: int = 11,
-                 snapshot_dir: str = None):
+                 snapshot_dir: str = None,
+                 classifier_learning_rate: float = None,
+                 attention_module_learning_rate: float = None):
+
 
         super(AttentionModule, self).__init__(classes, pre_train_epochs, train_epochs, save_train_logs_epochs,
                                               test_each_epoch, use_gpu,
                                               gpu_device, description, left_class_number, right_class_number,
-                                              snapshot_elements_count, snapshot_dir)
+                                              snapshot_elements_count, snapshot_dir,
+                                              classifier_learning_rate, attention_module_learning_rate)
 
         self.train_segments_set = train_segments_set
         self.test_set = test_set
@@ -63,10 +67,11 @@ class AttentionModule(at.AbstractTrain):
 
     def train(self):
 
-        learning_rate = 1e-6
+
         classifier_optimizer = torch.optim.Adam(gr.register_weights("classifier", self.am_model),
-                                                lr=learning_rate)
-        attention_module_optimizer = torch.optim.Adam(gr.register_weights("attention", self.am_model), lr=1e-4)
+                                                lr=self.classifier_learning_rate)
+        attention_module_optimizer = torch.optim.Adam(gr.register_weights("attention", self.am_model),
+                                                      lr= self.attention_module_learning_rate)
 
         self.best_weights = copy.deepcopy(self.am_model.state_dict())
         best_loss = None

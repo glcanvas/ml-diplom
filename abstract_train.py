@@ -29,7 +29,13 @@ class AbstractTrain:
                  left_class_number: int = None,
                  right_class_number: int = None,
                  snapshot_elements_count: int = 11,
-                 snapshot_dir: str = None):
+                 snapshot_dir: str = None,
+                 classifier_learning_rate: float = None,
+                 attention_module_learning_rate: float = None):
+
+        self.classifier_learning_rate = classifier_learning_rate
+        self.attention_module_learning_rate = attention_module_learning_rate
+
         self.snapshot_elements_count = snapshot_elements_count
         self.snapshot_dir = snapshot_dir
 
@@ -246,13 +252,6 @@ class AbstractTrain:
         self.test_model_answers = [[] for _ in range(self.classes)]
         self.test_trust_answers = [[] for _ in range(self.classes)]
         self.test_probabilities = [[] for _ in range(self.classes)]
-
-    # def apply_adaptive_learning(self, optimizer, learning_rate, epoch):
-    #    pow_epoch = epoch // self.change_lr_epochs
-    #    if pow_epoch == 0:
-    #        return optimizer
-    #    return torch.optim.Adam(register_weights("classifier", self.model),
-    #                            lr=learning_rate * (0.1 ** pow_epoch))
 
     def take_snapshot(self, data_set, model, snapshot_name: str = None):
         cnt = 0
