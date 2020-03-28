@@ -1,6 +1,6 @@
 import sys
 import os
-import random as r
+import random
 import executor_nvsmi as nsmi
 import property as p
 import time
@@ -23,13 +23,13 @@ CLASS_BORDER = [
 #
 
 MEMORY_USAGE = 5000  # MB
-RUN_NAME_RANGE_FROM = 100
+RUN_NAME_RANGE_FROM = 200
 TRAIN_SIZE = 1900
 EPOCHS_COUNT = 150
 LOOP_COUNT = 10
 PYTHON_FILE_NAME_DIR = os.path.dirname(os.path.realpath(__file__))
 
-SEED_LIST = [r.randint(1, 500) for _ in range(LOOP_COUNT)]
+SEED_LIST = [random.Random(0).randint(1, 500) for _ in range(LOOP_COUNT)]
 
 ALGORITHM_LIST = [
     {
@@ -65,7 +65,7 @@ ALGORITHM_LIST = [
 
 def execute_algorithm(algorithm_dict: dict, run_id: int, gpu: int, left_border: int, right_border: int):
     script_name = os.path.join(PYTHON_FILE_NAME_DIR, algorithm_dict['name'])
-    run_name = "RUN_{}_LEFT:{}_RIGHT:{}_TRAIN_SIZE:{}_LOOP_COUNT:{}".format(run_id, left_border, right_border,
+    run_name = "RUN_{}_LEFT-{}_RIGHT-{}_TRAIN_SIZE-{}_LOOP_COUNT-{}".format(run_id, left_border, right_border,
                                                                             TRAIN_SIZE, LOOP_COUNT)
 
     for i in range(LOOP_COUNT):
@@ -87,6 +87,7 @@ if __name__ == "__main__":
 
     thread_list = []
     p.initialize_log_name("NO_NUMBER", "NO_ALGORITHM", "FOR_EXEC_PURPOSE")
+    p.write_to_log("seed list: ", SEED_LIST)
     run_id = RUN_NAME_RANGE_FROM
     for classifier_learning_rate in CLASSIFIER_LEARNING_RATES:
         for attention_learning_rate in ATTENTION_MODULE_LEARNING_RATES:

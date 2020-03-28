@@ -84,15 +84,18 @@ class AlternateModuleTrain(at.AbstractTrain):
                 loss_classification_sum_classifier, accuracy_classification_sum_classifier, loss_segmentation_sum = \
                     self.train_classifier(self.am_model, self.l_loss, self.m_loss, classifier_optimizer,
                                           self.train_segments_set)
+                classifier_optimizer.zero_grad()
             else:
 
                 loss_classification_sum_classifier, accuracy_classification_sum_classifier, loss_segmentation_sum = \
                     self.train_classifier(self.am_model, self.l_loss, self.m_loss, classifier_optimizer,
                                           self.train_segments_set)
+                classifier_optimizer.zero_grad()
 
                 accuracy_classification_sum_segments, loss_m_sum, loss_l1_sum, loss_classification_sum_from_segm = \
                     self.train_segments(self.am_model, self.l_loss, self.m_loss, attention_module_optimizer,
                                         self.train_segments_set)
+                attention_module_optimizer.zero_grad()
 
             accuracy_total = (accuracy_classification_sum_segments + accuracy_classification_sum_classifier) / (
                 1 if div_flag else 2)

@@ -44,7 +44,6 @@ class AttentionModule(at.AbstractTrain):
                  classifier_learning_rate: float = None,
                  attention_module_learning_rate: float = None):
 
-
         super(AttentionModule, self).__init__(classes, pre_train_epochs, train_epochs, save_train_logs_epochs,
                                               test_each_epoch, use_gpu,
                                               gpu_device, description, left_class_number, right_class_number,
@@ -67,11 +66,10 @@ class AttentionModule(at.AbstractTrain):
 
     def train(self):
 
-
         classifier_optimizer = torch.optim.Adam(gr.register_weights("classifier", self.am_model),
                                                 lr=self.classifier_learning_rate)
         attention_module_optimizer = torch.optim.Adam(gr.register_weights("attention", self.am_model),
-                                                      lr= self.attention_module_learning_rate)
+                                                      lr=self.attention_module_learning_rate)
 
         self.best_weights = copy.deepcopy(self.am_model.state_dict())
         best_loss = None
@@ -90,11 +88,12 @@ class AttentionModule(at.AbstractTrain):
                 accuracy_classification_sum_segments, loss_m_sum, loss_l1_sum, loss_classification_sum_classifier = \
                     self.train_segments(self.am_model, self.l_loss, self.m_loss, attention_module_optimizer,
                                         self.train_segments_set)
+                attention_module_optimizer.zero_grad()
             else:
                 loss_classification_sum_classifier, accuracy_classification_sum_classifier, loss_m_sum = \
                     self.train_classifier(self.am_model, self.l_loss, self.m_loss, classifier_optimizer,
                                           self.train_segments_set)
-
+                classifier_optimizer.zero_grad()
             accuracy_total = accuracy_classification_sum_segments + accuracy_classification_sum_classifier
             loss_total = loss_classification_sum_classifier + loss_m_sum
 
