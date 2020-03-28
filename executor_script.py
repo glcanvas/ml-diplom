@@ -65,10 +65,15 @@ ALGORITHM_LIST = [
 ]
 
 
-def execute_algorithm(algorithm_dict: dict, run_id: int, gpu: int, left_border: int, right_border: int):
+def execute_algorithm(algorithm_dict: dict, run_id: int, gpu: int, left_border: int, right_border: int,
+                      classifier_learning_rate: float,
+                      attention_module_learning_rate: float):
     script_name = os.path.join(PYTHON_FILE_NAME_DIR, algorithm_dict['name'])
-    run_name = "RUN_{}_LEFT-{}_RIGHT-{}_TRAIN_SIZE-{}_LOOP_COUNT-{}".format(run_id, left_border, right_border,
-                                                                            TRAIN_SIZE, LOOP_COUNT)
+    run_name = "RUN_{}_LEFT-{}_RIGHT-{}_TRAIN_SIZE-{}_LOOP_COUNT-{}_CLR-{}_AMLR-{}".format(run_id, left_border,
+                                                                                           right_border,
+                                                                                           TRAIN_SIZE, LOOP_COUNT,
+                                                                                           classifier_learning_rate,
+                                                                                           attention_learning_rate)
 
     for i in range(LOOP_COUNT):
         args = [PYTHON_EXECUTOR_NAME, script_name, '--run_name', run_name,
@@ -79,7 +84,9 @@ def execute_algorithm(algorithm_dict: dict, run_id: int, gpu: int, left_border: 
                 '--train_set', str(algorithm_dict['train_set']),
                 '--left_class_number', str(left_border),
                 '--right_class_number', str(right_border),
-                '--seed', str(SEED_LIST[i])
+                '--seed', str(SEED_LIST[i]),
+                '--classifier_learning_rate', str(classifier_learning_rate),
+                '--attention_module_learning_rate', str(attention_module_learning_rate)
                 ]
         cmd = " ".join(args)
         os.system(cmd)
@@ -108,15 +115,17 @@ if __name__ == "__main__":
                             executed = True
                             # HERE IN NEW THREAD
                             thread = Thread(target=execute_algorithm, args=(algorithm_data, run_id, gpu,
-                                                                            left_border, right_border))
+                                                                            left_border, right_border,
+                                                                            classifier_learning_rate,
+                                                                            attention_learning_rate))
                             thread.start()
                             thread_list.append(thread)
                             break
 
                         if executed:
-                            p.write_to_log("success start, classifier_learning_rate: {},"
+                            p.write_to_log("success start, run_id:{} classifier_learning_rate: {},"
                                            " attention_learning_rate: {}, left: {}, right: {}, algorithm_data: {}"
-                                           " wait: {} seconds".format(classifier_learning_rate,
+                                           " wait: {} seconds".format(run_id, classifier_learning_rate,
                                                                       attention_learning_rate, left_border,
                                                                       right_border,
                                                                       algorithm_data, SLEEP_SECONDS))
