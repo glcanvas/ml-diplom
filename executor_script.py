@@ -8,9 +8,9 @@ from threading import Thread
 
 SLEEP_SECONDS = 120
 CLASSIFIER_LEARNING_RATES = [1e-3, 1e-4, 1e-5, 1e-6]
-ATTENTION_MODULE_LEARNING_RATES = [1e-3, 1e-4, 1e-5, 1e-6]
+ATTENTION_MODULE_LEARNING_RATES = [1e-3, 1e-6]
 
-PYTHON_EXECUTOR_NAME = "/home/nikita/anaconda3/envs/ml-diplom/bin/python"
+PYTHON_EXECUTOR_NAME = "/home/nduginec/nduginec_evn3/bin/python"
 
 CLASS_BORDER = [
     (0, 5),  # all classes
@@ -89,9 +89,9 @@ if __name__ == "__main__":
     p.initialize_log_name("NO_NUMBER", "NO_ALGORITHM", "FOR_EXEC_PURPOSE")
     p.write_to_log("seed list: ", SEED_LIST)
     run_id = RUN_NAME_RANGE_FROM
-    for classifier_learning_rate in CLASSIFIER_LEARNING_RATES:
-        for attention_learning_rate in ATTENTION_MODULE_LEARNING_RATES:
-            for left_border, right_border in CLASS_BORDER:
+    for left_border, right_border in CLASS_BORDER:
+        for classifier_learning_rate in CLASSIFIER_LEARNING_RATES:
+            for attention_learning_rate in ATTENTION_MODULE_LEARNING_RATES:
                 run_name = "RUN_{}_LEFT{}_RIGHT{}".format(run_id, left_border, right_border)
                 for algorithm_data in ALGORITHM_LIST:
 
