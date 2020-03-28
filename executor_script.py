@@ -29,8 +29,10 @@ EPOCHS_COUNT = 150
 LOOP_COUNT = 10
 PYTHON_FILE_NAME_DIR = os.path.dirname(os.path.realpath(__file__))
 
-SEED_LIST = [random.Random(0).randint(1, 500) for _ in range(LOOP_COUNT)]
+r = random.Random(0)
+SEED_LIST = [r.randint(1, 500) for _ in range(LOOP_COUNT)]
 
+print(SEED_LIST)
 ALGORITHM_LIST = [
     {
         'name': 'main_default_classifier.py',
