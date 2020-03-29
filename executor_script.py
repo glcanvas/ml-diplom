@@ -1,4 +1,7 @@
 import sys
+from multiprocessing import Pool, Value
+import subprocess
+from datetime import datetime
 import os
 import random
 import executor_nvsmi as nsmi
@@ -64,6 +67,9 @@ ALGORITHM_LIST = [
     }
 ]
 
+MAX_ALIVE_THREADS = 8
+alive_threads = Value('i', 0)
+
 
 def execute_algorithm(algorithm_dict: dict, run_id: int, gpu: int, left_border: int, right_border: int,
                       classifier_learning_rate: float,
@@ -89,7 +95,11 @@ def execute_algorithm(algorithm_dict: dict, run_id: int, gpu: int, left_border: 
                 '--attention_module_learning_rate', str(attention_module_learning_rate)
                 ]
         cmd = " ".join(args)
+        current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
+        p.write_to_log("time = {} idx = {} BEGIN execute: {}".format(current_time, i, cmd))
         os.system(cmd)
+        p.write_to_log("time = {} idx = {} END execute: {}".format(current_time, i, cmd))
+    alive_threads.value -= 1
 
 
 if __name__ == "__main__":
@@ -110,10 +120,14 @@ if __name__ == "__main__":
                         for k in smi['Attached GPUs']:
                             gpu = int(smi['Attached GPUs'][k]['Minor Number'])
                             free_memory = int(smi['Attached GPUs'][k]['FB Memory Usage']['Free'].split()[0])
-                            if free_memory < MEMORY_USAGE:
+                            if alive_threads.value > MAX_ALIVE_THREADS or free_memory < MEMORY_USAGE:
+                                current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
+                                p.write_to_log(
+                                    "time = {}, alive_threads = {}".format(current_time, alive_threads.value))
                                 continue
                             executed = True
                             # HERE IN NEW THREAD
+                            alive_threads.value += 1
                             thread = Thread(target=execute_algorithm, args=(algorithm_data, run_id, gpu,
                                                                             left_border, right_border,
                                                                             classifier_learning_rate,
@@ -122,19 +136,21 @@ if __name__ == "__main__":
                             thread_list.append(thread)
                             break
 
+                        current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
                         if executed:
-                            p.write_to_log("success start, run_id:{} classifier_learning_rate: {},"
+                            p.write_to_log("time = {} success start, run_id:{} classifier_learning_rate: {},"
                                            " attention_learning_rate: {}, left: {}, right: {}, algorithm_data: {}"
-                                           " wait: {} seconds".format(run_id, classifier_learning_rate,
+                                           " wait: {} seconds".format(current_time,
+                                                                      run_id, classifier_learning_rate,
                                                                       attention_learning_rate, left_border,
                                                                       right_border,
                                                                       algorithm_data, SLEEP_SECONDS))
                             break
-                        p.write_to_log("can't allocate memory: {}, classifier_learning_rate: {},"
+                        p.write_to_log("time = {} can't allocate memory: {}, classifier_learning_rate: {},"
                                        " attention_learning_rate: {}, left: {}, right: {}, algorithm_data: {}"
                                        " wait: {} seconds".format(
-                            MEMORY_USAGE, classifier_learning_rate, attention_learning_rate, left_border, right_border,
-                            algorithm_data, SLEEP_SECONDS))
+                            current_time, MEMORY_USAGE, classifier_learning_rate, attention_learning_rate, left_border,
+                            right_border, algorithm_data, SLEEP_SECONDS))
                         time.sleep(SLEEP_SECONDS)
                     time.sleep(SLEEP_SECONDS)
 
