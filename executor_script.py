@@ -124,9 +124,11 @@ if __name__ == "__main__":
                             free_memory = int(smi['Attached GPUs'][k]['FB Memory Usage']['Free'].split()[0])
 
                             nduginets_env_cnt = 0
-                            for process in smi['Attached GPUs'][k]['Processes']:
-                                if 'nduginec_evn3' in process['Name']:
-                                    nduginets_env_cnt += 1
+                            if smi['Attached GPUs'][k]['Processes'] is not None:
+                                for process in smi['Attached GPUs'][k]['Processes']:
+                                    if 'nduginec_evn3' in process['Name']:
+                                        nduginets_env_cnt += 1
+
                             if alive_threads.value >= MAX_ALIVE_THREADS or free_memory < MEMORY_USAGE \
                                     or nduginets_env_cnt >= ENV_MAX_CNT:
                                 current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
