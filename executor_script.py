@@ -11,7 +11,7 @@ from threading import Thread
 
 SLEEP_SECONDS = 120
 CLASSIFIER_LEARNING_RATES = [1e-3, 1e-4, 1e-5, 1e-6]
-ATTENTION_MODULE_LEARNING_RATES = [1e-3, 1e-6]
+ATTENTION_MODULE_LEARNING_RATES = [1e-3]
 
 PYTHON_EXECUTOR_NAME = "/home/nduginec/nduginec_evn3/bin/python"
 
@@ -26,10 +26,10 @@ CLASS_BORDER = [
 #
 
 MEMORY_USAGE = 5000  # MB
-RUN_NAME_RANGE_FROM = 300
-TRAIN_SIZE = 1900
+RUN_NAME_RANGE_FROM = 500
+TRAIN_SIZE = 1800
 EPOCHS_COUNT = 150
-LOOP_COUNT = 10
+LOOP_COUNT = 8
 PYTHON_FILE_NAME_DIR = os.path.dirname(os.path.realpath(__file__))
 
 r = random.Random(0)
@@ -68,6 +68,7 @@ ALGORITHM_LIST = [
 ]
 
 MAX_ALIVE_THREADS = 8
+ENV_MAX_CNT = 2
 alive_threads = Value('i', 0)
 
 
@@ -121,10 +122,18 @@ if __name__ == "__main__":
                         for k in smi['Attached GPUs']:
                             gpu = int(smi['Attached GPUs'][k]['Minor Number'])
                             free_memory = int(smi['Attached GPUs'][k]['FB Memory Usage']['Free'].split()[0])
-                            if alive_threads.value >= MAX_ALIVE_THREADS or free_memory < MEMORY_USAGE:
+
+                            nduginets_env_cnt = 0
+                            for process in smi['Attached GPUs'][k]['Processes']:
+                                if 'nduginec_evn3' in process['Name']:
+                                    nduginets_env_cnt += 1
+                            if alive_threads.value >= MAX_ALIVE_THREADS or free_memory < MEMORY_USAGE \
+                                    or nduginets_env_cnt >= ENV_MAX_CNT:
                                 current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
                                 p.write_to_log(
-                                    "time = {}, alive_threads = {}".format(current_time, alive_threads.value))
+                                    "time = {}, alive_threads = {} nduginets_env_cnt={}".format(current_time,
+                                                                                                alive_threads.value,
+                                                                                                nduginets_env_cnt))
                                 continue
                             executed = True
                             # HERE IN NEW THREAD
