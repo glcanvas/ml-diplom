@@ -98,6 +98,7 @@ def execute_algorithm(algorithm_dict: dict, run_id: int, gpu: int, left_border: 
         current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
         p.write_to_log("time = {} idx = {} BEGIN execute: {}".format(current_time, i, cmd))
         os.system(cmd)
+        current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
         p.write_to_log("time = {} idx = {} END execute: {}".format(current_time, i, cmd))
     alive_threads.value -= 1
 
@@ -120,7 +121,7 @@ if __name__ == "__main__":
                         for k in smi['Attached GPUs']:
                             gpu = int(smi['Attached GPUs'][k]['Minor Number'])
                             free_memory = int(smi['Attached GPUs'][k]['FB Memory Usage']['Free'].split()[0])
-                            if alive_threads.value > MAX_ALIVE_THREADS or free_memory < MEMORY_USAGE:
+                            if alive_threads.value >= MAX_ALIVE_THREADS or free_memory < MEMORY_USAGE:
                                 current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
                                 p.write_to_log(
                                     "time = {}, alive_threads = {}".format(current_time, alive_threads.value))
