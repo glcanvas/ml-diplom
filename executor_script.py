@@ -21,9 +21,6 @@ CLASS_BORDER = [
     (4, 5),  # last
     (3, 4),  # last prev
 ]
-#
-# красивые презентации
-#
 
 MEMORY_USAGE = 5000  # MB
 RUN_NAME_RANGE_FROM = 500
@@ -31,6 +28,7 @@ TRAIN_SIZE = 1800
 EPOCHS_COUNT = 150
 LOOP_COUNT = 8
 PYTHON_FILE_NAME_DIR = os.path.dirname(os.path.realpath(__file__))
+property_file = os.path.join(PYTHON_FILE_NAME_DIR, "executor_property.properties")
 
 r = random.Random(0)
 SEED_LIST = [r.randint(1, 500) for _ in range(LOOP_COUNT)]
@@ -104,6 +102,11 @@ def execute_algorithm(algorithm_dict: dict, run_id: int, gpu: int, left_border: 
     alive_threads.value -= 1
 
 
+def read_property() -> dict:
+    return dict(
+        line.strip().split('=') for line in open(property_file) if not line.strip().startswith('#'))
+
+
 if __name__ == "__main__":
 
     thread_list = []
@@ -119,10 +122,13 @@ if __name__ == "__main__":
                     executed = False
                     while True:
                         smi = nsmi.NVLog()
+                        props = read_property()
+
                         for k in smi['Attached GPUs']:
                             gpu = int(smi['Attached GPUs'][k]['Minor Number'])
                             free_memory = int(smi['Attached GPUs'][k]['FB Memory Usage']['Free'].split()[0])
-
+                            if gpu in props['banned_gpu']:
+                                continue
                             nduginets_env_cnt = 0
                             if smi['Attached GPUs'][k]['Processes'] is not None:
                                 for process in smi['Attached GPUs'][k]['Processes']:
