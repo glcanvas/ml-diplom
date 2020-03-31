@@ -127,7 +127,7 @@ if __name__ == "__main__":
                         for k in smi['Attached GPUs']:
                             gpu = int(smi['Attached GPUs'][k]['Minor Number'])
                             free_memory = int(smi['Attached GPUs'][k]['FB Memory Usage']['Free'].split()[0])
-                            if gpu in props['banned_gpu']:
+                            if str(gpu) in props['banned_gpu']:
                                 current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
                                 p.write_to_log("time = {}, gpu = {} is banned".format(current_time, gpu))
                                 continue
