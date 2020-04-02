@@ -206,17 +206,30 @@ if __name__ == "__main__":
     for idx, i in enumerate(ex_list):
         p.write_to_log("idx: {} data: {}".format(idx, i))
 
-    queue = [] # [(True, i) for i in ex_list]
+    queue = []  # [(True, i) for i in ex_list]
     execute_index = 0
-    property_index = 0
+
+    p.write_to_log("=" * 20)
+    properties = read_property()
+    property_index = process_property(0, queue, thread_list, mapper_list, properties)
+    p.write_to_log("execute_index={}".format(execute_index))
+    p.write_to_log("property_index={}".format(property_index))
+    for idx, i in enumerate(queue):
+        p.write_to_log("idx={}, queue value={}".format(idx, i))
+    for idx, i in enumerate(zip(thread_list, mapper_list)):
+        p.write_to_log("idx={}, thread map={}".format(idx, i))
+    for idx, i in enumerate(ex_list):
+        p.write_to_log("idx: {} execute algorithm: {}".format(idx, i))
+    p.write_to_log("=" * 20)
+    
     while execute_index < len(queue):
         run_it, (left_border, right_border, classifier_learning_rate, attention_learning_rate, run_id,
                  algorithm_data) = queue[execute_index]
 
         while True:
+
             p.write_to_log("=" * 20)
             properties = read_property()
-
             property_index = process_property(property_index, queue, thread_list, mapper_list, properties)
             p.write_to_log("execute_index={}".format(execute_index))
             p.write_to_log("property_index={}".format(property_index))
@@ -226,6 +239,7 @@ if __name__ == "__main__":
                 p.write_to_log("idx={}, thread map={}".format(idx, i))
             for idx, i in enumerate(ex_list):
                 p.write_to_log("idx: {} execute algorithm: {}".format(idx, i))
+
             gpu = found_gpu(nsmi.NVLog(), properties)
             if gpu == -1:
                 current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
