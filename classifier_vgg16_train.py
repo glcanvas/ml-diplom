@@ -28,7 +28,8 @@ class Classifier(at.AbstractTrain):
                  left_class_number: int = None,
                  right_class_number: int = None,
                  classifier_learning_rate: float = None,
-                 attention_module_learning_rate: float = None):
+                 attention_module_learning_rate: float = None,
+                 is_freezen: bool = False):
         super(Classifier, self).__init__(classes, None, None, None, test_each_epoch, use_gpu, gpu_device, description,
                                          left_class_number, right_class_number, None, None,
                                          classifier_learning_rate, attention_module_learning_rate)
@@ -56,12 +57,20 @@ class Classifier(at.AbstractTrain):
         self.best_weights = copy.deepcopy(self.model.state_dict())
         self.best_test_weights = copy.deepcopy(self.model.state_dict())
 
+        self.is_freezen = is_freezen
+
         if self.use_gpu:
             self.model = self.model.cuda(self.gpu_device, )
 
     def train(self):
 
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.classifier_learning_rate)
+        if self.is_freezen:
+            print("YES ITS FREEZEN")
+            params = self.model.classifier.parameters()
+        else:
+            params = self.model.parameters()
+
+        optimizer = torch.optim.Adam(params, lr=self.classifier_learning_rate)
         self.model.train()
         best_loss = None
         best_test_loss = None

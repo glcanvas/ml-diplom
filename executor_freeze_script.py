@@ -12,21 +12,6 @@ import threading
 import inspect
 import ctypes
 
-
-def _async_raise(tid, exctype):
-    """raises the exception, performs cleanup if needed"""
-    if not inspect.isclass(exctype):
-        raise TypeError("Only types can be raised (not instances)")
-    res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, ctypes.py_object(exctype))
-    if res == 0:
-        raise ValueError("invalid thread id")
-    elif res != 1:
-        # """if it returns a number greater than one, you're in trouble,
-        # and you should call it again with exc=NULL to revert the effect"""
-        ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, 0)
-        raise SystemError("PyThreadState_SetAsyncExc failed")
-
-
 SLEEP_SECONDS = 120
 CLASSIFIER_LEARNING_RATES = [1e-3, 1e-4, 1e-5, 1e-6]
 ATTENTION_MODULE_LEARNING_RATES = [1e-3]
@@ -41,7 +26,7 @@ CLASS_BORDER = [
 ]
 
 MEMORY_USAGE = 5000  # MB
-RUN_NAME_RANGE_FROM = 500
+RUN_NAME_RANGE_FROM = 600
 TRAIN_SIZE = 1800
 EPOCHS_COUNT = 150
 LOOP_COUNT = 8
@@ -60,27 +45,6 @@ ALGORITHM_LIST = [
         'train_set': TRAIN_SIZE,
         'epochs': EPOCHS_COUNT,
     },
-    {
-        'name': 'main_first_attention.py',
-        'algorithm_name': 'AM_AT_FIRST_THEN_CL_TWO_LOSS',
-        'pre_train': 100,
-        'train_set': TRAIN_SIZE,
-        'epochs': EPOCHS_COUNT
-    },
-    {
-        'name': 'main_alternate.py',
-        'algorithm_name': 'TWO_LOSS_WITH_AM',
-        'pre_train': 20,
-        'train_set': TRAIN_SIZE,
-        'epochs': EPOCHS_COUNT
-    },
-    {
-        'name': 'main_alternate.py',
-        'algorithm_name': 'ONE_LOSS_WITH_AM',
-        'pre_train': EPOCHS_COUNT,
-        'train_set': TRAIN_SIZE,
-        'epochs': EPOCHS_COUNT
-    }
 ]
 
 MAX_ALIVE_THREADS = 8
@@ -91,15 +55,13 @@ def execute_algorithm(algorithm_dict: dict, run_id: int, gpu: int, left_border: 
                       classifier_learning_rate: float,
                       attention_module_learning_rate: float):
     script_name = os.path.join(PYTHON_FILE_NAME_DIR, algorithm_dict['name'])
-    run_name = "RUN_{}_LEFT-{}_RIGHT-{}_TRAIN_SIZE-{}_LOOP_COUNT-{}_CLR-{}_AMLR-{}".format(run_id, left_border,
-                                                                                           right_border,
-                                                                                           TRAIN_SIZE, LOOP_COUNT,
-                                                                                           classifier_learning_rate,
-                                                                                           attention_module_learning_rate)
+    run_name = "RUN_{}_LEFT-{}_RIGHT-{}_TRAIN_SIZE-{}_LOOP_COUNT-{}".format(run_id, left_border,
+                                                                            right_border,
+                                                                            TRAIN_SIZE, LOOP_COUNT)
 
     for i in range(LOOP_COUNT):
         args = [PYTHON_EXECUTOR_NAME, script_name, '--run_name', run_name,
-                '--algorithm_name', str(algorithm_dict['algorithm_name']),
+                '--algorithm_name', str(algorithm_dict['algorithm_name']) + '_' + str(classifier_learning_rate),
                 '--epochs', str(algorithm_dict['epochs']),
                 '--pre_train', str(algorithm_dict['pre_train']),
                 '--gpu', str(gpu),
@@ -108,7 +70,8 @@ def execute_algorithm(algorithm_dict: dict, run_id: int, gpu: int, left_border: 
                 '--right_class_number', str(right_border),
                 '--seed', str(SEED_LIST[i]),
                 '--classifier_learning_rate', str(classifier_learning_rate),
-                '--attention_module_learning_rate', str(attention_module_learning_rate)
+                '--attention_module_learning_rate', str(attention_module_learning_rate),
+                '----is_freezen', 'True'
                 ]
         cmd = " ".join(args)
         current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
@@ -134,7 +97,8 @@ def build_execute_list():
                 for algorithm_data in ALGORITHM_LIST:
                     result.append((left_border, right_border, classifier_learning_rate, attention_learning_rate,
                                    run_id, algorithm_data))
-                run_id += 1
+        run_id += 1
+
     return result
 
 
@@ -167,15 +131,17 @@ def found_gpu(smi, properties: dict) -> int:
     return -1
 
 
-def process_property(property_index: int, queue: list, thread_list: list, mapper_list: list, properties: dict) -> int:
+def process_property(property_index: int, queue: list, thread_list: list, mapper_list: list, properties: dict) -> tuple:
     executed_list = build_execute_list()
 
+    chaned = False
     for prop in properties:
         splited_prop = prop.split(".")
         if splited_prop[0] != str(property_index):
             p.write_to_log("prop = {}, property_index = {} SKIP".format(prop, property_index))
             continue
 
+        chaned = True
         index = int(properties[prop])
         if splited_prop[1] == "add":
             queue.append((True, executed_list[index]))
@@ -193,7 +159,7 @@ def process_property(property_index: int, queue: list, thread_list: list, mapper
             else:
                 thread_list[thread_position]._stop()
             property_index += 1
-    return property_index
+    return chaned, property_index
 
 
 if __name__ == "__main__":
@@ -207,12 +173,12 @@ if __name__ == "__main__":
     for idx, i in enumerate(ex_list):
         p.write_to_log("idx: {} data: {}".format(idx, i))
 
-    queue = []  # [(True, i) for i in ex_list]
+    queue = [(True, i) for i in ex_list]
     execute_index = 0
 
     p.write_to_log("=" * 20)
     properties = read_property()
-    property_index = process_property(0, queue, thread_list, mapper_list, properties)
+    _, property_index = process_property(0, queue, thread_list, mapper_list, properties)
     p.write_to_log("execute_index={}".format(execute_index))
     p.write_to_log("property_index={}".format(property_index))
     for idx, i in enumerate(queue):
@@ -222,7 +188,7 @@ if __name__ == "__main__":
     for idx, i in enumerate(ex_list):
         p.write_to_log("idx: {} execute algorithm: {}".format(idx, i))
     p.write_to_log("=" * 20)
-    
+
     while execute_index < len(queue):
         run_it, (left_border, right_border, classifier_learning_rate, attention_learning_rate, run_id,
                  algorithm_data) = queue[execute_index]
@@ -231,15 +197,17 @@ if __name__ == "__main__":
 
             p.write_to_log("=" * 20)
             properties = read_property()
-            property_index = process_property(property_index, queue, thread_list, mapper_list, properties)
+            c, property_index = process_property(property_index, queue, thread_list, mapper_list, properties)
             p.write_to_log("execute_index={}".format(execute_index))
             p.write_to_log("property_index={}".format(property_index))
-            for idx, i in enumerate(queue):
-                p.write_to_log("idx={}, queue value={}".format(idx, i))
-            for idx, i in enumerate(zip(thread_list, mapper_list)):
-                p.write_to_log("idx={}, thread map={}".format(idx, i))
-            for idx, i in enumerate(ex_list):
-                p.write_to_log("idx: {} execute algorithm: {}".format(idx, i))
+
+            if c:
+                for idx, i in enumerate(queue):
+                    p.write_to_log("idx={}, queue value={}".format(idx, i))
+                for idx, i in enumerate(zip(thread_list, mapper_list)):
+                    p.write_to_log("idx={}, thread map={}".format(idx, i))
+                for idx, i in enumerate(ex_list):
+                    p.write_to_log("idx: {} execute algorithm: {}".format(idx, i))
 
             gpu = found_gpu(nsmi.NVLog(), properties)
             if gpu == -1:

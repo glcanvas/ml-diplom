@@ -22,6 +22,7 @@ if __name__ == "__main__":
     classes = right_class_number - left_class_number
     classifier_learning_rate = float(parsed.classifier_learning_rate)
     attention_module_learning_rate = float(parsed.attention_module_learning_rate)
+    is_freezen = False if str(parsed.is_freezen).lower() == "false" else True
 
     seed = int(parsed.seed)
     description = "description-{},train_set-{},epochs-{},l-{},r-{},clr-{},amlr-{},seed-{}".format(
@@ -63,7 +64,8 @@ if __name__ == "__main__":
                                    right_class_number=right_class_number,
                                    description=run_name + "_" + description,
                                    classifier_learning_rate=classifier_learning_rate,
-                                   attention_module_learning_rate=attention_module_learning_rate)
+                                   attention_module_learning_rate=attention_module_learning_rate,
+                                   is_freezen=is_freezen)
         classifier.train()
 
     except BaseException as e:

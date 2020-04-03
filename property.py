@@ -82,4 +82,5 @@ def parse_input_commands():
     parser.add_argument("--attention_module_learning_rate", default="1e-4")
     parser.add_argument("--freeze_list", default="for_alternate_only")
     parser.add_argument("--seed", default="5")
+    parser.add_argument("--is_freezen", default="False")
     return parser

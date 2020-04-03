@@ -1,660 +1,234 @@
 ==================================================
 ==================================================
-==================================================
 --------------------------------------------------
---------------------------------------------------
-run name = RUN_500_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.001_AMLR-0.001
+id = 500
+lr = 0.001
 algorithm = ONE_LOSS_WITH_AM
-runner = 0, epochs = 8
-runner = 1, epochs = 138
-runner = 2, epochs = 2
-runner = 3, epochs = 2
-runner = 4, epochs = 2
-runner = 5, epochs = 2
-runner = 6, epochs = 154
-runner = 7, epochs = 2
-runner = 8, epochs = 103
-runner = 9, epochs = 2
-runner = 10, epochs = 2
-runner = 11, epochs = 154
-runner = 12, epochs = 154
-runner = 13, epochs = 2
-runner = 14, epochs = 154
-runner = 15, epochs = 54
-runner = 16, epochs = 7
-runner = 17, epochs = 3
-runner = 18, epochs = 8
+count = 4
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_500_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.001_AMLR-0.001
+id = 500
+lr = 0.001
 algorithm = AM_AT_FIRST_THEN_CL_TWO_LOSS
-runner = 0, epochs = 8
-runner = 1, epochs = 154
-runner = 2, epochs = 154
-runner = 3, epochs = 154
-runner = 4, epochs = 102
-runner = 5, epochs = 107
-runner = 6, epochs = 6
-runner = 7, epochs = 8
-runner = 8, epochs = 22
-runner = 9, epochs = 7
-runner = 10, epochs = 22
-runner = 11, epochs = 7
-runner = 12, epochs = 3
-runner = 13, epochs = 7
-runner = 14, epochs = 7
-runner = 15, epochs = 154
-runner = 16, epochs = 8
-runner = 17, epochs = 154
-runner = 18, epochs = 7
+count = 5
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_500_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.001_AMLR-0.001
+id = 500
+lr = 0.001
 algorithm = VGG16
-runner = 0, epochs = 3
-runner = 1, epochs = 6
-runner = 2, epochs = 6
-runner = 3, epochs = 1
-runner = 4, epochs = 2
-runner = 5, epochs = 153
-runner = 6, epochs = 2
-runner = 7, epochs = 2
-runner = 8, epochs = 91
-runner = 9, epochs = 153
-runner = 10, epochs = 1
-runner = 11, epochs = 153
-runner = 12, epochs = 5
-runner = 13, epochs = 3
-runner = 14, epochs = 6
-runner = 15, epochs = 2
-runner = 16, epochs = 153
-runner = 17, epochs = 8
-runner = 18, epochs = 153
-runner = 19, epochs = 3
-runner = 20, epochs = 12
-runner = 21, epochs = 6
-runner = 22, epochs = 12
-runner = 23, epochs = 5
-runner = 24, epochs = 153
-runner = 25, epochs = 1
-runner = 26, epochs = 101
-runner = 27, epochs = 153
-runner = 28, epochs = 8
-runner = 29, epochs = 153
-runner = 30, epochs = 2
-runner = 31, epochs = 6
-runner = 32, epochs = 1
-runner = 33, epochs = 6
-runner = 34, epochs = 117
+count = 8
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_500_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.001_AMLR-0.001
+id = 500
+lr = 0.001
 algorithm = TWO_LOSS_WITH_AM
-runner = 0, epochs = 8
-runner = 1, epochs = 154
-runner = 2, epochs = 2
-runner = 3, epochs = 154
-runner = 4, epochs = 1
-runner = 5, epochs = 94
-runner = 6, epochs = 53
-runner = 7, epochs = 118
-runner = 8, epochs = 8
-runner = 9, epochs = 2
-runner = 10, epochs = 2
-runner = 11, epochs = 2
-runner = 12, epochs = 1
-runner = 13, epochs = 154
-runner = 14, epochs = 2
-runner = 15, epochs = 2
-runner = 16, epochs = 3
-runner = 17, epochs = 2
-runner = 18, epochs = 2
-runner = 19, epochs = 122
-runner = 20, epochs = 4
-runner = 21, epochs = 2
-runner = 22, epochs = 2
-runner = 23, epochs = 2
-runner = 24, epochs = 133
-runner = 25, epochs = 2
-runner = 26, epochs = 2
-runner = 27, epochs = 100
---------------------------------------------------
+count = 3
 --------------------------------------------------
 ==================================================
 ==================================================
 ==================================================
 ==================================================
-==================================================
-==================================================
 --------------------------------------------------
---------------------------------------------------
-run name = RUN_501_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.0001_AMLR-0.001
+id = 501
+lr = 0.0001
 algorithm = ONE_LOSS_WITH_AM
-runner = 0, epochs = 154
-runner = 1, epochs = 2
-runner = 2, epochs = 118
-runner = 3, epochs = 2
-runner = 4, epochs = 7
-runner = 5, epochs = 66
-runner = 6, epochs = 3
-runner = 7, epochs = 2
-runner = 8, epochs = 3
-runner = 9, epochs = 2
-runner = 10, epochs = 14
-runner = 11, epochs = 2
-runner = 12, epochs = 2
-runner = 13, epochs = 2
-runner = 14, epochs = 154
-runner = 15, epochs = 33
-runner = 16, epochs = 2
-runner = 17, epochs = 2
+count = 2
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_501_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.0001_AMLR-0.001
+id = 501
+lr = 0.0001
 algorithm = AM_AT_FIRST_THEN_CL_TWO_LOSS
-runner = 0, epochs = 7
-runner = 1, epochs = 68
-runner = 2, epochs = 5
-runner = 3, epochs = 102
-runner = 4, epochs = 8
-runner = 5, epochs = 151
-runner = 6, epochs = 104
-runner = 7, epochs = 154
-runner = 8, epochs = 6
-runner = 9, epochs = 154
-runner = 10, epochs = 154
-runner = 11, epochs = 124
-runner = 12, epochs = 54
-runner = 13, epochs = 2
-runner = 14, epochs = 154
-runner = 15, epochs = 6
-runner = 16, epochs = 154
-runner = 17, epochs = 6
+count = 6
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_501_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.0001_AMLR-0.001
+id = 501
+lr = 0.0001
 algorithm = VGG16
-runner = 0, epochs = 153
-runner = 1, epochs = 2
-runner = 2, epochs = 153
-runner = 3, epochs = 153
-runner = 4, epochs = 153
-runner = 5, epochs = 153
-runner = 6, epochs = 153
-runner = 7, epochs = 94
-runner = 8, epochs = 58
-runner = 9, epochs = 2
-runner = 10, epochs = 153
-runner = 11, epochs = 49
-runner = 12, epochs = 153
-runner = 13, epochs = 2
-runner = 14, epochs = 2
-runner = 15, epochs = 57
-runner = 16, epochs = 2
-runner = 17, epochs = 153
-runner = 18, epochs = 153
-runner = 19, epochs = 153
-runner = 20, epochs = 94
-runner = 21, epochs = 8
-runner = 22, epochs = 153
-runner = 23, epochs = 153
-runner = 24, epochs = 153
-runner = 25, epochs = 8
-runner = 26, epochs = 153
+count = 15
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_501_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.0001_AMLR-0.001
+id = 501
+lr = 0.0001
 algorithm = TWO_LOSS_WITH_AM
-runner = 0, epochs = 154
-runner = 1, epochs = 154
-runner = 2, epochs = 122
-runner = 3, epochs = 2
-runner = 4, epochs = 7
-runner = 5, epochs = 2
-runner = 6, epochs = 2
-runner = 7, epochs = 2
-runner = 8, epochs = 2
-runner = 9, epochs = 65
-runner = 10, epochs = 2
-runner = 11, epochs = 2
-runner = 12, epochs = 2
-runner = 13, epochs = 2
-runner = 14, epochs = 2
-runner = 15, epochs = 154
-runner = 16, epochs = 154
-runner = 17, epochs = 1
-runner = 18, epochs = 53
-runner = 19, epochs = 18
-runner = 20, epochs = 2
-runner = 21, epochs = 34
-runner = 22, epochs = 3
-runner = 23, epochs = 3
-runner = 24, epochs = 82
-runner = 25, epochs = 2
-runner = 26, epochs = 2
-runner = 27, epochs = 2
-runner = 28, epochs = 2
-runner = 29, epochs = 112
---------------------------------------------------
+count = 4
 --------------------------------------------------
 ==================================================
 ==================================================
 ==================================================
 ==================================================
-==================================================
-==================================================
 --------------------------------------------------
---------------------------------------------------
-run name = RUN_502_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-05_AMLR-0.001
+id = 502
+lr = 1e-05
 algorithm = ONE_LOSS_WITH_AM
-runner = 0, epochs = 2
-runner = 1, epochs = 2
-runner = 2, epochs = 2
-runner = 3, epochs = 3
-runner = 4, epochs = 2
-runner = 5, epochs = 154
-runner = 6, epochs = 154
-runner = 7, epochs = 62
-runner = 8, epochs = 2
-runner = 9, epochs = 2
-runner = 10, epochs = 2
-runner = 11, epochs = 4
-runner = 12, epochs = 2
-runner = 13, epochs = 2
-runner = 14, epochs = 2
-runner = 15, epochs = 2
+count = 2
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_502_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-05_AMLR-0.001
+id = 502
+lr = 1e-05
 algorithm = AM_AT_FIRST_THEN_CL_TWO_LOSS
-runner = 0, epochs = 1
-runner = 1, epochs = 93
-runner = 2, epochs = 2
-runner = 3, epochs = 2
-runner = 4, epochs = 2
-runner = 5, epochs = 3
-runner = 6, epochs = 1
-runner = 7, epochs = 143
-runner = 8, epochs = 6
-runner = 9, epochs = 2
-runner = 10, epochs = 154
-runner = 11, epochs = 53
-runner = 12, epochs = 6
-runner = 13, epochs = 105
-runner = 14, epochs = 6
-runner = 15, epochs = 9
+count = 2
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_502_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-05_AMLR-0.001
+id = 502
+lr = 1e-05
 algorithm = VGG16
-runner = 0, epochs = 2
-runner = 1, epochs = 2
-runner = 2, epochs = 1
-runner = 3, epochs = 4
-runner = 4, epochs = 2
-runner = 5, epochs = 4
-runner = 6, epochs = 2
-runner = 7, epochs = 2
-runner = 8, epochs = 2
-runner = 9, epochs = 2
-runner = 10, epochs = 2
-runner = 11, epochs = 2
-runner = 12, epochs = 2
-runner = 13, epochs = 2
-runner = 14, epochs = 2
-runner = 15, epochs = 2
-runner = 16, epochs = 2
-runner = 17, epochs = 2
-runner = 18, epochs = 2
+count = 0
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_502_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-05_AMLR-0.001
+id = 502
+lr = 1e-05
 algorithm = TWO_LOSS_WITH_AM
-runner = 0, epochs = 2
-runner = 1, epochs = 2
-runner = 2, epochs = 2
-runner = 3, epochs = 2
-runner = 4, epochs = 40
-runner = 5, epochs = 2
-runner = 6, epochs = 1
-runner = 7, epochs = 2
-runner = 8, epochs = 154
-runner = 9, epochs = 2
-runner = 10, epochs = 2
-runner = 11, epochs = 2
-runner = 12, epochs = 2
-runner = 13, epochs = 2
-runner = 14, epochs = 10
-runner = 15, epochs = 2
---------------------------------------------------
+count = 1
 --------------------------------------------------
 ==================================================
 ==================================================
 ==================================================
 ==================================================
-==================================================
-==================================================
 --------------------------------------------------
---------------------------------------------------
-run name = RUN_503_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-06_AMLR-0.001
+id = 503
+lr = 1e-06
 algorithm = ONE_LOSS_WITH_AM
-runner = 0, epochs = 6
-runner = 1, epochs = 2
-runner = 2, epochs = 2
-runner = 3, epochs = 2
-runner = 4, epochs = 2
-runner = 5, epochs = 2
-runner = 6, epochs = 2
-runner = 7, epochs = 2
+count = 0
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_503_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-06_AMLR-0.001
+id = 503
+lr = 1e-06
 algorithm = AM_AT_FIRST_THEN_CL_TWO_LOSS
-runner = 0, epochs = 5
-runner = 1, epochs = 2
-runner = 2, epochs = 2
-runner = 3, epochs = 6
-runner = 4, epochs = 154
-runner = 5, epochs = 5
-runner = 6, epochs = 79
-runner = 7, epochs = 12
-runner = 8, epochs = 104
-runner = 9, epochs = 2
+count = 1
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_503_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-06_AMLR-0.001
+id = 503
+lr = 1e-06
 algorithm = VGG16
-runner = 0, epochs = 2
-runner = 1, epochs = 153
-runner = 2, epochs = 2
-runner = 3, epochs = 2
-runner = 4, epochs = 2
-runner = 5, epochs = 106
-runner = 6, epochs = 2
-runner = 7, epochs = 2
-runner = 8, epochs = 2
-runner = 9, epochs = 2
+count = 1
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_503_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-06_AMLR-0.001
+id = 503
+lr = 1e-06
 algorithm = TWO_LOSS_WITH_AM
-runner = 0, epochs = 6
-runner = 1, epochs = 2
-runner = 2, epochs = 2
-runner = 3, epochs = 56
-runner = 4, epochs = 2
-runner = 5, epochs = 2
-runner = 6, epochs = 2
-runner = 7, epochs = 2
-runner = 8, epochs = 7
---------------------------------------------------
+count = 0
 --------------------------------------------------
 ==================================================
 ==================================================
 ==================================================
 ==================================================
-==================================================
-==================================================
 --------------------------------------------------
---------------------------------------------------
-run name = RUN_504_LEFT-3_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.001_AMLR-0.001
+id = 504
+lr = 0.001
 algorithm = ONE_LOSS_WITH_AM
-runner = 0, epochs = 2
-runner = 1, epochs = 2
-runner = 2, epochs = 2
-runner = 3, epochs = 2
-runner = 4, epochs = 2
-runner = 5, epochs = 2
-runner = 6, epochs = 2
-runner = 7, epochs = 2
+count = 0
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_504_LEFT-3_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.001_AMLR-0.001
+id = 504
+lr = 0.001
 algorithm = AM_AT_FIRST_THEN_CL_TWO_LOSS
-runner = 0, epochs = 134
-runner = 1, epochs = 46
-runner = 2, epochs = 118
+count = 0
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_504_LEFT-3_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.001_AMLR-0.001
+id = 504
+lr = 0.001
 algorithm = VGG16
-runner = 0, epochs = 2
-runner = 1, epochs = 9
-runner = 2, epochs = 3
-runner = 3, epochs = 2
-runner = 4, epochs = 2
-runner = 5, epochs = 2
-runner = 6, epochs = 2
-runner = 7, epochs = 2
+count = 0
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_504_LEFT-3_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.001_AMLR-0.001
+id = 504
+lr = 0.001
 algorithm = TWO_LOSS_WITH_AM
-runner = 0, epochs = 2
-runner = 1, epochs = 2
-runner = 2, epochs = 2
-runner = 3, epochs = 2
-runner = 4, epochs = 2
-runner = 5, epochs = 2
-runner = 6, epochs = 2
-runner = 7, epochs = 2
---------------------------------------------------
+count = 0
 --------------------------------------------------
 ==================================================
 ==================================================
 ==================================================
 ==================================================
-==================================================
-==================================================
 --------------------------------------------------
---------------------------------------------------
-run name = RUN_505_LEFT-3_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.0001_AMLR-0.001
+id = 505
+lr = 0.0001
 algorithm = ONE_LOSS_WITH_AM
-runner = 0, epochs = 2
-runner = 1, epochs = 2
-runner = 2, epochs = 2
-runner = 3, epochs = 3
-runner = 4, epochs = 3
-runner = 5, epochs = 2
-runner = 6, epochs = 2
-runner = 7, epochs = 2
+count = 0
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_505_LEFT-3_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.0001_AMLR-0.001
+id = 505
+lr = 0.0001
 algorithm = AM_AT_FIRST_THEN_CL_TWO_LOSS
-runner = 0, epochs = 7
-runner = 1, epochs = 32
-runner = 2, epochs = 13
-runner = 3, epochs = 40
-runner = 4, epochs = 2
-runner = 5, epochs = 32
-runner = 6, epochs = 1
-runner = 7, epochs = 7
+count = 0
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_505_LEFT-3_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.0001_AMLR-0.001
+id = 505
+lr = 0.0001
 algorithm = VGG16
-runner = 0, epochs = 2
-runner = 1, epochs = 2
-runner = 2, epochs = 7
-runner = 3, epochs = 8
-runner = 4, epochs = 4
-runner = 5, epochs = 2
-runner = 6, epochs = 8
-runner = 7, epochs = 2
+count = 0
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_505_LEFT-3_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.0001_AMLR-0.001
+id = 505
+lr = 0.0001
 algorithm = TWO_LOSS_WITH_AM
-runner = 0, epochs = 2
-runner = 1, epochs = 2
-runner = 2, epochs = 3
-runner = 3, epochs = 2
-runner = 4, epochs = 2
-runner = 5, epochs = 2
-runner = 6, epochs = 5
-runner = 7, epochs = 2
---------------------------------------------------
+count = 0
 --------------------------------------------------
 ==================================================
 ==================================================
 ==================================================
 ==================================================
-==================================================
-==================================================
 --------------------------------------------------
---------------------------------------------------
-run name = RUN_506_LEFT-3_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-05_AMLR-0.001
+id = 506
+lr = 1e-05
 algorithm = ONE_LOSS_WITH_AM
-runner = 0, epochs = 6
-runner = 1, epochs = 2
-runner = 2, epochs = 2
-runner = 3, epochs = 2
-runner = 4, epochs = 6
-runner = 5, epochs = 2
-runner = 6, epochs = 2
-runner = 7, epochs = 2
+count = 0
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_506_LEFT-3_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-05_AMLR-0.001
+id = 506
+lr = 1e-05
 algorithm = AM_AT_FIRST_THEN_CL_TWO_LOSS
-runner = 0, epochs = 4
-runner = 1, epochs = 42
-runner = 2, epochs = 30
-runner = 3, epochs = 2
-runner = 4, epochs = 10
+count = 0
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_506_LEFT-3_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-05_AMLR-0.001
+id = 506
+lr = 1e-05
 algorithm = VGG16
-runner = 0, epochs = 153
-runner = 1, epochs = 50
-runner = 2, epochs = 6
+count = 1
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_506_LEFT-3_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-05_AMLR-0.001
+id = 506
+lr = 1e-05
 algorithm = TWO_LOSS_WITH_AM
-runner = 0, epochs = 2
-runner = 1, epochs = 2
-runner = 2, epochs = 2
-runner = 3, epochs = 5
-runner = 4, epochs = 2
-runner = 5, epochs = 2
-runner = 6, epochs = 2
-runner = 7, epochs = 2
---------------------------------------------------
+count = 0
 --------------------------------------------------
 ==================================================
 ==================================================
 ==================================================
 ==================================================
-==================================================
-==================================================
 --------------------------------------------------
---------------------------------------------------
-run name = RUN_507_LEFT-3_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-06_AMLR-0.001
+id = 507
+lr = 1e-06
 algorithm = ONE_LOSS_WITH_AM
-runner = 0, epochs = 2
-runner = 1, epochs = 2
-runner = 2, epochs = 2
-runner = 3, epochs = 2
-runner = 4, epochs = 1
-runner = 5, epochs = 3
+count = 0
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_507_LEFT-3_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-06_AMLR-0.001
+id = 507
+lr = 1e-06
 algorithm = AM_AT_FIRST_THEN_CL_TWO_LOSS
-runner = 0, epochs = 2
-runner = 1, epochs = 1
-runner = 2, epochs = 7
-runner = 3, epochs = 2
-runner = 4, epochs = 2
-runner = 5, epochs = 2
+count = 0
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_507_LEFT-3_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-06_AMLR-0.001
+id = 507
+lr = 1e-06
 algorithm = VGG16
-runner = 0, epochs = 2
-runner = 1, epochs = 2
-runner = 2, epochs = 2
-runner = 3, epochs = 2
-runner = 4, epochs = 3
-runner = 5, epochs = 2
-runner = 6, epochs = 2
-runner = 7, epochs = 2
+count = 0
 --------------------------------------------------
 --------------------------------------------------
---------------------------------------------------
---------------------------------------------------
-run name = RUN_507_LEFT-3_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-06_AMLR-0.001
+id = 507
+lr = 1e-06
 algorithm = TWO_LOSS_WITH_AM
-runner = 0, epochs = 2
-runner = 1, epochs = 2
-runner = 2, epochs = 2
-runner = 3, epochs = 2
-runner = 4, epochs = 10
-runner = 5, epochs = 2
---------------------------------------------------
+count = 0
 --------------------------------------------------
 ==================================================
 ==================================================
 ==================================================
 ==================================================
-==================================================
-==================================================
 --------------------------------------------------
---------------------------------------------------
-run name = RUN_508_LEFT-4_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.001_AMLR-0.001
+id = 508
+lr = 0.001
 algorithm = VGG16
-runner = 0, epochs = 1
+count = 0
 --------------------------------------------------
---------------------------------------------------
-==================================================
 ==================================================
 ==================================================
