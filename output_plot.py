@@ -299,6 +299,7 @@ def reduce_stat(algorithms: dict, run_number: str):
         for algo_index, epochs in enumerate(dct['train']):
             if len(epochs) >= 140:
                 more_then_140 += 1
+        print("count = {}".format(more_then_140))
         print("-" * 50)
     print("=" * 50)
     print("=" * 50)
