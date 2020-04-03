@@ -288,25 +288,33 @@ def parse_run(run_number="run_01", use_print: bool = False):
 def reduce_stat(algorithms: dict, run_number: str):
     print("=" * 50)
     print("=" * 50)
-    print("=" * 50)
     for name, dct in algorithms.items():
         print("-" * 50)
-        print("-" * 50)
-        print("run name = {}".format(run_number))
-        print("algorithm = {}".format(name))
-        for algo_index, epochs in enumerate(dct['test']):
-            print("runner = {}, epochs = {}".format(algo_index, len(epochs)))
 
+        s = run_number[run_number.index("CLR-") + 4:]
+        print("id = {}".format(run_number[4:7]))
+        print("lr = {}".format(s[:s.index("_")]))
+        print("algorithm = {}".format(name))
+        more_then_140 = 0
+        for algo_index, epochs in enumerate(dct['train']):
+            if len(epochs) >= 140:
+                more_then_140 += 1
         print("-" * 50)
-        print("-" * 50)
-    print("=" * 50)
     print("=" * 50)
     print("=" * 50)
 
 
 if __name__ == "__main__":
     runs = [
-        "run_02"
+        "RUN_500_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.001_AMLR-0.001",
+        "RUN_501_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.0001_AMLR-0.001",
+        "RUN_502_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-05_AMLR-0.001",
+        "RUN_503_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-06_AMLR-0.001",
+        "RUN_504_LEFT-3_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.001_AMLR-0.001",
+        "RUN_505_LEFT-3_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.0001_AMLR-0.001",
+        "RUN_506_LEFT-3_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-05_AMLR-0.001",
+        "RUN_507_LEFT-3_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-06_AMLR-0.001",
+        "RUN_508_LEFT-4_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-0.001_AMLR-0.001"
     ]
     for i in runs:
         a, r_n = parse_run(i)
