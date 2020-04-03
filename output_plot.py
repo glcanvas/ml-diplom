@@ -258,7 +258,7 @@ def visualize_algorithms(algorithms: dict, run_name: str):
     plt.show()
 
 
-def parse_run(run_number="run_01"):
+def parse_run(run_number="run_01", use_print: bool = False):
     algorithms = {}
     for current_path, folder, _ in os.walk(os.path.join(logs_path, run_number)):
         # print(folder)
@@ -273,14 +273,35 @@ def parse_run(run_number="run_01"):
                     log_path = os.path.join(current_path, algorithm, executed_algorithm)
                     if '.txt' not in log_path:
                         continue
-                    print('BEGIN READ ' + log_path)
+                    if use_print:
+                        print('BEGIN READ ' + log_path)
                     train, test, _ = __load_file(log_path, sam_parse_train,
                                                  sam_parse_train)
-                    print('END READ ' + log_path)
+                    if use_print:
+                        print('END READ ' + log_path)
                     algorithm_list_test.append(test)
                     algorithm_list_train.append(train)
         break
-    visualize_algorithms(algorithms, run_number)
+    return algorithms, run_number
+
+
+def reduce_stat(algorithms: dict, run_number: str):
+    print("=" * 50)
+    print("=" * 50)
+    print("=" * 50)
+    for name, dct in algorithms.items():
+        print("-" * 50)
+        print("-" * 50)
+        print("run name = {}".format(run_number))
+        print("algorithm = {}".format(name))
+        for algo_index, epochs in enumerate(dct['test']):
+            print("runner = {}, epochs = {}".format(algo_index, len(epochs)))
+
+        print("-" * 50)
+        print("-" * 50)
+    print("=" * 50)
+    print("=" * 50)
+    print("=" * 50)
 
 
 if __name__ == "__main__":
@@ -288,4 +309,6 @@ if __name__ == "__main__":
         "run_02"
     ]
     for i in runs:
-        parse_run(i)
+        a, r_n = parse_run(i)
+        # visualize_algorithms(a, r_n)
+        reduce_stat(a, r_n)

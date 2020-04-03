@@ -147,10 +147,10 @@ def found_gpu(smi, properties: dict) -> int:
             p.write_to_log("time = {}, gpu = {} is banned".format(current_time, gpu))
             continue
         if 'max_thread_on_gpu' in properties and smi['Attached GPUs'][k]['Processes'] is not None and \
-                len(smi['Attached GPUs'][k]['Processes']) > int(properties['max_thread_on_gpu']):
+                len(smi['Attached GPUs'][k]['Processes']) >= int(properties['max_thread_on_gpu']):
             current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
             p.write_to_log("time = {}, gpu = {}, processes = {}, max processes={}".format(current_time, gpu,
-                                                                                          alive_threads.value,
+                                                                                          len(smi['Attached GPUs'][k]['Processes']),
                                                                                           properties[
                                                                                               'max_thread_on_gpu']))
             continue
