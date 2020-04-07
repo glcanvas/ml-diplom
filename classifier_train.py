@@ -52,8 +52,6 @@ class Classifier(at.AbstractTrain):
         self.classes = classes
 
         self.model = model
-        num_features = self.model.classifier[6].in_features
-        self.model.classifier[6] = nn.Linear(num_features, self.classes)
 
         self.best_weights = copy.deepcopy(self.model.state_dict())
         self.best_test_weights = copy.deepcopy(self.model.state_dict())

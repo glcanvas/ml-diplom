@@ -16,18 +16,26 @@ input_attribute = 'input'
 cached_extension = '.torch'
 
 stupid_flag = False
-base_data_dir = "/home/nikita/PycharmProjects"
+base_data_dir = None
+
 if os.path.exists("/media/disk1/nduginec"):
     base_data_dir = "/media/disk1/nduginec"
-elif os.path.exists("/content/gdrive/My Drive/isic/"):
-    base_data_dir = "/content/gdrive/My Drive/isic/"
+
+elif os.path.exists("/content/gdrive/My Drive/isic"):
+    base_data_dir = "/content/gdrive/My Drive/isic"
+
 elif os.path.exists("/media/disk2/nduginec"):
     base_data_dir = "/media/disk2/nduginec"
     stupid_flag = True
-elif os.path.exists("/content/drive/My Drive/isic/"):
-    base_data_dir = "/content/drive/My Drive/isic/"
+
+elif os.path.exists("/content/drive/My Drive/isic"):
+    base_data_dir = "/content/drive/My Drive/isic"
+
+elif os.path.exists("/home/nikita/PycharmProjects"):
+    base_data_dir = "/home/nikita/PycharmProjects"
+
 else:
-    raise Exception("NOT FOUND BASE DIR")
+    raise Exception("NOT FOND BASE DIR")
 
 data_inputs_path = base_data_dir + "/ISIC2018_Task1-2_Training_Input"
 data_labels_path = base_data_dir + "/ISIC2018_Task2_Training_GroundTruth_v3"

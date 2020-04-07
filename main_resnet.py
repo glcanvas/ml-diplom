@@ -6,6 +6,7 @@ import torchvision.models as m
 import traceback
 import classifier_train as cl
 import os
+import torch.nn as nn
 
 #
 #
@@ -57,6 +58,8 @@ if __name__ == "__main__":
         print("ok")
 
         model = m.resnet50(pretrained=True)
+        num_features = model.fc.in_features
+        model.fc = nn.Linear(num_features, classes)
         P.write_to_log(model)
 
         classifier = cl.Classifier(model,
