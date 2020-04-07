@@ -31,8 +31,8 @@ class AbstractTrain:
                  snapshot_elements_count: int = 11,
                  snapshot_dir: str = None,
                  classifier_learning_rate: float = None,
-                 attention_module_learning_rate: float = None):
-
+                 attention_module_learning_rate: float = None,
+                 weight_decay: float = 0):
         self.classifier_learning_rate = classifier_learning_rate
         self.attention_module_learning_rate = attention_module_learning_rate
 
@@ -53,6 +53,8 @@ class AbstractTrain:
         self.train_epochs = train_epochs
         self.save_train_logs_epochs = save_train_logs_epochs
         self.test_each_epoch = test_each_epoch
+
+        self.weight_decay = weight_decay
 
         self.current_epoch = 0
 

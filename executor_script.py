@@ -28,7 +28,7 @@ def _async_raise(tid, exctype):
 
 
 SLEEP_SECONDS = 120
-CLASSIFIER_LEARNING_RATES = [1e-3, 1e-4, 1e-5, 1e-6]
+CLASSIFIER_LEARNING_RATES = [0.0001]
 ATTENTION_MODULE_LEARNING_RATES = [1e-3]
 
 PYTHON_EXECUTOR_NAME = "/home/nduginec/nduginec_evn3/bin/python"
@@ -40,11 +40,12 @@ CLASS_BORDER = [
     (3, 4),  # last prev
 ]
 
+weight_decay = 0.01
 MEMORY_USAGE = 5000  # MB
-RUN_NAME_RANGE_FROM = 500
+RUN_NAME_RANGE_FROM = 700
 TRAIN_SIZE = 1800
-EPOCHS_COUNT = 150
-LOOP_COUNT = 8
+EPOCHS_COUNT = 200
+LOOP_COUNT = 4
 PYTHON_FILE_NAME_DIR = os.path.dirname(os.path.realpath(__file__))
 property_file = os.path.join(PYTHON_FILE_NAME_DIR, "executor_property.properties")
 
@@ -53,6 +54,13 @@ SEED_LIST = [r.randint(1, 500) for _ in range(LOOP_COUNT)]
 
 print(SEED_LIST)
 ALGORITHM_LIST = [
+    {
+        'name': 'main_resnet.py',
+        'algorithm_name': 'RESNET_50',
+        'pre_train': 500,
+        'train_set': TRAIN_SIZE,
+        'epochs': EPOCHS_COUNT,
+    },
     {
         'name': 'main_default_classifier.py',
         'algorithm_name': 'VGG16',
@@ -98,7 +106,8 @@ def execute_algorithm(algorithm_dict: dict, run_id: int, gpu: int, left_border: 
                                                                                            attention_module_learning_rate)
 
     for i in range(LOOP_COUNT):
-        args = [PYTHON_EXECUTOR_NAME, script_name, '--run_name', run_name,
+        args = [PYTHON_EXECUTOR_NAME, script_name,
+                '--run_name', run_name,
                 '--algorithm_name', str(algorithm_dict['algorithm_name']),
                 '--epochs', str(algorithm_dict['epochs']),
                 '--pre_train', str(algorithm_dict['pre_train']),
@@ -108,7 +117,8 @@ def execute_algorithm(algorithm_dict: dict, run_id: int, gpu: int, left_border: 
                 '--right_class_number', str(right_border),
                 '--seed', str(SEED_LIST[i]),
                 '--classifier_learning_rate', str(classifier_learning_rate),
-                '--attention_module_learning_rate', str(attention_module_learning_rate)
+                '--attention_module_learning_rate', str(attention_module_learning_rate),
+                '--weight_decay', str(weight_decay)
                 ]
         cmd = " ".join(args)
         current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')

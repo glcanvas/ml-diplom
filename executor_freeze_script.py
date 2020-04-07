@@ -71,7 +71,7 @@ def execute_algorithm(algorithm_dict: dict, run_id: int, gpu: int, left_border: 
                 '--seed', str(SEED_LIST[i]),
                 '--classifier_learning_rate', str(classifier_learning_rate),
                 '--attention_module_learning_rate', str(attention_module_learning_rate),
-                '----is_freezen', 'True'
+                '--is_freezen', 'True'
                 ]
         cmd = " ".join(args)
         current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')

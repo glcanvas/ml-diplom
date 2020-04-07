@@ -7,6 +7,11 @@ import traceback
 import classifier_train as cl
 import os
 
+#
+#
+# lr = 1e-4
+# weight_decay=0.01
+
 if __name__ == "__main__":
     parsed = P.parse_input_commands().parse_args(sys.argv[1:])
     gpu = int(parsed.gpu)
@@ -22,10 +27,10 @@ if __name__ == "__main__":
     classes = right_class_number - left_class_number
     classifier_learning_rate = float(parsed.classifier_learning_rate)
     attention_module_learning_rate = float(parsed.attention_module_learning_rate)
-    is_freezen = False if str(parsed.is_freezen).lower() == "false" else True
+    weight_decay = float(parsed.weight_decay)
 
     seed = int(parsed.seed)
-    description = "description-{},train_set-{},epochs-{},l-{},r-{},clr-{},amlr-{},seed-{}".format(
+    description = "description-{},train_set-{},epochs-{},l-{},r-{},clr-{},amlr-{},seed-{},weight_decay-{}".format(
         parsed_description,
         train_set_size,
         epochs,
@@ -33,7 +38,8 @@ if __name__ == "__main__":
         right_class_number,
         classifier_learning_rate,
         attention_module_learning_rate,
-        seed
+        seed,
+        weight_decay
     )
 
     P.initialize_log_name(run_name, algorithm_name, description)
@@ -50,7 +56,7 @@ if __name__ == "__main__":
         test_set = DataLoader(il.ImageDataset(test_set), batch_size=5)
         print("ok")
 
-        model = m.vgg16(pretrained=True)
+        model = m.resnet50(pretrained=True)
         P.write_to_log(model)
 
         classifier = cl.Classifier(model,
@@ -65,7 +71,7 @@ if __name__ == "__main__":
                                    description=run_name + "_" + description,
                                    classifier_learning_rate=classifier_learning_rate,
                                    attention_module_learning_rate=attention_module_learning_rate,
-                                   is_freezen=is_freezen)
+                                   weight_decay=weight_decay)
         classifier.train()
 
     except BaseException as e:

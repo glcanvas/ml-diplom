@@ -71,7 +71,7 @@ class DatasetLoader:
     def __merge_data(self, input_path, target_path) -> list:
         inputs = self.__get_input_image_list(input_path)
         targets = self.__get_target_image_list(target_path)
-        # print(inputs)
+        print("ok")
 
         def composite_zips(x):
             inp = x[0]
@@ -106,11 +106,12 @@ class DatasetLoader:
         print("all saved successfully")
         P.write_to_log("all saved successfully")
 
-    def load_tensors(self, lower_bound=None, upper_bound=None, load_first_segments: int = 10 ** 20,
+    def load_tensors(self, lower_bound: int, upper_bound: int, load_first_segments: int = 10 ** 20,
                      use_norm: bool = False):
         if self.data is None:
             self.data = self.__merge_data(self.cache_input_path, self.cache_target_path)
         data_len = len(self.data)
+        print(data_len)
         lower_bound = 0 if lower_bound is None else lower_bound
         upper_bound = data_len if upper_bound is None else upper_bound
         result = []
@@ -201,9 +202,9 @@ def count_size(x):
     return cnt
 
 
-def load_data(train_size: int, seed:int):
+def load_data(train_size: int, seed: int):
     loader = DatasetLoader.initial()
-    all_data = prepare_data(loader.load_tensors())
+    all_data = prepare_data(loader.load_tensors(None, None))
     log = "set size: {}, set by classes: {}".format(len(all_data), count_size(all_data))
     P.write_to_log(log)
     random.Random(seed).shuffle(all_data)
@@ -216,6 +217,10 @@ def load_data(train_size: int, seed:int):
     P.write_to_log(log)
 
     return train_set, test_set
+
+
+def load_data_batch(offset: int, size: int) -> list:
+    return prepare_data(DatasetLoader.initial().load_tensors(offset, offset + size))
 
 
 class ImageDataset(torch.utils.data.Dataset):
@@ -248,5 +253,8 @@ def create_torch_tensors():
 
 
 if __name__ == "__main__":
-    loader = DatasetLoader(P.data_inputs_path, P.data_labels_path)
-    loader.save_images_to_tensors()
+    #loader = DatasetLoader(P.data_inputs_path, P.data_labels_path)
+    #loader.save_images_to_tensors()
+    x = load_data_batch(0, 100)
+    print(len(x))
+    print(len(load_data_batch(100, 200)))

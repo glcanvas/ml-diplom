@@ -29,10 +29,11 @@ class Classifier(at.AbstractTrain):
                  right_class_number: int = None,
                  classifier_learning_rate: float = None,
                  attention_module_learning_rate: float = None,
-                 is_freezen: bool = False):
+                 is_freezen: bool = False,
+                 weight_decay: float = 0):
         super(Classifier, self).__init__(classes, None, None, None, test_each_epoch, use_gpu, gpu_device, description,
                                          left_class_number, right_class_number, None, None,
-                                         classifier_learning_rate, attention_module_learning_rate)
+                                         classifier_learning_rate, attention_module_learning_rate, weight_decay)
 
         self.train_epochs = train_epochs
         self.train_segments_set = train_segments_set
@@ -70,7 +71,7 @@ class Classifier(at.AbstractTrain):
         else:
             params = self.model.parameters()
 
-        optimizer = torch.optim.Adam(params, lr=self.classifier_learning_rate)
+        optimizer = torch.optim.Adam(params, lr=self.classifier_learning_rate, weight_decay=self.weight_decay)
         self.model.train()
         best_loss = None
         best_test_loss = None

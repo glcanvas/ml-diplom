@@ -19,9 +19,15 @@ stupid_flag = False
 base_data_dir = "/home/nikita/PycharmProjects"
 if os.path.exists("/media/disk1/nduginec"):
     base_data_dir = "/media/disk1/nduginec"
+elif os.path.exists("/content/gdrive/My Drive/isic/"):
+    base_data_dir = "/content/gdrive/My Drive/isic/"
 elif os.path.exists("/media/disk2/nduginec"):
     base_data_dir = "/media/disk2/nduginec"
     stupid_flag = True
+elif os.path.exists("/content/drive/My Drive/isic/"):
+    base_data_dir = "/content/drive/My Drive/isic/"
+else:
+    raise Exception("NOT FOUND BASE DIR")
 
 data_inputs_path = base_data_dir + "/ISIC2018_Task1-2_Training_Input"
 data_labels_path = base_data_dir + "/ISIC2018_Task2_Training_GroundTruth_v3"
@@ -83,4 +89,5 @@ def parse_input_commands():
     parser.add_argument("--freeze_list", default="for_alternate_only")
     parser.add_argument("--seed", default="5")
     parser.add_argument("--is_freezen", default="False")
+    parser.add_argument("--weight_decay", default="0")
     return parser

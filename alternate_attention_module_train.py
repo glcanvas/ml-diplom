@@ -31,14 +31,16 @@ class AlternateModuleTrain(at.AbstractTrain):
                  snapshot_elements_count: int = 11,
                  snapshot_dir: str = None,
                  classifier_learning_rate: float = None,
-                 attention_module_learning_rate: float = None):
+                 attention_module_learning_rate: float = None,
+                 weight_decay: float = 0):
 
         super(AlternateModuleTrain, self).__init__(classes, pre_train_epochs, train_epochs, save_train_logs_epochs,
                                                    test_each_epoch, use_gpu,
                                                    gpu_device, description, left_class_number, right_class_number,
                                                    snapshot_elements_count, snapshot_dir,
                                                    classifier_learning_rate,
-                                                   attention_module_learning_rate)
+                                                   attention_module_learning_rate,
+                                                   weight_decay)
 
         self.train_segments_set = train_segments_set
         self.test_set = test_set
