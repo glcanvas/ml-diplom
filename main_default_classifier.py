@@ -81,7 +81,7 @@ if __name__ == "__main__":
                                current_epoch=current_epoch)
     try:
         classifier.train()
-
+        exit(0)
     except BaseException as e:
         print("EXCEPTION", e)
         print(type(e))
@@ -90,4 +90,4 @@ if __name__ == "__main__":
 
         P.save_raised_model(classifier.model, classifier.current_epoch, time_stamp, run_name, algorithm_name)
         P.write_to_log("saved model, exception raised")
-        raise e
+        exit(1)

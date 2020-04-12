@@ -91,7 +91,7 @@ if __name__ == "__main__":
     is_used_only_one_loss = pre_train >= epochs
     try:
         sam_train.train(is_used_only_one_loss)
-
+        exit(0)
     except BaseException as e:
         print("EXCEPTION", e)
         print(type(e))
@@ -100,4 +100,4 @@ if __name__ == "__main__":
 
         P.save_raised_model(sam_train.am_model, sam_train.current_epoch, time_stamp, run_name, algorithm_name)
         P.write_to_log("saved model, exception raised")
-        raise e
+        exit(1)

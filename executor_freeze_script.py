@@ -1,4 +1,4 @@
-import sys
+"""import sys
 from multiprocessing import Pool, Value
 import subprocess
 from datetime import datetime
@@ -246,3 +246,4 @@ if __name__ == "__main__":
 
     for t in thread_list:
         t.join()
+"""

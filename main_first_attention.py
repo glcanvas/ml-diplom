@@ -84,6 +84,7 @@ if __name__ == "__main__":
                                    current_epoch=current_epoch)
     try:
         am_train.train()
+        exit(0)
     except BaseException as e:
         print("EXCEPTION", e)
         print(type(e))
@@ -92,4 +93,5 @@ if __name__ == "__main__":
 
         P.save_raised_model(am_train.am_model, am_train.current_epoch, time_stamp, run_name, algorithm_name)
         P.write_to_log("saved model, exception raised")
-        raise e
+        exit(1)
+
