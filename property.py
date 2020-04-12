@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 import sys
 import argparse
+import torch
 
 # for train model
 EPS = 1e-10
@@ -48,9 +49,11 @@ log_path = base_data_dir + ("/ml-data" if stupid_flag else "") + "/logs"
 log = "default_log_{}.txt".format(datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S'))
 
 
-def initialize_log_name(run_number: str, algorithm_name: str, value: str):
+def initialize_log_name(run_number: str, algorithm_name: str, value: str, timestamp: str = None):
     global log
-    current_log_name = "log{}_{}.txt".format(datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S'), value)
+    if timestamp is None:
+        timestamp = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
+    current_log_name = "log{}_{}.txt".format(timestamp, value)
 
     # aaa/bbb/ccc/logs/run01
     log = os.path.join(log_path, run_number, algorithm_name)
@@ -79,6 +82,40 @@ def write_to_log(*args):
         print("Exception while write to log", e)
 
 
+def save_raised_model(model, epoch, identifier, run_name, algorithm_name):
+    full_dir = os.path.join(base_data_dir, run_name, algorithm_name)
+    os.makedirs(full_dir, exist_ok=True)
+    model_filename = "id={};epoch={}".format(identifier, epoch)
+    full_path = os.path.join(full_dir, model_filename)
+    torch.save(model.state_dict(), full_path)
+
+
+def __parse_model_name(name):
+    ids = name.split(";")
+    ids = {x.split("=")[0]: x.split("=")[1] for x in ids}
+    return ids
+
+
+def load_latest_model(identifier, run_name, algorithm_name):
+    full_dir = os.path.join(base_data_dir, run_name, algorithm_name)
+
+    models = []
+    for (_, _, filenames) in os.walk(full_dir):
+        models.extend(filenames)
+        break
+
+    models = list(filter(lambda x: __parse_model_name(x)['id'] == identifier, models))
+    max_epoch = max(map(lambda x: int(__parse_model_name(x)['epoch']), models))
+    last_model_file_name = None
+    for model_file_name in models:
+        full_dir_ = os.path.join(full_dir, model_file_name)
+        if int(__parse_model_name(model_file_name)['epoch']) != max_epoch:
+            os.remove(full_dir_)
+        else:
+            last_model_file_name = model_file_name
+    return torch.load(os.path.join(full_dir, last_model_file_name)), max_epoch
+
+
 def parse_input_commands():
     parser = argparse.ArgumentParser(description="diploma")
     parser.add_argument("--description", default="N")
@@ -98,4 +135,7 @@ def parse_input_commands():
     parser.add_argument("--seed", default="5")
     parser.add_argument("--is_freezen", default="False")
     parser.add_argument("--weight_decay", default="0")
+
+    parser.add_argument("--time_stamp")
+    parser.add_argument("--execute_from_model", default="false")
     return parser

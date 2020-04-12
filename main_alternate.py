@@ -25,6 +25,9 @@ if __name__ == "__main__":
     classifier_learning_rate = float(parsed.classifier_learning_rate)
     attention_module_learning_rate = float(parsed.attention_module_learning_rate)
 
+    time_stamp = parsed.time_stamp
+    execute_from_model = False if str(parsed.execute_from_model).lower() == "false" else True
+
     classes = right_class_number - left_class_number
 
     seed = int(parsed.seed)
@@ -38,7 +41,8 @@ if __name__ == "__main__":
         attention_module_learning_rate,
         seed
     )
-    P.initialize_log_name(run_name, algorithm_name, description)
+
+    P.initialize_log_name(run_name, algorithm_name, description, time_stamp)
 
     P.write_to_log("description={}".format(description))
     P.write_to_log("classes={}".format(classes))
@@ -50,34 +54,42 @@ if __name__ == "__main__":
     snapshots_path = os.path.join(log_dir, log_name)
     os.makedirs(snapshots_path, exist_ok=True)
 
+    segments_set, test_set = il.load_data(train_set_size, seed)
+
+    train_segments_set = DataLoader(il.ImageDataset(segments_set), batch_size=5, shuffle=True)
+    print("ok")
+    test_set = DataLoader(il.ImageDataset(test_set), batch_size=5)
+    print("ok")
+
+    am_model = ss.build_attention_module_model(classes)
+
+    current_epoch = 1
+    if execute_from_model:
+        model_state_dict, current_epoch = P.load_latest_model(time_stamp, run_name, algorithm_name)
+        am_model.load_state_dict(model_state_dict)
+        P.write_to_log("recovery model:", am_model, "current epoch = {}".format(current_epoch))
+    else:
+        P.write_to_log("begin model:", am_model, "current epoch = {}".format(current_epoch))
+
+    sam_train = st.AlternateModuleTrain(am_model, train_segments_set, test_set,
+                                        classes=classes,
+                                        pre_train_epochs=pre_train,
+                                        gpu_device=gpu,
+                                        train_epochs=epochs,
+                                        save_train_logs_epochs=4,
+                                        test_each_epoch=4,
+                                        left_class_number=left_class_number,
+                                        right_class_number=right_class_number,
+                                        description=run_name + "_" + description,
+                                        snapshot_elements_count=20,
+                                        snapshot_dir=snapshots_path,
+                                        classifier_learning_rate=classifier_learning_rate,
+                                        attention_module_learning_rate=attention_module_learning_rate,
+                                        current_epoch=current_epoch)
+
+    # если только и делаем что делаем претрейн, то надо обучать ВСЕ-ВСЕ веса
+    is_used_only_one_loss = pre_train >= epochs
     try:
-        segments_set, test_set = il.load_data(train_set_size, seed)
-
-        train_segments_set = DataLoader(il.ImageDataset(segments_set), batch_size=5, shuffle=True)
-        print("ok")
-        test_set = DataLoader(il.ImageDataset(test_set), batch_size=5)
-        print("ok")
-
-        am_model = ss.build_attention_module_model(classes)
-
-        P.write_to_log(am_model)
-        sam_train = st.AlternateModuleTrain(am_model, train_segments_set, test_set,
-                                            classes=classes,
-                                            pre_train_epochs=pre_train,
-                                            gpu_device=gpu,
-                                            train_epochs=epochs,
-                                            save_train_logs_epochs=4,
-                                            test_each_epoch=4,
-                                            left_class_number=left_class_number,
-                                            right_class_number=right_class_number,
-                                            description=run_name + "_" + description,
-                                            snapshot_elements_count=20,
-                                            snapshot_dir=snapshots_path,
-                                            classifier_learning_rate=classifier_learning_rate,
-                                            attention_module_learning_rate=attention_module_learning_rate)
-
-        # если только и делаем что делаем претрейн, то надо обучать ВСЕ-ВСЕ веса
-        is_used_only_one_loss = pre_train >= epochs
         sam_train.train(is_used_only_one_loss)
 
     except BaseException as e:
@@ -86,4 +98,6 @@ if __name__ == "__main__":
         P.write_to_log("EXCEPTION", e, type(e))
         traceback.print_stack()
 
+        P.save_raised_model(sam_train.am_model, sam_train.current_epoch, time_stamp, run_name, algorithm_name)
+        P.write_to_log("saved model, exception raised")
         raise e

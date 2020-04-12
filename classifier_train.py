@@ -30,10 +30,12 @@ class Classifier(at.AbstractTrain):
                  classifier_learning_rate: float = None,
                  attention_module_learning_rate: float = None,
                  is_freezen: bool = False,
-                 weight_decay: float = 0):
+                 weight_decay: float = 0,
+                 current_epoch: int = 1):
         super(Classifier, self).__init__(classes, None, None, None, test_each_epoch, use_gpu, gpu_device, description,
                                          left_class_number, right_class_number, None, None,
-                                         classifier_learning_rate, attention_module_learning_rate, weight_decay)
+                                         classifier_learning_rate, attention_module_learning_rate, weight_decay,
+                                         current_epoch)
 
         self.train_epochs = train_epochs
         self.train_segments_set = train_segments_set
@@ -74,8 +76,7 @@ class Classifier(at.AbstractTrain):
         best_loss = None
         best_test_loss = None
 
-        for epoch in range(1, self.train_epochs):
-            self.current_epoch = epoch
+        while self.current_epoch <= self.train_epochs:
 
             loss_classification_sum = 0
             accuracy_classification_sum = 0
@@ -118,7 +119,7 @@ class Classifier(at.AbstractTrain):
             f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
                                                                                              self.train_trust_answers,
                                                                                              self.train_model_answers)
-            text = "TRAIN={} Loss_CL={:.10f} Accuracy_CL={:.5f} {} {} {} ".format(epoch,
+            text = "TRAIN={} Loss_CL={:.10f} Accuracy_CL={:.5f} {} {} {} ".format(self.current_epoch,
                                                                                   loss_classification_sum / batch_count,
                                                                                   accuracy_classification_sum / batch_count,
                                                                                   f_1_score_text,
@@ -135,6 +136,8 @@ class Classifier(at.AbstractTrain):
                 best_loss = loss_classification_sum
                 self.best_weights = copy.deepcopy(self.model.state_dict())
             self.clear_temp_metrics()
+
+            self.current_epoch += 1
 
         self.save_model(self.best_test_weights)
         self.save_model(self.best_weights)

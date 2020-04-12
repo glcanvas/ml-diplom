@@ -32,7 +32,8 @@ class AbstractTrain:
                  snapshot_dir: str = None,
                  classifier_learning_rate: float = None,
                  attention_module_learning_rate: float = None,
-                 weight_decay: float = 0):
+                 weight_decay: float = 0,
+                 current_epoch: int = 1):
         self.classifier_learning_rate = classifier_learning_rate
         self.attention_module_learning_rate = attention_module_learning_rate
 
@@ -56,7 +57,7 @@ class AbstractTrain:
 
         self.weight_decay = weight_decay
 
-        self.current_epoch = 0
+        self.current_epoch = current_epoch
 
         self.train_model_answers = [[] for _ in range(self.classes)]
         self.train_trust_answers = [[] for _ in range(self.classes)]
