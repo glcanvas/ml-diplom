@@ -63,6 +63,8 @@ if __name__ == "__main__":
     current_epoch = 1
     if execute_from_model:
         model_state_dict, current_epoch = P.load_latest_model(time_stamp, run_name, algorithm_name)
+        if model_state_dict is None:
+            exit(0)
         am_model.load_state_dict(model_state_dict)
         P.write_to_log("recovery model:", am_model, "current epoch = {}".format(current_epoch))
     else:

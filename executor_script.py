@@ -23,9 +23,9 @@ CLASS_BORDER = [
 ]
 
 weight_decay = 0.01
-RUN_NAME_RANGE_FROM = 500
+RUN_NAME_RANGE_FROM = 502
 TRAIN_SIZE = 1800
-EPOCHS_COUNT = 200
+EPOCHS_COUNT = 150
 LOOP_COUNT = 8
 
 PYTHON_FILE_NAME_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -217,6 +217,9 @@ def main_function():
     p.write_to_log("=" * 20)
     properties = read_property()
     property_index = process_property(0, queue, thread_list, mapper_list, properties)
+    #for idx,(i,j,k) in enumerate(queue):
+    #    queue[idx] = (i, True, k)
+
     p.write_to_log("execute_index={}".format(execute_index))
     p.write_to_log("property_index={}".format(property_index))
     for idx, i in enumerate(queue):
@@ -258,7 +261,7 @@ def main_function():
                                                             classifier_learning_rate,
                                                             attention_learning_rate,
                                                             seed_value,
-                                                            False,
+                                                            recovery,
                                                             algorithm_position))
             thread.start()
 

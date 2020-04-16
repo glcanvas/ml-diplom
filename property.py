@@ -113,6 +113,8 @@ def load_latest_model(identifier, run_name, algorithm_name):
             os.remove(full_dir_)
         else:
             last_model_file_name = model_file_name
+    if last_model_file_name is None:
+        return None, None
     return torch.load(os.path.join(full_dir, last_model_file_name)), max_epoch
 
 
