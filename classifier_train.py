@@ -72,7 +72,6 @@ class Classifier(at.AbstractTrain):
             params = self.model.parameters()
 
         optimizer = torch.optim.Adam(params, lr=self.classifier_learning_rate, weight_decay=self.weight_decay)
-        self.model.train()
         best_loss = None
         best_test_loss = None
 
@@ -82,6 +81,7 @@ class Classifier(at.AbstractTrain):
             accuracy_classification_sum = 0
             batch_count = 0
 
+            self.model.train(mode=True)
             for images, segments, labels in self.train_segments_set:
                 labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
                                                                 segments)
@@ -146,6 +146,7 @@ class Classifier(at.AbstractTrain):
         loss_classification_sum = 0
         accuracy_classification_sum = 0
         batch_count = 0
+        self.model.train(mode=False)
         for images, segments, labels in test_set:
             labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
                                                             segments)
