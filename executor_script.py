@@ -10,7 +10,7 @@ import time
 from threading import Thread
 
 SLEEP_SECONDS = 120
-CLASSIFIER_LEARNING_RATES = [1e-5, 1e-6]
+CLASSIFIER_LEARNING_RATES = [1e-3, 1e-4]
 ATTENTION_MODULE_LEARNING_RATES = [1e-3]
 
 PYTHON_EXECUTOR_NAME = "/home/nduginec/nduginec_evn3/bin/python"
@@ -23,10 +23,10 @@ CLASS_BORDER = [
 ]
 
 weight_decay = 0.01
-RUN_NAME_RANGE_FROM = 502
+RUN_NAME_RANGE_FROM = 500
 TRAIN_SIZE = 1800
 EPOCHS_COUNT = 150
-LOOP_COUNT = 8
+LOOP_COUNT = 3
 
 PYTHON_FILE_NAME_DIR = os.path.dirname(os.path.realpath(__file__))
 property_file = os.path.join(PYTHON_FILE_NAME_DIR, "executor_property.properties")
@@ -36,17 +36,17 @@ SEED_LIST = [r.randint(1, 500) for _ in range(LOOP_COUNT)]
 
 print(SEED_LIST)
 ALGORITHM_LIST = [
-    {
-        'name': 'main_default_classifier.py',
-        'algorithm_name': 'VGG16',
-        'memory_usage': 4000,
-        'pre_train': 100,
-        'train_set': TRAIN_SIZE,
-        'epochs': EPOCHS_COUNT,
-    },
+    # {
+    #    'name': 'main_default_classifier.py',
+    #    'algorithm_name': 'VGG16',
+    #    'memory_usage': 4000,
+    #    'pre_train': 100,
+    #    'train_set': TRAIN_SIZE,
+    #    'epochs': EPOCHS_COUNT,
+    # },
     {
         'name': 'main_first_attention.py',
-        'algorithm_name': 'VGG16+ATTENTION_MODULE+MLOSS+PRETRAIN_100',
+        'algorithm_name': 'VGG16+ATTENTION_MODULE+MLOSS+PRETRAIN_100_NO_PRETRAIN',
         'pre_train': 100,
         'memory_usage': 4000,
         'train_set': TRAIN_SIZE,
@@ -54,7 +54,7 @@ ALGORITHM_LIST = [
     },
     {
         'name': 'main_alternate.py',
-        'algorithm_name': 'VGG16+ATTENTION_MODULE+MLOSS+ALTERNATE',
+        'algorithm_name': 'VGG16+ATTENTION_MODULE+MLOSS+ALTERNATE_NO_PRETRAIN',
         'pre_train': 20,
         'memory_usage': 5500,
         'train_set': TRAIN_SIZE,
@@ -62,7 +62,7 @@ ALGORITHM_LIST = [
     },
     {
         'name': 'main_alternate.py',
-        'algorithm_name': 'VGG16+ATTENTION_MODULE',
+        'algorithm_name': 'VGG16+ATTENTION_MODULE_NO_PRETRAIN',
         'pre_train': EPOCHS_COUNT,
         'memory_usage': 5000,
         'train_set': TRAIN_SIZE,
@@ -82,7 +82,7 @@ def execute_algorithm(algorithm_dict: dict, run_id: int, gpu: int, left_border: 
                       attention_module_learning_rate: float,
                       seed_id: int,
                       recovery: bool,
-                      algorithm_position:int):
+                      algorithm_position: int):
     script_name = os.path.join(PYTHON_FILE_NAME_DIR, algorithm_dict['name'])
     run_name = "RUN_{}_LEFT-{}_RIGHT-{}_TRAIN_SIZE-{}_LOOP_COUNT-{}_CLR-{}_AMLR-{}".format(run_id, left_border,
                                                                                            right_border,
@@ -111,7 +111,8 @@ def execute_algorithm(algorithm_dict: dict, run_id: int, gpu: int, left_border: 
     p.write_to_log("time = {} idx = {} BEGIN execute: {}".format(current_time, algorithm_position, cmd))
     status = os.system(cmd)
     current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
-    p.write_to_log("time = {} idx = {} END execute: {}, status = {}".format(current_time, algorithm_position, cmd, status))
+    p.write_to_log(
+        "time = {} idx = {} END execute: {}, status = {}".format(current_time, algorithm_position, cmd, status))
     alive_threads.value -= 1
     if status != 0:
         p.write_to_log("failed algorithm position: {}".format(algorithm_position))
@@ -217,7 +218,7 @@ def main_function():
     p.write_to_log("=" * 20)
     properties = read_property()
     property_index = process_property(0, queue, thread_list, mapper_list, properties)
-    #for idx,(i,j,k) in enumerate(queue):
+    # for idx,(i,j,k) in enumerate(queue):
     #    queue[idx] = (i, True, k)
 
     p.write_to_log("execute_index={}".format(execute_index))

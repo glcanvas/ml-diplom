@@ -204,8 +204,8 @@ def count_size(x):
 
 def load_data(train_size: int, seed: int):
     loader = DatasetLoader.initial()
-    #all_data = prepare_data(loader.load_tensors(0, train_size * 2))
-    all_data = prepare_data(loader.load_tensors(None, None))
+    all_data = prepare_data(loader.load_tensors(0, train_size * 2))
+    #all_data = prepare_data(loader.load_tensors(None, None))
     log = "set size: {}, set by classes: {}".format(len(all_data), count_size(all_data))
     P.write_to_log(log)
     random.Random(seed).shuffle(all_data)
