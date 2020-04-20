@@ -204,6 +204,7 @@ def count_size(x):
 
 def load_data(train_size: int, seed: int):
     loader = DatasetLoader.initial()
+    #all_data = prepare_data(loader.load_tensors(0, train_size * 2))
     all_data = prepare_data(loader.load_tensors(None, None))
     log = "set size: {}, set by classes: {}".format(len(all_data), count_size(all_data))
     P.write_to_log(log)
@@ -253,8 +254,8 @@ def create_torch_tensors():
 
 
 if __name__ == "__main__":
-    #loader = DatasetLoader(P.data_inputs_path, P.data_labels_path)
-    #loader.save_images_to_tensors()
+    loader = DatasetLoader(P.data_inputs_path, P.data_labels_path)
+    loader.save_images_to_tensors()
     x = load_data_batch(0, 100)
     print(len(x))
     print(len(load_data_batch(100, 200)))

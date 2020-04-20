@@ -21,20 +21,17 @@ base_data_dir = None
 
 if os.path.exists("/media/disk1/nduginec"):
     base_data_dir = "/media/disk1/nduginec"
-
 elif os.path.exists("/content/gdrive/My Drive/isic"):
     base_data_dir = "/content/gdrive/My Drive/isic"
-
 elif os.path.exists("/media/disk2/nduginec"):
     base_data_dir = "/media/disk2/nduginec"
     stupid_flag = True
-
 elif os.path.exists("/content/drive/My Drive/isic"):
     base_data_dir = "/content/drive/My Drive/isic"
-
 elif os.path.exists("/home/nikita/PycharmProjects"):
     base_data_dir = "/home/nikita/PycharmProjects"
-
+elif os.path.exists("D:/diplom-base-dir"):
+    base_data_dir = "D:/diplom-base-dir"
 else:
     raise Exception("NOT FOND BASE DIR")
 
@@ -141,3 +138,7 @@ def parse_input_commands():
     parser.add_argument("--time_stamp")
     parser.add_argument("--execute_from_model", default="false")
     return parser
+
+
+if __name__ == "__main__":
+    pass
