@@ -243,14 +243,6 @@ def main_function():
             p.write_to_log("=" * 20)
             properties = read_property()
             property_index = process_property(property_index, queue, thread_list, mapper_list, properties)
-            p.write_to_log("execute_index={}".format(execute_index))
-            p.write_to_log("property_index={}".format(property_index))
-            for idx, i in enumerate(queue):
-                p.write_to_log("idx={}, queue value={}".format(idx, i))
-            for idx, i in enumerate(zip(thread_list, mapper_list)):
-                p.write_to_log("idx={}, thread map={}".format(idx, i))
-            for idx, i in enumerate(ex_list):
-                p.write_to_log("idx: {} execute algorithm: {}".format(idx, i))
 
             gpu = found_gpu(algorithm_data, nsmi.NVLog(), properties)
             if gpu == -1:
@@ -281,6 +273,14 @@ def main_function():
             break
         time.sleep(SLEEP_SECONDS)
         execute_index += 1
+        p.write_to_log("execute_index={}".format(execute_index))
+        p.write_to_log("property_index={}".format(property_index))
+        for idx, i in enumerate(queue):
+            p.write_to_log("idx={}, queue value={}".format(idx, i))
+        for idx, i in enumerate(zip(thread_list, mapper_list)):
+            p.write_to_log("idx={}, thread map={}".format(idx, i))
+        for idx, i in enumerate(ex_list):
+            p.write_to_log("idx: {} execute algorithm: {}".format(idx, i))
 
     for t in thread_list:
         t.join()
