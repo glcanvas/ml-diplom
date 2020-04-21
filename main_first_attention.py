@@ -58,7 +58,7 @@ if __name__ == "__main__":
     snapshots_path = os.path.join(log_dir, log_name)
     os.makedirs(snapshots_path, exist_ok=True)
 
-    am_model = ss.build_attention_module_model(classes, False)
+    am_model = ss.build_attention_module_model(classes)
 
     current_epoch = 1
     if execute_from_model:

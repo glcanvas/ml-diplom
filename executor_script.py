@@ -46,7 +46,7 @@ ALGORITHM_LIST = [
     # },
     {
         'name': 'main_first_attention.py',
-        'algorithm_name': 'VGG16+ATTENTION_MODULE+MLOSS+PRETRAIN_100_NO_PRETRAIN',
+        'algorithm_name': 'VGG16+ATTENTION_MODULE+MLOSS+PRETRAIN_100_PRETRAIN_SUM',
         'pre_train': 100,
         'memory_usage': 4000,
         'train_set': TRAIN_SIZE,
@@ -54,17 +54,17 @@ ALGORITHM_LIST = [
     },
     {
         'name': 'main_alternate.py',
-        'algorithm_name': 'VGG16+ATTENTION_MODULE+MLOSS+ALTERNATE_NO_PRETRAIN',
+        'algorithm_name': 'VGG16+ATTENTION_MODULE+MLOSS+ALTERNATE_PRETRAIN_SUM',
         'pre_train': 20,
-        'memory_usage': 5500,
+        'memory_usage': 5800,
         'train_set': TRAIN_SIZE,
         'epochs': EPOCHS_COUNT
     },
     {
         'name': 'main_alternate.py',
-        'algorithm_name': 'VGG16+ATTENTION_MODULE_NO_PRETRAIN',
+        'algorithm_name': 'VGG16+ATTENTION_MODULE_PRETRAIN_SUM',
         'pre_train': EPOCHS_COUNT,
-        'memory_usage': 5000,
+        'memory_usage': 5800,
         'train_set': TRAIN_SIZE,
         'epochs': EPOCHS_COUNT
     }

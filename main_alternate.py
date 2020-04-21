@@ -61,7 +61,7 @@ if __name__ == "__main__":
     test_set = DataLoader(il.ImageDataset(test_set), batch_size=5)
     print("ok")
 
-    am_model = ss.build_attention_module_model(classes, False)
+    am_model = ss.build_attention_module_model(classes)
 
     current_epoch = 1
     if execute_from_model:
