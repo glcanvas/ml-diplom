@@ -175,7 +175,7 @@ def process_property(property_index: int, queue: list, thread_list: list, mapper
     for prop in properties:
         splited_prop = prop.split(".")
         if splited_prop[0] != str(property_index):
-            p.write_to_log("prop = {}, property_index = {} SKIP".format(prop, property_index))
+            # p.write_to_log("prop = {}, property_index = {} SKIP".format(prop, property_index))
             continue
 
         indexes = list(map(int, filter(lambda x: len(x) > 0, properties[prop].split(','))))
@@ -196,7 +196,8 @@ def process_property(property_index: int, queue: list, thread_list: list, mapper
                     if i == index:
                         thread_position = idx
                 if thread_position == -1:
-                    p.write_to_log("prop = {}, value = {} not found, skip".format(prop, index))
+                    pass
+                    # p.write_to_log("prop = {}, value = {} not found, skip".format(prop, index))
                 else:
                     thread_list[thread_position]._stop()
             property_index += 1
@@ -239,8 +240,8 @@ def main_function():
             continue
 
         while True:
-
-            p.write_to_log("=" * 20)
+            time.sleep(SLEEP_SECONDS)
+            #p.write_to_log("=" * 20)
             properties = read_property()
             property_index = process_property(property_index, queue, thread_list, mapper_list, properties)
 
