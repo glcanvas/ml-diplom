@@ -16,7 +16,7 @@ import time
 from threading import Lock, Thread
 
 # constants
-PYTHON_EXECUTOR_NAME = "/home/nduginec/nduginec_evn3/bin/python" # "C:\\Users\\nikita\\anaconda3\\python.exe"
+PYTHON_EXECUTOR_NAME = "/home/nduginec/nduginec_evn3/bin/python"  # "C:\\Users\\nikita\\anaconda3\\python.exe"
 SLEEP_SECONDS = 120
 DIPLOMA_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 PROPERTY_FILE = os.path.join(DIPLOMA_DIR, "executor_property.properties")
@@ -174,6 +174,7 @@ def infinity_server():
             strategy_lock.release()
 
         time.sleep(SLEEP_SECONDS)
+
 
 if __name__ == "__main__":
     infinity_server()

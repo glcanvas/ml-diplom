@@ -50,7 +50,7 @@ def __parse_add_command(add_command: str) -> tuple:
     key_value = list(filter(lambda x: len(x) > 0, add_command.split(";")))
     dct = {}
     for kv in key_value:
-        kv_s = kv.split("=")
+        kv_s = kv.split("|")
         if len(kv_s) != 2:
             continue
         dct[kv_s[0]] = kv_s[1]
@@ -58,8 +58,6 @@ def __parse_add_command(add_command: str) -> tuple:
     if "--script_name" not in dct:
         return False, None
     if "--script_memory" not in dct:
-        return False, None
-    if "--gpu" not in dct:
         return False, None
     if "--pre_train" not in dct:
         return False, None
