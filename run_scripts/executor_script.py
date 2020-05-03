@@ -1,11 +1,9 @@
-import sys
-from multiprocessing import Pool, Value
-import subprocess
+from multiprocessing import Value
 from datetime import datetime
 import os
 import random
-import executor_nvsmi as nsmi
-import property as p
+from run_scripts import executor_nvsmi as nsmi
+from utils import property as p
 import time
 from threading import Thread
 
@@ -37,7 +35,7 @@ SEED_LIST = [r.randint(1, 500) for _ in range(LOOP_COUNT)]
 print(SEED_LIST)
 ALGORITHM_LIST = [
     # {
-    #    'name': 'main_default_classifier.py',
+    #    'name': 'executor_baseline_vgg16.py',
     #    'algorithm_name': 'VGG16',
     #    'memory_usage': 4000,
     #    'pre_train': 100,
@@ -45,24 +43,24 @@ ALGORITHM_LIST = [
     #    'epochs': EPOCHS_COUNT,
     # },
     {
-        'name': 'main_first_attention.py',
-        'algorithm_name': 'VGG16+ATTENTION_MODULE+MLOSS+PRETRAIN_100_PRETRAIN_SUM',
+        'name': 'executor_sequential.py',
+        'algorithm_name': 'VGG16+ATTENTION_MODULE+MLOSS+PRETRAIN_100_PRETRAIN_SUM_NO_SIGMOID',
         'pre_train': 100,
         'memory_usage': 4000,
         'train_set': TRAIN_SIZE,
         'epochs': EPOCHS_COUNT
     },
     {
-        'name': 'main_alternate.py',
-        'algorithm_name': 'VGG16+ATTENTION_MODULE+MLOSS+ALTERNATE_PRETRAIN_SUM',
+        'name': 'executor_simultaneous.py',
+        'algorithm_name': 'VGG16+ATTENTION_MODULE+MLOSS+ALTERNATE_PRETRAIN_SUM_NO_SIGMOID',
         'pre_train': 20,
         'memory_usage': 5800,
         'train_set': TRAIN_SIZE,
         'epochs': EPOCHS_COUNT
     },
     {
-        'name': 'main_alternate.py',
-        'algorithm_name': 'VGG16+ATTENTION_MODULE_PRETRAIN_SUM',
+        'name': 'executor_simultaneous.py',
+        'algorithm_name': 'VGG16+ATTENTION_MODULE_PRETRAIN_SUM_NO_SIGMOID',
         'pre_train': EPOCHS_COUNT,
         'memory_usage': 5800,
         'train_set': TRAIN_SIZE,
@@ -103,7 +101,7 @@ def execute_algorithm(algorithm_dict: dict, run_id: int, gpu: int, left_border: 
             '--classifier_learning_rate', str(classifier_learning_rate),
             '--attention_module_learning_rate', str(attention_module_learning_rate),
             '--weight_decay', str(weight_decay),
-            '--time_stamp', str(seed_id),
+            '--model_identifier', str(seed_id),
             '--execute_from_model', str(recovery)
             ]
     cmd = " ".join(args)

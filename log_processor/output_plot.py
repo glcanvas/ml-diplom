@@ -5,7 +5,7 @@ import re
 from sklearn.metrics import roc_curve, auc, precision_recall_curve, average_precision_score
 import traceback
 
-stupid_flag = False
+"""stupid_flag = False
 base_data_dir = "/home/nikita/PycharmProjects"
 if os.path.exists("/media/disk1/nduginec"):
     base_data_dir = "/media/disk1/nduginec"
@@ -14,8 +14,9 @@ elif os.path.exists("/media/disk2/nduginec"):
     stupid_flag = True
 
 base_data_dir += "/ml-data" if stupid_flag else ""
-
-logs_path = base_data_dir + "/logs"
+"""
+base_data_dir = "D://diplom-base-dir"
+logs_path = base_data_dir + "/trust_logs"
 plot_images_path = base_data_dir + "/images"
 os.makedirs(plot_images_path, exist_ok=True)
 
@@ -101,7 +102,7 @@ def draw_plot_return_avg(ax, title, algo_name, algorithm_list: list, execute_mea
     for _, algo in enumerate(algorithm_list):
         lists.append(execute_measure_function(algo))
     result = []
-    for epoch in range(0, 200):
+    for epoch in range(0, 151):
         cnt = 0
         sm = 0.0
         for idx in range(len(lists)):
@@ -116,7 +117,7 @@ def draw_plot_return_avg(ax, title, algo_name, algorithm_list: list, execute_mea
     return result
 
 
-def draw_plot_avg(ax, title, algo_name, algorithm_list: list, color: list, mull_index=1):
+def draw_plot_avg(ax, title: str, algo_name, algorithm_list: list, color: list, mull_index=1):
     ax.set_title(title)
     legend = algo_name
     algorithm_list = [] if len(algorithm_list) == 0 else [algorithm_list[0]] + list(
@@ -129,6 +130,7 @@ def draw_plot_avg(ax, title, algo_name, algorithm_list: list, color: list, mull_
             color=(abs(color[0] - 0.4), abs(color[1] - 0.4), abs(color[2] - 0.4)))
 
     ax.plot(indexes, algorithm_list, label=legend, color=color)
+    return max_values[0], legend, title.replace(" ", "_")
 
 
 def get_simple_measure_by_name(name):
@@ -170,6 +172,7 @@ def draw_simple_metrics(axes, algorithms: dict):
             'Loss_L1',
             'Accuracy_CL'
         ]
+        res = []
         for m_idx, m in enumerate(metrics):
             trains = algorithms[algo_name]['train']
             loss_cl_avg = draw_plot_return_avg(axes[m_idx][0], m + ' Train', algo_name, trains,
@@ -186,7 +189,10 @@ def draw_simple_metrics(axes, algorithms: dict):
                                                mull_index=4)
             # color = [0, 0, 0]
             # color[color_idx] = 1
-            draw_plot_avg(axes[m_idx][3], m + ' AVG', algo_name, loss_cl_avg, to_color_array(color_idx), mull_index=4)
+            res.append(draw_plot_avg(axes[m_idx][3], m + ' AVG', algo_name, loss_cl_avg, to_color_array(color_idx),
+                                     mull_index=4))
+        for i, j, k in res:
+            print(i, j, k)
 
 
 def draw_hard_metrics(axes, algorithms: dict):
@@ -217,6 +223,7 @@ def draw_hard_metrics(axes, algorithms: dict):
                 'precision_global'
             ]
         }
+        res = []
         for m_idx, m in enumerate(metrics):
             m_idx *= 6
             for sub_metrics_idx, sub_metrics in enumerate(metrics[m]):
@@ -237,8 +244,10 @@ def draw_hard_metrics(axes, algorithms: dict):
                                                    mull_index=4)
                 # color = [0, 0, 0]
                 # color[color_idx] = 1
-                draw_plot_avg(axes[m_idx_1 + 5][3], sub_metrics + ' AVG', algo_name, loss_cl_avg,
-                              to_color_array(color_idx), mull_index=4)
+                res.append(draw_plot_avg(axes[m_idx_1 + 5][3], sub_metrics + ' AVG', algo_name, loss_cl_avg,
+                                         to_color_array(color_idx), mull_index=4))
+        for i, j, k in res:
+            print(i, j, k)
 
 
 def visualize_algorithms(algorithms: dict, run_name: str):
@@ -250,7 +259,7 @@ def visualize_algorithms(algorithms: dict, run_name: str):
     draw_hard_metrics(axes, algorithms)
     for ax in axes.flat:
         ax.set(xlabel='epoch', ylabel='value')
-        ax.legend(loc='lower left')
+        ax.legend(loc='upper right')
 
     for ax in axes.flat[12:]:
         ax.set_ylim((0, 1))
@@ -307,10 +316,17 @@ def reduce_stat(algorithms: dict, run_number: str):
 
 if __name__ == "__main__":
     runs = [
-    "RUN_502_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-3_CLR-1e-05_AMLR-0.001",
-    "RUN_502_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_LOOP_COUNT-8_CLR-1e-05_AMLR-0.001"
+        #"RUN_500_no_pretrian",
+        #"RUN_500_pretained_default",
+        #"RUN_500_pretrain_sum",
+        #"RUN_501_no_pretrian",
+        #"RUN_501_pretained_default",
+        #"RUN_501_pretrain_sum",
+        #"RUN_502_pretained_default",
+        #"RUN_503_pretained_default"
+        "vgg_vs_resnet50"
     ]
     for i in runs:
         a, r_n = parse_run(i)
         visualize_algorithms(a, r_n)
-        reduce_stat(a, r_n)
+        # reduce_stat(a, r_n)

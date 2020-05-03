@@ -6,10 +6,10 @@ import torch
 import torch.nn as nn
 from datetime import datetime
 import os
-import utils
+from utils import utils
 import matplotlib.pyplot as plt
 import numpy as np
-import property as p
+from utils import property as p
 
 
 class AbstractTrain:
@@ -329,12 +329,12 @@ nduginec@laplas:~/ml2/ml-diplom/runners_alternate_one_loss$ EXCEPTION CUDA out o
 EXCEPTION
 CUDA out of memory. Tried to allocate 392.00 MiB (GPU 0; 10.92 GiB total capacity; 3.24 GiB already allocated; 216.69 MiB free; 3.33 GiB reserved in total by PyTorch)
 <class 'RuntimeError'>
-  File "/home/nduginec/ml2/ml-diplom/main_alternate.py", line 75, in <module>
+  File "/home/nduginec/ml2/ml-diplom/executor_simultaneous.py", line 75, in <module>
     traceback.print_stack()
 Traceback (most recent call last):
-  File "/home/nduginec/ml2/ml-diplom/main_alternate.py", line 77, in <module>
+  File "/home/nduginec/ml2/ml-diplom/executor_simultaneous.py", line 77, in <module>
     raise e
-  File "/home/nduginec/ml2/ml-diplom/main_alternate.py", line 69, in <module>
+  File "/home/nduginec/ml2/ml-diplom/executor_simultaneous.py", line 69, in <module>
     sam_train.train()
   File "/home/nduginec/ml2/ml-diplom/alternate_attention_module_train.py", line 75, in train
     self.train_segments_set)

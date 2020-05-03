@@ -1,7 +1,5 @@
 import torch
-import torch.nn as nn
-import math
-import am_loss_function as amlf
+from model import am_loss_function as amlf
 
 if __name__ == "__main__":
     """

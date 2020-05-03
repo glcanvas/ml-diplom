@@ -23,8 +23,9 @@ def build_attention_module_model(classes: int, pretrained=True):
     """
     sam_branch = nn.Sequential(
         *m.vgg16(pretrained=pretrained).features[2:15],
-        nn.Conv2d(256, classes, kernel_size=(3, 3), padding=(1, 1)),
-        nn.Sigmoid()
+        nn.Conv2d(256, classes, kernel_size=(3, 3), padding=(1, 1))
+        #,
+        #nn.Sigmoid()
     )
     model = m.vgg16(pretrained=True)
     basis_branch = model.features[:4]

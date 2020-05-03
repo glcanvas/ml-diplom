@@ -3,7 +3,7 @@ import torch
 import torch.utils.data.dataset
 from torchvision import transforms
 from PIL import Image
-import property as P
+from utils import property as P
 import random
 
 composite = transforms.Compose([

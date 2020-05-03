@@ -1,8 +1,9 @@
 import torch
 import sklearn.metrics as metrics
-import property as p
+from utils import property as p
 import numpy as np
 import time
+
 
 def __to_global(a, b, classes):
     if classes == 1:
@@ -85,11 +86,13 @@ def calculate_metric(classes, trust_answers, model_answer):
     f_1_score_text = ""
     for i in range(classes):
         f_1_score_text += "f_1_{}={:.5f} ".format(i, metrics.f1_score(trust_answers[i],
-                                                                      model_answer[i], average=class_metric_for_one_class))
+                                                                      model_answer[i],
+                                                                      average=class_metric_for_one_class))
     recall_score_text = ""
     for i in range(classes):
         recall_score_text += "recall_{}={:.5f} ".format(i, metrics.recall_score(trust_answers[i],
-                                                                                model_answer[i], average=class_metric_for_one_class))
+                                                                                model_answer[i],
+                                                                                average=class_metric_for_one_class))
 
     precision_score_text = ""
     for i in range(classes):

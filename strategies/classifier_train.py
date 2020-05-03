@@ -3,11 +3,11 @@ classify dataset
 """
 
 import torch
-import property as p
+from utils import property as p
 import torch.nn as nn
 import copy
-import utils
-import abstract_train as at
+from utils import utils
+from strategies import abstract_train as at
 
 
 class Classifier(at.AbstractTrain):

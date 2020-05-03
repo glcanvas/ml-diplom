@@ -1,7 +1,5 @@
-import torch
 import torch.nn as nn
-import math
-import property as p
+from utils import property as p
 
 
 class AmLossFunction(nn.Module):

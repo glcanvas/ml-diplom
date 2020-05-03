@@ -7,7 +7,7 @@ import torch
 # for train model
 EPS = 1e-10
 PROBABILITY_THRESHOLD = 0.5
-TRY_CALCULATE_MODEL = 500
+TRY_CALCULATE_MODEL = 2
 
 prefix = 'ISIC_'
 attribute = '_attribute_'
@@ -122,8 +122,8 @@ def parse_input_commands():
     parser.add_argument("--pre_train", default=15)
     parser.add_argument("--gradient_layer_name", default="features.28")
     parser.add_argument("--from_gradient_layer", default="False")
-    parser.add_argument("--epochs", default="100")
-    parser.add_argument("--train_set", default="2000")
+    parser.add_argument("--epochs", default="150")
+    parser.add_argument("--train_set", default="1800")
     parser.add_argument("--run_name")  # require
     parser.add_argument("--algorithm_name")  # require
     parser.add_argument("--left_class_number", default="0")  # inclusive
@@ -131,11 +131,10 @@ def parse_input_commands():
     parser.add_argument("--classifier_learning_rate", default="1e-6")
     parser.add_argument("--attention_module_learning_rate", default="1e-4")
     parser.add_argument("--freeze_list", default="for_alternate_only")
-    parser.add_argument("--seed", default="5")
     parser.add_argument("--is_freezen", default="False")
     parser.add_argument("--weight_decay", default="0")
-
-    parser.add_argument("--time_stamp")
+    parser.add_argument("--resnet_type", default="<resnet50,resnet32,...>")
+    parser.add_argument("--model_identifier")
     parser.add_argument("--execute_from_model", default="false")
     return parser
 
