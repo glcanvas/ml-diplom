@@ -23,13 +23,14 @@ class AbstractExecutor:
         self.classifier_learning_rate = float(parsed.classifier_learning_rate)
         self.attention_module_learning_rate = float(parsed.attention_module_learning_rate)
         self.is_freezen = False if str(parsed.is_freezen).lower() == "false" else True
+
         self.resnet_type = parsed.resnet_type
+        self.inceptionv_type = parsed.inceptionv_type
 
         self.model_identifier = parsed.model_identifier
         self.execute_from_model = False if str(parsed.execute_from_model).lower() == "false" else True
 
         self.classes = self.right_class_number - self.left_class_number
-
 
         self.description = "description-{},train_set-{},epochs-{},l-{},r-{},clr-{},amlr-{},model_identifier-{}".format(
             self.parsed_description,
@@ -103,18 +104,22 @@ class AbstractExecutor:
 
     def get_current_epoch(self) -> int:
         if self.execute_from_model:
-            model_state_dict, current_epoch = P.load_latest_model(self.model_identifier, self.run_name, self.algorithm_name)
+            model_state_dict, current_epoch = P.load_latest_model(self.model_identifier, self.run_name,
+                                                                  self.algorithm_name)
             if model_state_dict is None:
-                raise Exception("not found model for current epoch: model_identifier: {}, run_name: {}, algorithm_name: {}"
-                                .format(self.model_identifier, self.run_name, self.algorithm_name))
+                raise Exception(
+                    "not found model for current epoch: model_identifier: {}, run_name: {}, algorithm_name: {}"
+                        .format(self.model_identifier, self.run_name, self.algorithm_name))
             return current_epoch
         return 1
 
     def load_model_from_saves(self):
         if self.execute_from_model:
-            model_state_dict, current_epoch = P.load_latest_model(self.model_identifier, self.run_name, self.algorithm_name)
+            model_state_dict, current_epoch = P.load_latest_model(self.model_identifier, self.run_name,
+                                                                  self.algorithm_name)
             if model_state_dict is None:
-                raise Exception("not found model for current epoch: model_identifier: {}, run_name: {}, algorithm_name: {}"
-                                .format(self.model_identifier, self.run_name, self.algorithm_name))
+                raise Exception(
+                    "not found model for current epoch: model_identifier: {}, run_name: {}, algorithm_name: {}"
+                        .format(self.model_identifier, self.run_name, self.algorithm_name))
             return model_state_dict
         return None
