@@ -135,6 +135,7 @@ def parse_input_commands():
     parser.add_argument("--weight_decay", default="0")
     parser.add_argument("--resnet_type", default="<resnet50,resnet32,...>")
     parser.add_argument("--inceptionv_type", default="<inceptionv1, inceptionv3>")
+    parser.add_argument("--image_size", default='224')
     parser.add_argument("--model_identifier")
     parser.add_argument("--execute_from_model", default="false")
     return parser

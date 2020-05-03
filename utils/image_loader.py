@@ -4,6 +4,7 @@ import torch.utils.data.dataset
 from torchvision import transforms
 from PIL import Image
 from utils import property as P
+import torch.nn.functional as F
 import random
 
 composite = transforms.Compose([
@@ -16,6 +17,7 @@ composite = transforms.Compose([
 normalization = transforms.Compose([
     transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
+
 
 
 class DatasetLoader:
@@ -107,6 +109,7 @@ class DatasetLoader:
         P.write_to_log("all saved successfully")
 
     def load_tensors(self, lower_bound: int, upper_bound: int, load_first_segments: int = 10 ** 20,
+                     image_size: int = 224,
                      use_norm: bool = False):
         if self.data is None:
             self.data = self.__merge_data(self.cache_input_path, self.cache_target_path)
@@ -130,10 +133,16 @@ class DatasetLoader:
                     loads += 1
                 for item in P.labels_attributes:
                     torch_dict[item] = torch.load(dct[item])
+                    if image_size != 224:
+                        torch_dict[item] = F.upsample(torch_dict[item], (1, image_size, image_size))
+
                 if use_norm:
                     torch_dict[P.input_attribute] = normalization(torch.load(dct[P.input_attribute]))
                 else:
                     torch_dict[P.input_attribute] = torch.load(dct[P.input_attribute])
+
+                if image_size != 224:
+                    torch_dict[P.input_attribute] = F.upsample(torch_dict[P.input_attribute], (3, image_size, image_size))
                 # normalization(torch.load(dct[P.input_attribute]))
                 result.append(torch_dict)
                 # print("left:{}, current:{}, right:{} processed".format(lower_bound, idx, upper_bound))
@@ -202,10 +211,10 @@ def count_size(x):
     return cnt
 
 
-def load_data(train_size: int, seed: int):
+def load_data(train_size: int, seed: int, image_size: int):
     loader = DatasetLoader.initial()
-    all_data = prepare_data(loader.load_tensors(0, train_size * 2))
-    #all_data = prepare_data(loader.load_tensors(None, None))
+    all_data = prepare_data(loader.load_tensors(0, train_size * 2, image_size))
+    # all_data = prepare_data(loader.load_tensors(None, None))
     log = "set size: {}, set by classes: {}".format(len(all_data), count_size(all_data))
     P.write_to_log(log)
     random.Random(seed).shuffle(all_data)

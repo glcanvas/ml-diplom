@@ -26,6 +26,7 @@ class AbstractExecutor:
 
         self.resnet_type = parsed.resnet_type
         self.inceptionv_type = parsed.inceptionv_type
+        self.image_size = int(parsed.image_size)
 
         self.model_identifier = parsed.model_identifier
         self.execute_from_model = False if str(parsed.execute_from_model).lower() == "false" else True
@@ -95,7 +96,7 @@ class AbstractExecutor:
         os.makedirs(self.snapshots_path, exist_ok=True)
 
     def load_dataset(self):
-        segments_set, test_set = il.load_data(self.train_set_size, self.model_identifier)
+        segments_set, test_set = il.load_data(self.train_set_size, self.model_identifier, self.image_size)
 
         self.train_segments_set = DataLoader(il.ImageDataset(segments_set), batch_size=3, shuffle=True)
         print("ok")

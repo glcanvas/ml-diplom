@@ -3,8 +3,8 @@ import sys
 import torchvision.models as m
 from strategies import classifier_train as cl
 import torch.nn as nn
-
 from executors.abastract_executor import AbstractExecutor
+from model import googlenet
 
 
 class InceptionBaselineExecutor(AbstractExecutor):
@@ -12,7 +12,12 @@ class InceptionBaselineExecutor(AbstractExecutor):
         super(InceptionBaselineExecutor, self).__init__(parsed)
 
     def create_model(self):
-        self.model = m.inception_v3(pretrained=True)
+        if self.inceptionv_type == "inceptionv3":
+            self.model = m.inception_v3(pretrained=True)
+        elif self.inceptionv_type == "inceptionv1":
+            self.model = googlenet.inceptionv1(pretrained=True)
+        else:
+            raise Exception("Not exist model with name: {}".format(self.resnet_type))
         num_features = self.model.fc.in_features
         self.model.fc = nn.Linear(num_features, self.classes)
         P.write_to_log(self.model)
