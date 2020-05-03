@@ -16,7 +16,7 @@ import time
 from threading import Lock, Thread
 
 # constants
-PYTHON_EXECUTOR_NAME = "C:\\Users\\nikita\\anaconda3\\python.exe" #"/home/nduginec/nduginec_evn3/bin/python"
+PYTHON_EXECUTOR_NAME = "/home/nduginec/nduginec_evn3/bin/python" # "C:\\Users\\nikita\\anaconda3\\python.exe"
 SLEEP_SECONDS = 120
 DIPLOMA_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 PROPERTY_FILE = os.path.join(DIPLOMA_DIR, "executor_property.properties")
@@ -152,19 +152,21 @@ def infinity_server():
                 continue
             strategy_name, strategy_memory, strategy_arguments = strategy_queue.popleft()
 
-            #gpu = ru.found_gpu(nsmi.NVLog(), int(strategy_memory), actual_property_context.banned_gpu,
-            #                   actual_property_context.max_thread_on_gpu)
-            gpu = 0
+            gpu = ru.found_gpu(nsmi.NVLog(), int(strategy_memory), actual_property_context.banned_gpu,
+                               actual_property_context.max_thread_on_gpu)
+
             if gpu == -1:
                 strategy_queue.appendleft((strategy_name, strategy_memory, strategy_arguments))
                 continue
             if alive_process >= actual_property_context.max_alive_threads:
                 continue
+
             thread = Thread(target=start_strategy, args=(strategy_name, strategy_memory, gpu, strategy_arguments))
             thread.start()
             thread_list.append(thread)
             mapper_list.append((strategy_name, strategy_memory, gpu, strategy_arguments))
             alive_process += 1
+
             p.write_to_log("-" * 20)
             print_status_info()
             p.write_to_log("-" * 20)
