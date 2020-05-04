@@ -36,7 +36,7 @@ def initial_strategy_queue_resnet():
                                         attention_learning_rate)
                             arguments = {
                                 '--run_name': run_name,
-                                '--algorithm_name': algorithm_data['algorithm_name'] + resnet_type,
+                                '--algorithm_name': algorithm_data['algorithm_name'] + "_" + resnet_type,
                                 '--epochs': 150,
                                 '--pre_train': 150,
                                 '--train_set': 1800,
@@ -70,7 +70,7 @@ def initial_strategy_queue_inception():
         'train_set': TRAIN_SIZE,
         'epochs': EPOCHS_COUNT
     }]
-    INCEPTION_TYPES = ["inceptionv3", "inceptionv1"]
+    INCEPTION_TYPES = ["inceptionv1"]
     result = []
     run_id = RUN_NAME_RANGE_FROM
     for left_border, right_border in CLASS_BORDER:
