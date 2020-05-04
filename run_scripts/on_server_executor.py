@@ -3,6 +3,10 @@ Script for launch strategies on remove server
 Which can survive out of memory errors
 """
 import sys
+
+print(sys.path)
+sys.path.insert(0, "/home/nduginec/ml3/ml-diplom")
+
 from collections import deque
 from multiprocessing import *
 from datetime import datetime
