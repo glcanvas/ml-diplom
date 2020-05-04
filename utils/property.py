@@ -138,7 +138,8 @@ def parse_input_commands():
     parser.add_argument("--image_size", default='224')
     parser.add_argument("--model_identifier")
     parser.add_argument("--execute_from_model", default="false")
-    parser.add_argument("--loss_function", default="BCELoss")
+    parser.add_argument("--classifier_loss_function", default="bceloss")
+    parser.add_argument("--am_loss_function", default="bceloss")
     return parser
 
 

@@ -41,6 +41,7 @@ class ResnetBaselineExecutor(AbstractExecutor):
                                       self.train_segments_set,
                                       self.test_set,
                                       classes=self.classes,
+                                      l_loss=self.classifier_loss_function,
                                       test_each_epoch=4,
                                       gpu_device=self.gpu,
                                       train_epochs=self.epochs,

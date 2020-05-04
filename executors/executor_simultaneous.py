@@ -28,6 +28,8 @@ class SimultaneousExecutor(AbstractExecutor):
                                                 gpu_device=self.gpu,
                                                 train_epochs=self.epochs,
                                                 save_train_logs_epochs=4,
+                                                l_loss=self.classifier_loss_function,
+                                                m_loss=self.am_loss_function,
                                                 test_each_epoch=4,
                                                 left_class_number=self.left_class_number,
                                                 right_class_number=self.right_class_number,

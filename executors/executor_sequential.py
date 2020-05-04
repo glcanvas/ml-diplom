@@ -26,6 +26,8 @@ class SequentialExecutor(AbstractExecutor):
                                             pre_train_epochs=self.pre_train,
                                             gpu_device=self.gpu,
                                             train_epochs=self.epochs,
+                                            l_loss=self.classifier_loss_function,
+                                            m_loss=self.am_loss_function,
                                             save_train_logs_epochs=4,
                                             test_each_epoch=4,
                                             left_class_number=self.left_class_number,

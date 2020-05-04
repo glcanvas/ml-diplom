@@ -1,7 +1,13 @@
+import sys
+
+sys.path.insert(0, "/home/nduginec/ml3/ml-diplom")
+
 import os
 from utils import image_loader as il, property as P
 from torch.utils.data import DataLoader
 import traceback
+import torch.nn as nn
+import model.soft_f1_loss as f1loss
 
 
 class AbstractExecutor:
@@ -27,6 +33,20 @@ class AbstractExecutor:
         self.resnet_type = parsed.resnet_type
         self.inceptionv_type = parsed.inceptionv_type
         self.image_size = int(parsed.image_size)
+
+        if str(parsed.classifier_loss_function).lower() == "bceloss":
+            self.classifier_loss_function = nn.BCELoss()
+        elif str(parsed.classifier_loss_function).lower() == "softf1":
+            self.classifier_loss_function = f1loss.SoftF1Loss()
+        else:
+            raise Exception("loss {} not found".format(parsed.classifier_loss_function))
+
+        if str(parsed.am_loss_function).lower() == "bceloss":
+            self.am_loss_function = nn.BCELoss()
+        elif str(parsed.am_loss_function).lower() == "softf1":
+            self.am_loss_function = f1loss.SoftF1Loss()
+        else:
+            raise Exception("loss {} not found".format(parsed.am_loss_function))
 
         self.model_identifier = parsed.model_identifier
         self.execute_from_model = False if str(parsed.execute_from_model).lower() == "false" else True
