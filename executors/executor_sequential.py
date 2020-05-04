@@ -1,3 +1,7 @@
+import sys
+
+sys.path.insert(0, "/home/nduginec/ml3/ml-diplom")
+
 from strategies import sequential_train as amt
 from utils import property as P
 import sys

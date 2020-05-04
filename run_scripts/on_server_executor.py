@@ -4,7 +4,6 @@ Which can survive out of memory errors
 """
 import sys
 
-print(sys.path)
 sys.path.insert(0, "/home/nduginec/ml3/ml-diplom")
 
 from collections import deque
