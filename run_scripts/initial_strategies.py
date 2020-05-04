@@ -36,7 +36,7 @@ def initial_strategy_queue_resnet():
                                         attention_learning_rate)
                             arguments = {
                                 '--run_name': run_name,
-                                '--algorithm_name': algorithm_data['algorithm_name'],
+                                '--algorithm_name': algorithm_data['algorithm_name'] + resnet_type,
                                 '--epochs': 150,
                                 '--pre_train': 150,
                                 '--train_set': 1800,
