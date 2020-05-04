@@ -7,8 +7,8 @@ from datetime import datetime
 
 
 def found_gpu(smi, max_algorithm_memory: int, banned_gpu: int, max_thread_on_gpu: int) -> int:
-    for k in smi['Attached GPUs']:
-        gpu = int(smi['Attached GPUs'][k]['Minor Number'])
+    for idx, k in enumerate(smi['Attached GPUs']):
+        gpu = idx #int(smi['Attached GPUs'][k]['Minor Number'])
         free_memory = int(smi['Attached GPUs'][k]['FB Memory Usage']['Free'].split()[0])
         if banned_gpu == gpu:
             current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
