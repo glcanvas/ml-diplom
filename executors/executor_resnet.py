@@ -1,7 +1,7 @@
 from utils import property as P
 import sys
 import torchvision.models as m
-from strategies import classifier_train as cl
+from strategies import vgg16_baseline_strategy as cl
 import torch.nn as nn
 
 from executors.abastract_executor import AbstractExecutor

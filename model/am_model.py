@@ -24,8 +24,8 @@ def build_attention_module_model(classes: int, pretrained=True):
     sam_branch = nn.Sequential(
         *m.vgg16(pretrained=pretrained).features[2:15],
         nn.Conv2d(256, classes, kernel_size=(3, 3), padding=(1, 1))
-        #,
-        #nn.Sigmoid()
+        # ,
+        # nn.Sigmoid()
     )
     model = m.vgg16(pretrained=True)
     basis_branch = model.features[:4]
@@ -83,32 +83,18 @@ class AttentionModuleModel(nn.Module):
         self.classifier = classification_pool
 
     def forward(self, input_images: torch.Tensor, segments=None) -> tuple:
-        #
-        # Попробую схитрить: буду умножать не на то что получилось, а на настоящую сегментационную карту
-        #
         basis_out = self.basis(input_images)
         classifier_out = self.classifier_branch(basis_out)
         sam_out = self.sam_branch(basis_out)
         # замечание -- sam_out -- небольшого размера...
         point_wise_out = None
-        if segments is None:
-            for c in range(0, sam_out.size(1)):
-                sub_sam_out = sam_out[:, c:c + 1, :, :]
-                if point_wise_out is None:
-                    point_wise_out = classifier_out + sub_sam_out
-                else:
-                    point_wise_out = torch.cat((point_wise_out, classifier_out + sub_sam_out), dim=1)
-        else:
-            for c in range(0, segments.size(1)):
-                sub_sam_out = segments[:, c:c + 1, :, :]
-                if point_wise_out is None:
-                    point_wise_out = classifier_out + sub_sam_out
-                else:
-                    point_wise_out = torch.cat((point_wise_out, classifier_out + sub_sam_out), dim=1)
-        # if sam_out.shape != classifier_out.shape:
-        #    raise Exception("sam output: {} must be equal with classifier output: {}".format(sam_out.shape,
-        #                                                                                     classifier_out.shape))
-        # point_wise_out = classifier_out * sam_out
+
+        for c in range(0, sam_out.size(1)):
+            sub_sam_out = sam_out[:, c:c + 1, :, :]
+            if point_wise_out is None:
+                point_wise_out = classifier_out + sub_sam_out
+            else:
+                point_wise_out = torch.cat((point_wise_out, classifier_out + sub_sam_out), dim=1)
 
         merged_out = self.merged_branch(point_wise_out)
         avg_out = self.avg_pool(merged_out)

@@ -86,7 +86,7 @@ class Classifier(at.AbstractTrain):
                 labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
                                                                 segments)
                 images, labels, segments = self.convert_data_and_label(images, labels, segments)
-                segments = self.PULLER(segments)
+                segments = self.puller(segments)
 
                 # calculate and optimize model
                 optimizer.zero_grad()
@@ -95,6 +95,7 @@ class Classifier(at.AbstractTrain):
                 sigmoid = nn.Sigmoid()  # used for calculate accuracy
                 model_classification = sigmoid(model_classification)
 
+                # все дело в инцептион может быть
                 classification_loss = self.l_loss(model_classification, labels)
                 torch.cuda.empty_cache()
                 classification_loss.backward()

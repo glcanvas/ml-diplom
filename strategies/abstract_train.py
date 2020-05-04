@@ -16,7 +16,6 @@ class AbstractTrain:
     """
     Common class for all trains which has attention module
     """
-    PULLER = nn.Sequential(nn.MaxPool2d(kernel_size=2, stride=2), nn.MaxPool2d(kernel_size=2, stride=2))
 
     def __init__(self, classes: int = None,
                  pre_train_epochs: int = 100,
@@ -33,7 +32,8 @@ class AbstractTrain:
                  classifier_learning_rate: float = None,
                  attention_module_learning_rate: float = None,
                  weight_decay: float = 0,
-                 current_epoch: int = 1):
+                 current_epoch: int = 1,
+                 puller=nn.Sequential(nn.MaxPool2d(kernel_size=2, stride=2), nn.MaxPool2d(kernel_size=2, stride=2))):
         self.classifier_learning_rate = classifier_learning_rate
         self.attention_module_learning_rate = attention_module_learning_rate
 
@@ -59,6 +59,7 @@ class AbstractTrain:
 
         self.current_epoch = current_epoch
 
+        self.puller = puller
         self.train_model_answers = [[] for _ in range(self.classes)]
         self.train_trust_answers = [[] for _ in range(self.classes)]
         self.train_probabilities = [[] for _ in range(self.classes)]
@@ -76,7 +77,7 @@ class AbstractTrain:
             labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
                                                             segments)
             images, labels, segments = self.convert_data_and_label(images, labels, segments)
-            segments = self.PULLER(segments)
+            segments = self.puller(segments)
             model_classification, model_segmentation = utils.wait_while_can_execute(model, images)
 
             classification_loss = l_loss(model_classification, labels)
@@ -122,7 +123,7 @@ class AbstractTrain:
             labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
                                                             segments)
             images, labels, segments = self.convert_data_and_label(images, labels, segments)
-            segments = self.PULLER(segments)
+            segments = self.puller(segments)
 
             # calculate and optimize model
             optimizer.zero_grad()
@@ -161,7 +162,7 @@ class AbstractTrain:
             labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
                                                             segments)
             images, labels, segments = self.convert_data_and_label(images, labels, segments)
-            segments = self.PULLER(segments)
+            segments = self.puller(segments)
             optimizer.zero_grad()
             model_classification, model_segmentation = utils.wait_while_can_execute(model, images)
 
@@ -267,7 +268,7 @@ class AbstractTrain:
             segments = segments[:, self.left_class_number:self.right_class_number, :, :]
 
             images, labels, segments = self.convert_data_and_label(images, labels, segments)
-            segments = self.PULLER(segments)
+            segments = self.puller(segments)
             _, model_segmentation = utils.wait_while_can_execute(model, images)
 
             cnt += segments.size(0)
@@ -320,31 +321,3 @@ class AbstractTrain:
         print("=" * 50)
         plt.savefig(os.path.join(self.snapshot_dir, snapshot_name))
         plt.close(fig)
-
-
-"""
-ginec@laplas:~/ml2/ml-diplom/runners_alternate_one_loss$ 
-nduginec@laplas:~/ml2/ml-diplom/runners_alternate_one_loss$ EXCEPTION CUDA out of memory. Tried to allocate 392.00 MiB (GPU 0; 10.92 GiB total capacity; 3.24 GiB already allocated; 216.69 MiB free; 3.33 GiB reserved in total by PyTorch)
-<class 'RuntimeError'>
-EXCEPTION
-CUDA out of memory. Tried to allocate 392.00 MiB (GPU 0; 10.92 GiB total capacity; 3.24 GiB already allocated; 216.69 MiB free; 3.33 GiB reserved in total by PyTorch)
-<class 'RuntimeError'>
-  File "/home/nduginec/ml2/ml-diplom/executor_simultaneous.py", line 75, in <module>
-    traceback.print_stack()
-Traceback (most recent call last):
-  File "/home/nduginec/ml2/ml-diplom/executor_simultaneous.py", line 77, in <module>
-    raise e
-  File "/home/nduginec/ml2/ml-diplom/executor_simultaneous.py", line 69, in <module>
-    sam_train.train()
-  File "/home/nduginec/ml2/ml-diplom/alternate_attention_module_train.py", line 75, in train
-    self.train_segments_set)
-  File "/home/nduginec/ml2/ml-diplom/abstract_train.py", line 119, in train_classifier
-    classification_loss.backward()
-  File "/home/nduginec/nduginetc_env3/lib/python3.5/site-packages/torch/tensor.py", line 195, in backward
-    torch.autograd.backward(self, gradient, retain_graph, create_graph)
-  File "/home/nduginec/nduginetc_env3/lib/python3.5/site-packages/torch/autograd/__init__.py", line 99, in backward
-    allow_unreachable=True)  # allow_unreachable flag
-RuntimeError: CUDA out of memory. Tried to allocate 392.00 MiB (GPU 0; 10.92 GiB total capacity; 3.24 GiB already allocated; 216.69 MiB free; 3.33 GiB reserved in total by PyTorch)
-/home/nduginec/nduginetc_env3/lib/python3.5/site-packages/torchvision/transforms/transforms.py:220: UserWarning: The use of the transforms.Scale transform is deprecated, please use transforms.Resize instead.
-  "please use transforms.Resize
-"""

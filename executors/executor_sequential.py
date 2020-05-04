@@ -1,4 +1,4 @@
-from strategies import first_attention_module_train as amt
+from strategies import sequential_train as amt
 from utils import property as P
 import sys
 from model import am_model as ss

@@ -1,11 +1,11 @@
 from utils import property as P
 import sys
 import torchvision.models as m
-from strategies import classifier_train as cl
+from strategies import vgg16_baseline_strategy as cl
 import torch.nn as nn
 from executors.abastract_executor import AbstractExecutor
 from model import googlenet
-
+from model import inceptionv3
 
 class InceptionBaselineExecutor(AbstractExecutor):
     def __init__(self, parsed):
@@ -13,7 +13,7 @@ class InceptionBaselineExecutor(AbstractExecutor):
 
     def create_model(self):
         if self.inceptionv_type == "inceptionv3":
-            self.model = m.inception_v3(pretrained=True)
+            self.model = inceptionv3.inception_v3(pretrained=True)
         elif self.inceptionv_type == "inceptionv1":
             self.model = googlenet.inceptionv1(pretrained=True)
         else:

@@ -1,7 +1,7 @@
 from utils import property as P
 import sys
 from model import am_model as ss
-from strategies import alternate_attention_module_train as st
+from strategies import simultaneous_train as st
 from executors.abastract_executor import AbstractExecutor
 
 

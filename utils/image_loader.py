@@ -134,7 +134,8 @@ class DatasetLoader:
                 for item in P.labels_attributes:
                     torch_dict[item] = torch.load(dct[item])
                     if image_size != 224:
-                        torch_dict[item] = F.upsample(torch_dict[item], (1, image_size, image_size))
+                        torch_dict[item] = F.upsample(torch.tensor([torch_dict[item].tolist()]),
+                                                      (image_size, image_size))[0]
 
                 if use_norm:
                     torch_dict[P.input_attribute] = normalization(torch.load(dct[P.input_attribute]))
@@ -142,7 +143,8 @@ class DatasetLoader:
                     torch_dict[P.input_attribute] = torch.load(dct[P.input_attribute])
 
                 if image_size != 224:
-                    torch_dict[P.input_attribute] = F.upsample(torch_dict[P.input_attribute], (3, image_size, image_size))
+                    torch_dict[P.input_attribute] = F.upsample(torch.tensor([torch_dict[P.input_attribute].tolist()]),
+                                                               (image_size, image_size))[0]
                 # normalization(torch.load(dct[P.input_attribute]))
                 result.append(torch_dict)
                 # print("left:{}, current:{}, right:{} processed".format(lower_bound, idx, upper_bound))
@@ -213,7 +215,7 @@ def count_size(x):
 
 def load_data(train_size: int, seed: int, image_size: int):
     loader = DatasetLoader.initial()
-    all_data = prepare_data(loader.load_tensors(0, train_size * 2, image_size))
+    all_data = prepare_data(loader.load_tensors(0, train_size * 2, 10 ** 20, image_size))
     # all_data = prepare_data(loader.load_tensors(None, None))
     log = "set size: {}, set by classes: {}".format(len(all_data), count_size(all_data))
     P.write_to_log(log)

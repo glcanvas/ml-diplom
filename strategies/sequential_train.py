@@ -6,7 +6,7 @@ from strategies import abstract_train as at
 import utils
 
 """
-по сути тоже что и alternate_attention_module_train.py, но здесь я сначала предобучаю только AM потом уже все остальное
+по сути тоже что и simultaneous_train.py, но здесь я сначала предобучаю только AM потом уже все остальное
 """
 
 
