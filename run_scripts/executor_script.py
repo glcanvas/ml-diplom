@@ -2,7 +2,7 @@ from multiprocessing import Value
 from datetime import datetime
 import os
 import random
-from run_scripts import executor_nvsmi as nsmi
+from . import executor_nvsmi as nsmi
 from utils import property as p
 import time
 from threading import Thread
