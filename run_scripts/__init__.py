@@ -1,6 +1,7 @@
 import sys
+
 print(sys.path)
-sys.path.append(0, "/home/nduginec/ml3/ml-diplom")
+sys.path.insert(0, "/home/nduginec/ml3/ml-diplom")
 
 from .executor_nvsmi import *
 from .initial_strategies import *
