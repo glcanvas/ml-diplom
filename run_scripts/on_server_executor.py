@@ -80,7 +80,7 @@ def start_strategy(executor_name: str, memory_usage: int, gpu: int, algorithms_p
             copy_alg_params = {}
             for k, v in algorithms_params.items():
                 copy_alg_params[k] = v
-            copy_alg_params['execute_from_model'] = 'True'
+            copy_alg_params['--execute_from_model'] = 'True'
             strategy_queue.appendleft((executor_name, memory_usage, copy_alg_params))
 
         alive_process -= 1
