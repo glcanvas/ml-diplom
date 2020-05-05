@@ -18,7 +18,7 @@ def initial_strategy_queue_resnet():
         'name': 'executor_resnet.py',
         'algorithm_name': 'RESNET_BASELINE',
         'pre_train': 200,
-        'memory_usage': 4000,
+        'memory_usage': 2000,
         'train_set': TRAIN_SIZE,
         'epochs': EPOCHS_COUNT
     }
