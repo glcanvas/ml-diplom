@@ -128,9 +128,10 @@ class AbstractExecutor:
             model_state_dict, current_epoch = P.load_latest_model(self.model_identifier, self.run_name,
                                                                   self.algorithm_name)
             if model_state_dict is None:
-                raise Exception(
-                    "not found model for current epoch: model_identifier: {}, run_name: {}, algorithm_name: {}"
-                        .format(self.model_identifier, self.run_name, self.algorithm_name))
+                exit(0)
+                #raise Exception(
+                #    "not found model for current epoch: model_identifier: {}, run_name: {}, algorithm_name: {}"
+                #        .format(self.model_identifier, self.run_name, self.algorithm_name))
             return current_epoch
         return 1
 
@@ -139,8 +140,9 @@ class AbstractExecutor:
             model_state_dict, current_epoch = P.load_latest_model(self.model_identifier, self.run_name,
                                                                   self.algorithm_name)
             if model_state_dict is None:
-                raise Exception(
-                    "not found model for current epoch: model_identifier: {}, run_name: {}, algorithm_name: {}"
-                        .format(self.model_identifier, self.run_name, self.algorithm_name))
+                exit(0)
+                #raise Exception(
+                #    "not found model for current epoch: model_identifier: {}, run_name: {}, algorithm_name: {}"
+                #        .format(self.model_identifier, self.run_name, self.algorithm_name))
             return model_state_dict
         return None

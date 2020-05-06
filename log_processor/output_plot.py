@@ -89,9 +89,14 @@ def draw_plot_return_avg(ax, title, algo_name, algorithm_list: list, execute_mea
     ax.set_title(title)
 
     use_legend = True
+    max_value = []
     for idx, algo in enumerate(algorithm_list):
         legend = algo_name
         datas = execute_measure_function(algo)
+
+        if len(datas) > 0:
+            max_value.append((max(datas), algo_name + "_" + str(idx), title.replace(" ", "_")))
+
         indexes = [i * mull_index for i, _ in enumerate(datas)]
         if use_legend:
             ax.plot(indexes, datas, label=legend, color=plot_color)
@@ -114,7 +119,7 @@ def draw_plot_return_avg(ax, title, algo_name, algorithm_list: list, execute_mea
             result.append(0)
         else:
             result.append(sm / cnt)
-    return result
+    return result, max_value
 
 
 def draw_plot_avg(ax, title: str, algo_name, algorithm_list: list, color: list, mull_index=1):
@@ -175,20 +180,21 @@ def draw_simple_metrics(axes, algorithms: dict):
         res = []
         for m_idx, m in enumerate(metrics):
             trains = algorithms[algo_name]['train']
-            loss_cl_avg = draw_plot_return_avg(axes[m_idx][0], m + ' Train', algo_name, trains,
-                                               get_simple_measure_by_name(m),
-                                               to_color_array(color_idx))
+            loss_cl_avg, _ = draw_plot_return_avg(axes[m_idx][0], m + ' Train', algo_name, trains,
+                                                  get_simple_measure_by_name(m),
+                                                  to_color_array(color_idx))
             # color = [0, 0, 0]
             # color[color_idx] = 1
             draw_plot_avg(axes[m_idx][1], m + ' AVG', algo_name, loss_cl_avg, to_color_array(color_idx))
 
             tests = algorithms[algo_name]['test']
-            loss_cl_avg = draw_plot_return_avg(axes[m_idx][2], m + ' Test', algo_name, tests,
-                                               get_simple_measure_by_name(m),
-                                               to_color_array(color_idx),
-                                               mull_index=4)
+            loss_cl_avg, x = draw_plot_return_avg(axes[m_idx][2], m + ' Test', algo_name, tests,
+                                                  get_simple_measure_by_name(m),
+                                                  to_color_array(color_idx),
+                                                  mull_index=4)
             # color = [0, 0, 0]
             # color[color_idx] = 1
+            res.extend(x)
             res.append(draw_plot_avg(axes[m_idx][3], m + ' AVG', algo_name, loss_cl_avg, to_color_array(color_idx),
                                      mull_index=4))
         for i, j, k in res:
@@ -229,21 +235,22 @@ def draw_hard_metrics(axes, algorithms: dict):
             for sub_metrics_idx, sub_metrics in enumerate(metrics[m]):
                 m_idx_1 = m_idx + sub_metrics_idx
                 trains = algorithms[algo_name]['train']
-                loss_cl_avg = draw_plot_return_avg(axes[m_idx_1 + 5][0], sub_metrics + ' Train', algo_name, trains,
-                                                   get_hard_measure_by_name(m, sub_metrics),
-                                                   to_color_array(color_idx))
+                loss_cl_avg, _ = draw_plot_return_avg(axes[m_idx_1 + 5][0], sub_metrics + ' Train', algo_name, trains,
+                                                      get_hard_measure_by_name(m, sub_metrics),
+                                                      to_color_array(color_idx))
                 # color = [0, 0, 0]
                 # color[color_idx] = 1
                 draw_plot_avg(axes[m_idx_1 + 5][1], sub_metrics + ' AVG', algo_name, loss_cl_avg,
                               to_color_array(color_idx))
 
                 tests = algorithms[algo_name]['test']
-                loss_cl_avg = draw_plot_return_avg(axes[m_idx_1 + 5][2], sub_metrics + ' Test', algo_name, tests,
-                                                   get_hard_measure_by_name(m, sub_metrics),
-                                                   to_color_array(color_idx),
-                                                   mull_index=4)
+                loss_cl_avg, x = draw_plot_return_avg(axes[m_idx_1 + 5][2], sub_metrics + ' Test', algo_name, tests,
+                                                      get_hard_measure_by_name(m, sub_metrics),
+                                                      to_color_array(color_idx),
+                                                      mull_index=4)
                 # color = [0, 0, 0]
                 # color[color_idx] = 1
+                res.extend(x)
                 res.append(draw_plot_avg(axes[m_idx_1 + 5][3], sub_metrics + ' AVG', algo_name, loss_cl_avg,
                                          to_color_array(color_idx), mull_index=4))
         for i, j, k in res:
@@ -316,15 +323,15 @@ def reduce_stat(algorithms: dict, run_number: str):
 
 if __name__ == "__main__":
     runs = [
-        #"RUN_500_no_pretrian",
+        # "RUN_500_no_pretrian",
         #"RUN_500_pretained_default",
         #"RUN_500_pretrain_sum",
-        #"RUN_501_no_pretrian",
+        # "RUN_501_no_pretrian",
         #"RUN_501_pretained_default",
-        #"RUN_501_pretrain_sum",
-        #"RUN_502_pretained_default",
-        #"RUN_503_pretained_default"
-        "vgg_vs_resnet50"
+         "RUN_501_pretrain_sum",
+        # "RUN_502_pretained_default",
+        # "RUN_503_pretained_default"
+        # "vgg_vs_resnet50"
     ]
     for i in runs:
         a, r_n = parse_run(i)
