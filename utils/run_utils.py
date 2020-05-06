@@ -9,7 +9,7 @@ from datetime import datetime
 def found_gpu(smi, max_algorithm_memory: int, banned_gpu: int, max_thread_on_gpu: int) -> int:
     print("list of gpu:", end=" ")
     for idx, gpu in enumerate(smi['Attached GPUs']):
-        print(str(idx) + " " + smi['Attached GPUs'][gpu]['Minor Number'], end="|")
+        print(str(idx) + " " + str(smi['Attached GPUs'][gpu]['Minor Number']), end="|")
     print()
     for idx, k in enumerate(smi['Attached GPUs']):
         gpu = int(smi['Attached GPUs'][k]['Minor Number'])
