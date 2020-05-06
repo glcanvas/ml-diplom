@@ -38,7 +38,7 @@ def found_gpu(smi, max_algorithm_memory: int, banned_gpu: int, max_thread_on_gpu
                                                                                                 max_algorithm_memory))
             continue
         current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
-        p.write_to_log("time = {} found gpu = {}".format(current_time, gpu))
+        p.write_to_log("time = {} found gpu = {}".format(current_time, MAPPER[gpu]))
         return MAPPER[gpu]
     current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
     p.write_to_log("time = {} not found gpu".format(current_time))
