@@ -20,20 +20,20 @@ def found_gpu(smi, max_algorithm_memory: int, banned_gpu: int, max_thread_on_gpu
             continue
         if smi['Attached GPUs'][k]['Processes'] is not None and len(
                 smi['Attached GPUs'][k]['Processes']) >= max_thread_on_gpu:
-            # current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
-            # p.write_to_log("time = {}, gpu = {} has processes = {} but max processes = {}".format(current_time, gpu,
-            #                                                                                      len(smi[
-            #                                                                                              'Attached GPUs']
-            #                                                                                          [k]['Processes']),
-            #                                                                                      max_thread_on_gpu))
+            current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
+            p.write_to_log("time = {}, gpu = {} has processes = {} but max processes = {}".format(current_time, gpu,
+                                                                                                  len(smi[
+                                                                                                          'Attached GPUs']
+                                                                                                      [k]['Processes']),
+                                                                                                  max_thread_on_gpu))
             continue
 
         if free_memory < max_algorithm_memory:
-            # current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
-            # p.write_to_log("time = {}, gpu = {} has free memory = {}, but required = {}".format(current_time,
-            #                                                                                    gpu,
-            #                                                                                    free_memory,
-            #                                                                                    max_algorithm_memory))
+            current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
+            p.write_to_log("time = {}, gpu = {} has free memory = {}, but required = {}".format(current_time,
+                                                                                                gpu,
+                                                                                                free_memory,
+                                                                                                max_algorithm_memory))
             continue
         current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
         p.write_to_log("time = {} found gpu = {}".format(current_time, gpu))
