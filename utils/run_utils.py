@@ -5,6 +5,7 @@ return index of free gpu number
 from utils import property as p
 from datetime import datetime
 
+MAPPER = {1:2, 2:1, 3:0}
 
 def found_gpu(smi, max_algorithm_memory: int, banned_gpu: int, max_thread_on_gpu: int) -> int:
     p.write_to_log("list of gpu:")
@@ -38,7 +39,7 @@ def found_gpu(smi, max_algorithm_memory: int, banned_gpu: int, max_thread_on_gpu
             continue
         current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
         p.write_to_log("time = {} found gpu = {}".format(current_time, gpu))
-        return gpu
+        return MAPPER[gpu]
     current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
     p.write_to_log("time = {} not found gpu".format(current_time))
     return -1
