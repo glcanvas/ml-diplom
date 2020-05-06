@@ -145,7 +145,7 @@ if __name__ == "__main__":
     if "inception" in args:
         q.extend(reversed(init_strat.initial_strategy_queue_inception()))
     if "resnet" in args:
-        q.extend(init_strat.initial_strategy_queue_resnet())
+        q.extend(reversed(init_strat.initial_strategy_queue_resnet()))
     if len(q) == 0:
         print("nothing register")
 
