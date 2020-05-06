@@ -22,6 +22,12 @@ from threading import Lock, Thread
 
 # constants
 PYTHON_EXECUTOR_NAME = "/home/nduginec/nduginec_evn3/bin/python"  # "C:\\Users\\nikita\\anaconda3\\python.exe"
+if os.path.exists("/home/nduginec/nduginec_evn3/bin/python"):
+    PYTHON_EXECUTOR_NAME = "/home/nduginec/nduginec_evn3/bin/python"
+elif os.path.exists("/home/nduginec/nduginetc_env3/bin/python"):
+    PYTHON_EXECUTOR_NAME = "/home/nduginec/nduginetc_env3/bin/python"
+else:
+    raise Exception("Not known computer")
 SLEEP_SECONDS = 120
 DIPLOMA_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 PROPERTY_FILE = os.path.join(DIPLOMA_DIR, "executor_property.properties")
@@ -137,7 +143,7 @@ if __name__ == "__main__":
     args = sys.argv[1:]
     q = []
     if "inception" in args:
-        q.extend(init_strat.initial_strategy_queue_inception())
+        q.extend(reversed(init_strat.initial_strategy_queue_inception()))
     if "resnet" in args:
         q.extend(init_strat.initial_strategy_queue_resnet())
     if len(q) == 0:

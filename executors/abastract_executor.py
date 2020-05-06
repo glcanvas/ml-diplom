@@ -118,9 +118,9 @@ class AbstractExecutor:
     def load_dataset(self):
         segments_set, test_set = il.load_data(self.train_set_size, self.model_identifier, self.image_size)
 
-        self.train_segments_set = DataLoader(il.ImageDataset(segments_set), batch_size=3, shuffle=True)
+        self.train_segments_set = DataLoader(il.ImageDataset(segments_set), batch_size=4, shuffle=True)
         print("ok")
-        self.test_set = DataLoader(il.ImageDataset(test_set), batch_size=3)
+        self.test_set = DataLoader(il.ImageDataset(test_set), batch_size=4)
         print("ok")
 
     def get_current_epoch(self) -> int:
