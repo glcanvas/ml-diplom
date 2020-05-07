@@ -19,7 +19,7 @@ ALGORITHM_DATA = {
     'epochs': EPOCHS_COUNT
 }
 TRUST_RESNET_TYPES = ["resnet34", "resnet50", "resnet101", "resnet152"]
-MEMORY_USAGE = [1600, 1600, 2400, 3000]
+MEMORY_USAGE = [2000, 2000, 3000, 3000]
 TRUST_LR = [1e-3, 1e-4, 1e-5]
 
 
