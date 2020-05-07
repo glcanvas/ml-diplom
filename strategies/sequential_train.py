@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 import copy
+from utils import metrics_processor
 from utils import property as p, gradient_registers as gr
 from strategies import abstract_train as at
-import utils
 
 """
 по сути тоже что и simultaneous_train.py, но здесь я сначала предобучаю только AM потом уже все остальное
@@ -99,7 +99,7 @@ class AttentionModule(at.AbstractTrain):
             loss_total = loss_classification_sum_classifier + loss_m_sum
 
             prefix = "PRETRAIN" if self.current_epoch <= self.pre_train_epochs else "TRAIN"
-            f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
+            f_1_score_text, recall_score_text, precision_score_text = metrics_processor.calculate_metric(self.classes,
                                                                                              self.train_trust_answers,
                                                                                              self.train_model_answers)
 
