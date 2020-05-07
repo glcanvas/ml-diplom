@@ -24,3 +24,7 @@ precision_2
 precision_3
 precision_4
 precision_global
+
+
+
+python on_server_executor.py '0;vgg16+100-50;False;softf1' '0;vgg16+AM;False;softf1' '0;vgg16+1-1;False;softf1' 

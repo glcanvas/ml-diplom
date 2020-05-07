@@ -114,9 +114,9 @@ def infinity_server(q: list):
                 continue
             strategy_name, strategy_memory, strategy_arguments = strategy_queue.popleft()
 
-            #gpu = ru.found_gpu(nsmi.NVLog(), int(strategy_memory), actual_property_context.banned_gpu,
-            #                   actual_property_context.max_thread_on_gpu)
-            gpu = 0
+            gpu = ru.found_gpu(nsmi.NVLog(), int(strategy_memory), actual_property_context.banned_gpu,
+                               actual_property_context.max_thread_on_gpu)
+
             if gpu == -1:
                 strategy_queue.appendleft((strategy_name, strategy_memory, strategy_arguments))
                 continue
@@ -134,7 +134,7 @@ def infinity_server(q: list):
             p.write_to_log("-" * 20)
         finally:
             strategy_lock.release()
-            time.sleep(SLEEP_SECONDS)
+            # time.sleep(SLEEP_SECONDS)
 
 
 if __name__ == "__main__":
