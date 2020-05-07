@@ -134,7 +134,7 @@ def infinity_server(q: list):
             p.write_to_log("-" * 20)
         finally:
             strategy_lock.release()
-            # time.sleep(SLEEP_SECONDS)
+            time.sleep(SLEEP_SECONDS)
 
 
 if __name__ == "__main__":
