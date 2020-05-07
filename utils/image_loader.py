@@ -19,7 +19,6 @@ normalization = transforms.Compose([
 ])
 
 
-
 class DatasetLoader:
     """
     Load ISIC files as images and cache them, or load from cache files
@@ -110,7 +109,7 @@ class DatasetLoader:
 
     def load_tensors(self, lower_bound: int, upper_bound: int, load_first_segments: int = 10 ** 20,
                      image_size: int = 224,
-                     use_norm: bool = False):
+                     use_norm: bool = False, load_extend: bool = False):
         if self.data is None:
             self.data = self.__merge_data(self.cache_input_path, self.cache_target_path)
         data_len = len(self.data)
@@ -118,37 +117,39 @@ class DatasetLoader:
         lower_bound = 0 if lower_bound is None else lower_bound
         upper_bound = data_len if upper_bound is None else upper_bound
         result = []
-
+        data = self.data[lower_bound:upper_bound]
         loads = 0
-        for idx, dct in enumerate(self.data):
-            if lower_bound <= idx < upper_bound:
-                torch_dict = dict()
-                torch_dict['id'] = dct['id']
-                # здесь как обсуждалось
-                # я помечу только первые N сегментов как существующие, остальные при загрузке
-                # я заменю  НА ПУСТЫЕ МАТРИЦЫ
-                torch_dict['is_segments'] = False
-                if loads < load_first_segments:
-                    torch_dict['is_segments'] = True
-                    loads += 1
-                for item in P.labels_attributes:
-                    torch_dict[item] = torch.load(dct[item])
-                    if image_size != 224:
-                        torch_dict[item] = F.upsample(torch.tensor([torch_dict[item].tolist()]),
-                                                      (image_size, image_size))[0]
 
-                if use_norm:
-                    torch_dict[P.input_attribute] = normalization(torch.load(dct[P.input_attribute]))
-                else:
-                    torch_dict[P.input_attribute] = torch.load(dct[P.input_attribute])
-
+        for idx, dct in enumerate(data):
+            torch_dict = dict()
+            torch_dict['id'] = dct['id']
+            # здесь как обсуждалось
+            # я помечу только первые N сегментов как существующие, остальные при загрузке
+            # я заменю  НА ПУСТЫЕ МАТРИЦЫ
+            torch_dict['is_segments'] = False
+            if loads < load_first_segments:
+                torch_dict['is_segments'] = True
+                loads += 1
+            for item in P.labels_attributes:
+                torch_dict[item] = torch.load(dct[item])
                 if image_size != 224:
-                    torch_dict[P.input_attribute] = F.upsample(torch.tensor([torch_dict[P.input_attribute].tolist()]),
-                                                               (image_size, image_size))[0]
-                # normalization(torch.load(dct[P.input_attribute]))
-                result.append(torch_dict)
-                # print("left:{}, current:{}, right:{} processed".format(lower_bound, idx, upper_bound))
-                # P.write_to_log("left:{}, current:{}, right:{} processed".format(lower_bound, idx, upper_bound))
+                    torch_dict[item] = F.upsample(torch.tensor([torch_dict[item].tolist()]),
+                                                  (image_size, image_size))[0]
+
+            if use_norm:
+                torch_dict[P.input_attribute] = normalization(torch.load(dct[P.input_attribute]))
+            else:
+                torch_dict[P.input_attribute] = torch.load(dct[P.input_attribute])
+
+            if image_size != 224:
+                torch_dict[P.input_attribute] = F.upsample(torch.tensor([torch_dict[P.input_attribute].tolist()]),
+                                                           (image_size, image_size))[0]
+            # normalization(torch.load(dct[P.input_attribute]))
+            result.append(torch_dict)
+            # print("left:{}, current:{}, right:{} processed".format(lower_bound, idx, upper_bound))
+            # P.write_to_log("left:{}, current:{}, right:{} processed".format(lower_bound, idx, upper_bound))
+        if load_extend:
+            return data, result
         return result
 
     @staticmethod

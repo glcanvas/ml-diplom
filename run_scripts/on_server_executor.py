@@ -7,16 +7,12 @@ import sys
 sys.path.insert(0, "/home/nduginec/ml3/ml-diplom")
 
 from collections import deque
-from multiprocessing import *
 from datetime import datetime
 import os
-import random
-from run_scripts import executor_nvsmi as nsmi
+from run_scripts import executor_nvsmi as nsmi, gpu_founder as ru
 from utils import property as p
 from utils import property_parser as pp
-from utils import run_utils as ru
 import time
-from run_scripts import initial_strategies as init_strat
 from run_scripts import initial_resnet_strategy as init_resnet
 
 from threading import Lock, Thread
@@ -137,8 +133,7 @@ def infinity_server(q: list):
             p.write_to_log("-" * 20)
         finally:
             strategy_lock.release()
-
-        time.sleep(SLEEP_SECONDS)
+            time.sleep(SLEEP_SECONDS)
 
 
 
