@@ -28,7 +28,8 @@ if os.path.exists("/home/nduginec/nduginec_evn3/bin/python"):
 elif os.path.exists("/home/nduginec/nduginetc_env3/bin/python"):
     PYTHON_EXECUTOR_NAME = "/home/nduginec/nduginetc_env3/bin/python"
 else:
-    raise Exception("Not known computer")
+    pass
+    #raise Exception("Not known computer")
 SLEEP_SECONDS = 120
 DIPLOMA_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 PROPERTY_FILE = os.path.join(DIPLOMA_DIR, "executor_property.properties")

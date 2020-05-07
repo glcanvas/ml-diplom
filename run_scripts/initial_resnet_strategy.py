@@ -75,6 +75,12 @@ def parse_resnet_args(args):
             if values[2] == "true" or values[2] == "false":
                 commands.extend(initial_strategy_queue_resnet(int(values[0]), values[1], values[2]))
         except BaseException as e:
-            continue
+            print(e)
 
     return commands
+
+
+if __name__ == "__main__":
+    r = parse_resnet_args("1;resnet101;True 0;resnet152;True 1;resnet152;False ".split())
+    for i in r:
+        print(i)
