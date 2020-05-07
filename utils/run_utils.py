@@ -22,6 +22,7 @@ def found_gpu(smi, max_algorithm_memory: int, banned_gpu: int, max_thread_on_gpu
          smi['Attached GPUs'][gpu]['FB Memory Usage']['Free'].split()[0] + "| " for idx, gpu in
          enumerate(smi['Attached GPUs'])])
     p.write_to_log("Mapper=", MAPPER)
+    p.write_to_log("need memory", max_algorithm_memory)
     for idx, k in enumerate(smi['Attached GPUs']):
         gpu = int(smi['Attached GPUs'][k]['Minor Number'])
         free_memory = int(smi['Attached GPUs'][k]['FB Memory Usage']['Free'].split()[0])
