@@ -29,7 +29,7 @@ def initial_strategy_queue_resnet(clr_idx: int = 0, resnet_type: str = None,
     run_id = RUN_NAME_RANGE_FROM + clr_idx
     for left_border, right_border in CLASS_BORDER:
         for attention_learning_rate in ATTENTION_MODULE_LEARNING_RATES:
-            memory = TRUST_RESNET_TYPES.index(resnet_type)
+            memory_index = TRUST_RESNET_TYPES.index(resnet_type)
             for seed_id in SEED_LIST:
                 run_name = "RUN_{}_LEFT-{}_RIGHT-{}_TRAIN_SIZE-{}_CLR-{}_AMLR-{}" \
                     .format(run_id, left_border, right_border, TRAIN_SIZE, TRUST_LR[clr_idx],
@@ -48,7 +48,7 @@ def initial_strategy_queue_resnet(clr_idx: int = 0, resnet_type: str = None,
                     '--model_identifier': seed_id,
                     '--execute_from_model': execute_from_model
                 }
-                result.append((ALGORITHM_DATA['name'], memory, arguments))
+                result.append((ALGORITHM_DATA['name'], MEMORY_USAGE[memory_index], arguments))
     return result
 
 
