@@ -226,4 +226,4 @@ class NVLog(dict):
 if __name__ == '__main__':
     log = NVLog()
     for k in log['Attached GPUs']:
-        print(log['Attached GPUs'][k]['FB Memory Usage']['Free'].split()[0])
+        print(k, log['Attached GPUs'][k]['FB Memory Usage']['Free'].split()[0])
