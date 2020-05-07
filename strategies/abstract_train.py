@@ -6,7 +6,8 @@ import torch
 import torch.nn as nn
 from datetime import datetime
 import os
-from utils import utils
+from utils import metrics_processor
+from utils import model_utils
 import matplotlib.pyplot as plt
 import numpy as np
 from utils import property as p
@@ -74,11 +75,12 @@ class AbstractTrain:
         accuracy_classification_sum = 0
         batch_count = 0
         for images, segments, labels in test_set:
-            labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
-                                                            segments)
+            labels, segments = model_utils.reduce_to_class_number(self.left_class_number, self.right_class_number,
+                                                                  labels,
+                                                                  segments)
             images, labels, segments = self.convert_data_and_label(images, labels, segments)
             segments = self.puller(segments)
-            model_classification, model_segmentation = utils.wait_while_can_execute(model, images)
+            model_classification, model_segmentation = model_utils.wait_while_can_execute(model, images)
 
             classification_loss = l_loss(model_classification, labels)
             segmentation_loss = m_loss(model_segmentation, segments)
@@ -89,16 +91,16 @@ class AbstractTrain:
             self.save_test_data(labels, output_cl, output_probability)
 
             # accumulate information
-            accuracy_classification_sum += utils.scalar(cl_acc.sum())
-            loss_classification_sum += utils.scalar(classification_loss.sum())
-            loss_segmentation_sum += utils.scalar(segmentation_loss.sum())
+            accuracy_classification_sum += model_utils.scalar(cl_acc.sum())
+            loss_classification_sum += model_utils.scalar(classification_loss.sum())
+            loss_segmentation_sum += model_utils.scalar(segmentation_loss.sum())
             batch_count += 1
             self.de_convert_data_and_label(images, labels)
             torch.cuda.empty_cache()
 
-        f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
-                                                                                         self.test_trust_answers,
-                                                                                         self.test_model_answers)
+        f_1_score_text, recall_score_text, precision_score_text = metrics_processor.calculate_metric(self.classes,
+                                                                                                     self.test_trust_answers,
+                                                                                                     self.test_model_answers)
 
         loss_classification_sum /= batch_count + p.EPS
         accuracy_classification_sum /= batch_count + p.EPS
@@ -120,15 +122,16 @@ class AbstractTrain:
         batch_count = 0
 
         for images, segments, labels in train_set:
-            labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
-                                                            segments)
+            labels, segments = model_utils.reduce_to_class_number(self.left_class_number, self.right_class_number,
+                                                                  labels,
+                                                                  segments)
             images, labels, segments = self.convert_data_and_label(images, labels, segments)
             segments = self.puller(segments)
 
             # calculate and optimize model
             optimizer.zero_grad()
 
-            model_classification, model_segmentation = utils.wait_while_can_execute(model, images)
+            model_classification, model_segmentation = model_utils.wait_while_can_execute(model, images)
             segmentation_loss = m_loss(model_segmentation, segments)
             classification_loss = l_loss(model_classification, labels)
             torch.cuda.empty_cache()
@@ -141,9 +144,9 @@ class AbstractTrain:
             self.save_train_data(labels, output_cl, output_probability)
 
             # accumulate information
-            accuracy_classification_sum += utils.scalar(cl_acc.sum())
-            loss_classification_sum += utils.scalar(classification_loss.sum())
-            loss_segmentation_sum += utils.scalar(segmentation_loss.sum())
+            accuracy_classification_sum += model_utils.scalar(cl_acc.sum())
+            loss_classification_sum += model_utils.scalar(classification_loss.sum())
+            loss_segmentation_sum += model_utils.scalar(segmentation_loss.sum())
             batch_count += 1
             self.de_convert_data_and_label(images, segments, labels)
             torch.cuda.empty_cache()
@@ -159,12 +162,13 @@ class AbstractTrain:
         batch_count = 0
 
         for images, segments, labels in train_set:
-            labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
-                                                            segments)
+            labels, segments = model_utils.reduce_to_class_number(self.left_class_number, self.right_class_number,
+                                                                  labels,
+                                                                  segments)
             images, labels, segments = self.convert_data_and_label(images, labels, segments)
             segments = self.puller(segments)
             optimizer.zero_grad()
-            model_classification, model_segmentation = utils.wait_while_can_execute(model, images)
+            model_classification, model_segmentation = model_utils.wait_while_can_execute(model, images)
 
             classification_loss = l_loss(model_classification, labels)
             segmentation_loss = m_loss(model_segmentation, segments)
@@ -178,10 +182,10 @@ class AbstractTrain:
             self.save_train_data(labels, output_cl, output_probability)
 
             # accumulate information
-            accuracy_classification_sum += utils.scalar(cl_acc.sum())
-            loss_m_sum += utils.scalar(segmentation_loss.sum())
+            accuracy_classification_sum += model_utils.scalar(cl_acc.sum())
+            loss_m_sum += model_utils.scalar(segmentation_loss.sum())
             loss_l1_sum += 0
-            loss_classification_sum += utils.scalar(classification_loss.sum())
+            loss_classification_sum += model_utils.scalar(classification_loss.sum())
             batch_count += 1
             self.de_convert_data_and_label(images, labels, segments)
             torch.cuda.empty_cache()
@@ -269,7 +273,7 @@ class AbstractTrain:
 
             images, labels, segments = self.convert_data_and_label(images, labels, segments)
             segments = self.puller(segments)
-            _, model_segmentation = utils.wait_while_can_execute(model, images)
+            _, model_segmentation = model_utils.wait_while_can_execute(model, images)
 
             cnt += segments.size(0)
             images, _, segments = self.de_convert_data_and_label(images, labels, segments)

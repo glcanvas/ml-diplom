@@ -17,6 +17,7 @@ from utils import property_parser as pp
 from utils import run_utils as ru
 import time
 from run_scripts import initial_strategies as init_strat
+from run_scripts import initial_resnet_strategy as init_resnet
 
 from threading import Lock, Thread
 
@@ -139,13 +140,11 @@ def infinity_server(q: list):
         time.sleep(SLEEP_SECONDS)
 
 
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     q = []
-    if "inception" in args:
-        q.extend(reversed(init_strat.initial_strategy_queue_inception()))
-    if "resnet" in args:
-        q.extend(reversed(init_strat.initial_strategy_queue_resnet()))
+    q.extend(init_resnet.parse_resnet_args(args))
     if len(q) == 0:
         print("nothing register")
 

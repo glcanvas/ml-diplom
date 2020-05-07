@@ -6,7 +6,8 @@ import torch
 from utils import property as p
 import torch.nn as nn
 import copy
-from utils import utils
+from utils import metrics_processor
+from utils import model_utils
 from strategies import abstract_train as at
 
 
@@ -83,15 +84,15 @@ class Classifier(at.AbstractTrain):
 
             self.model.train(mode=True)
             for images, segments, labels in self.train_segments_set:
-                labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
-                                                                segments)
+                labels, segments = model_utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
+                                                                            segments)
                 images, labels, segments = self.convert_data_and_label(images, labels, segments)
                 segments = self.puller(segments)
 
                 # calculate and optimize model
                 optimizer.zero_grad()
 
-                model_classification = utils.wait_while_can_execute_single(self.model, images)
+                model_classification = model_utils.wait_while_can_execute_single(self.model, images)
                 sigmoid = nn.Sigmoid()  # used for calculate accuracy
                 model_classification = sigmoid(model_classification)
 
@@ -107,8 +108,8 @@ class Classifier(at.AbstractTrain):
                 self.save_train_data(labels, output_cl, output_probability)
 
                 # accumulate information
-                accuracy_classification_sum += utils.scalar(cl_acc.sum())
-                loss_classification_sum += utils.scalar(classification_loss.sum())
+                accuracy_classification_sum += model_utils.scalar(cl_acc.sum())
+                loss_classification_sum += model_utils.scalar(classification_loss.sum())
                 batch_count += 1
                 self.de_convert_data_and_label(images, segments, labels)
                 torch.cuda.empty_cache()
@@ -117,9 +118,9 @@ class Classifier(at.AbstractTrain):
                 best_loss = loss_classification_sum
                 self.best_weights = copy.deepcopy(self.model.state_dict())
 
-            f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
-                                                                                             self.train_trust_answers,
-                                                                                             self.train_model_answers)
+            f_1_score_text, recall_score_text, precision_score_text = metrics_processor.calculate_metric(self.classes,
+                                                                                                         self.train_trust_answers,
+                                                                                                         self.train_model_answers)
             text = "TRAIN={} Loss_CL={:.10f} Accuracy_CL={:.5f} {} {} {} ".format(self.current_epoch,
                                                                                   loss_classification_sum / batch_count,
                                                                                   accuracy_classification_sum / batch_count,
@@ -149,10 +150,10 @@ class Classifier(at.AbstractTrain):
         batch_count = 0
         self.model.train(mode=False)
         for images, segments, labels in test_set:
-            labels, segments = utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
-                                                            segments)
+            labels, segments = model_utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
+                                                                        segments)
             images, labels, segments = self.convert_data_and_label(images, labels, segments)
-            model_classification = utils.wait_while_can_execute_single(model, images)
+            model_classification = model_utils.wait_while_can_execute_single(model, images)
 
             sigmoid = nn.Sigmoid()  # used for calculate accuracy
             model_classification = sigmoid(model_classification)
@@ -164,15 +165,15 @@ class Classifier(at.AbstractTrain):
             self.save_test_data(labels, output_cl, output_probability)
 
             # accumulate information
-            accuracy_classification_sum += utils.scalar(cl_acc.sum())
-            loss_classification_sum += utils.scalar(classification_loss.sum())
+            accuracy_classification_sum += model_utils.scalar(cl_acc.sum())
+            loss_classification_sum += model_utils.scalar(classification_loss.sum())
             batch_count += 1
             self.de_convert_data_and_label(images, labels)
             torch.cuda.empty_cache()
 
-        f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
-                                                                                         self.test_trust_answers,
-                                                                                         self.test_model_answers)
+        f_1_score_text, recall_score_text, precision_score_text = metrics_processor.calculate_metric(self.classes,
+                                                                                                     self.test_trust_answers,
+                                                                                                     self.test_model_answers)
 
         loss_classification_sum /= batch_count + p.EPS
         accuracy_classification_sum /= batch_count + p.EPS

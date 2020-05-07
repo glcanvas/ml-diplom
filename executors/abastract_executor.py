@@ -91,6 +91,9 @@ class AbstractExecutor:
             self.train_strategy()
             exit(0)
         except BaseException as e:
+            if isinstance(e, SystemExit) and e.args[0] == 0:
+                P.write_to_log("Exit with 0")
+                return
             print("EXCEPTION", e)
             print(type(e))
             P.write_to_log("EXCEPTION", e, type(e))
@@ -129,7 +132,7 @@ class AbstractExecutor:
                                                                   self.algorithm_name)
             if model_state_dict is None:
                 exit(0)
-                #raise Exception(
+                # raise Exception(
                 #    "not found model for current epoch: model_identifier: {}, run_name: {}, algorithm_name: {}"
                 #        .format(self.model_identifier, self.run_name, self.algorithm_name))
             return current_epoch
@@ -141,7 +144,7 @@ class AbstractExecutor:
                                                                   self.algorithm_name)
             if model_state_dict is None:
                 exit(0)
-                #raise Exception(
+                # raise Exception(
                 #    "not found model for current epoch: model_identifier: {}, run_name: {}, algorithm_name: {}"
                 #        .format(self.model_identifier, self.run_name, self.algorithm_name))
             return model_state_dict

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import copy
 from utils import property as P, gradient_registers as gr
-from utils import utils
+from utils import metrics_processor
 from strategies import abstract_train as at
 
 
@@ -105,9 +105,9 @@ class AlternateModuleTrain(at.AbstractTrain):
 
             loss_total = loss_classification_sum_classifier + loss_m_sum + loss_classification_sum_from_segm
             prefix = "PRETRAIN" if self.current_epoch <= self.pre_train_epochs else "TRAIN"
-            f_1_score_text, recall_score_text, precision_score_text = utils.calculate_metric(self.classes,
-                                                                                             self.train_trust_answers,
-                                                                                             self.train_model_answers)
+            f_1_score_text, recall_score_text, precision_score_text = metrics_processor.calculate_metric(self.classes,
+                                                                                                         self.train_trust_answers,
+                                                                                                         self.train_model_answers)
 
             text = "{}={} Loss_CL={:.5f} Loss_M={:.5f} Loss_L1={:.5f} Loss_Total={:.5f} Accuracy_CL={:.5f} " \
                    "{} {} {} ".format(prefix, self.current_epoch, classification_loss_total,

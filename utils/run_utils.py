@@ -4,8 +4,15 @@ return index of free gpu number
 
 from utils import property as p
 from datetime import datetime
+import os
 
-MAPPER = {1:2, 2:1, 3:0}
+if os.path.exists("/home/nduginec/nduginec_evn3/bin/python"):
+    MAPPER = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4}
+elif os.path.exists("/home/nduginec/nduginetc_env3/bin/python"):
+    MAPPER = {1: 2, 2: 1, 3: 0}
+else:
+    raise Exception("Not found gpu mapper")
+
 
 def found_gpu(smi, max_algorithm_memory: int, banned_gpu: int, max_thread_on_gpu: int) -> int:
     p.write_to_log("list of gpu:")

@@ -18,7 +18,7 @@ def initial_strategy_queue_resnet():
         'name': 'executor_resnet.py',
         'algorithm_name': 'RESNET_BASELINE',
         'pre_train': 200,
-        'memory_usage': 3000,
+        'memory_usage': 2000,
         'train_set': TRAIN_SIZE,
         'epochs': EPOCHS_COUNT
     }
@@ -51,7 +51,7 @@ def initial_strategy_queue_resnet():
                 run_id += 1
     return result
 
-
+"""
 def initial_strategy_queue_inception():
     RANDOM = random.Random(0)
     SEED_LIST = [RANDOM.randint(1, 500) for _ in range(3)]
@@ -156,3 +156,4 @@ def initial_strategy_queue_soft_loss_baseline():
                             result.append((algorithm_data['name'], algorithm_data['memory_usage'], arguments))
                     run_id += 1
     return result
+"""
