@@ -14,6 +14,7 @@ from utils import property as p
 from utils import property_parser as pp
 import time
 from run_scripts import initial_resnet_strategy as init_resnet
+from run_scripts import initial_vgg_strategy as init_vgg
 
 from threading import Lock, Thread
 
@@ -25,7 +26,7 @@ elif os.path.exists("/home/nduginec/nduginetc_env3/bin/python"):
     PYTHON_EXECUTOR_NAME = "/home/nduginec/nduginetc_env3/bin/python"
 else:
     pass
-    #raise Exception("Not known computer")
+    # raise Exception("Not known computer")
 SLEEP_SECONDS = 120
 DIPLOMA_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 PROPERTY_FILE = os.path.join(DIPLOMA_DIR, "executor_property.properties")
@@ -113,9 +114,9 @@ def infinity_server(q: list):
                 continue
             strategy_name, strategy_memory, strategy_arguments = strategy_queue.popleft()
 
-            gpu = ru.found_gpu(nsmi.NVLog(), int(strategy_memory), actual_property_context.banned_gpu,
-                               actual_property_context.max_thread_on_gpu)
-
+            #gpu = ru.found_gpu(nsmi.NVLog(), int(strategy_memory), actual_property_context.banned_gpu,
+            #                   actual_property_context.max_thread_on_gpu)
+            gpu = 0
             if gpu == -1:
                 strategy_queue.appendleft((strategy_name, strategy_memory, strategy_arguments))
                 continue
@@ -136,11 +137,11 @@ def infinity_server(q: list):
             time.sleep(SLEEP_SECONDS)
 
 
-
 if __name__ == "__main__":
     args = sys.argv[1:]
     q = []
     q.extend(init_resnet.parse_resnet_args(args))
+    q.extend(init_vgg.parse_vgg_args(args))
     if len(q) == 0:
         print("nothing register")
 

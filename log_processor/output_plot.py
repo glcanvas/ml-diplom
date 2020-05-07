@@ -328,10 +328,13 @@ if __name__ == "__main__":
         #"RUN_500_pretrain_sum",
         # "RUN_501_no_pretrian",
         #"RUN_501_pretained_default",
-         "RUN_501_pretrain_sum",
+        # "RUN_501_pretrain_sum",
         # "RUN_502_pretained_default",
         # "RUN_503_pretained_default"
         # "vgg_vs_resnet50"
+        #"RUN_1000",
+        #"RUN_1001",
+        #"RUN_1002",
     ]
     for i in runs:
         a, r_n = parse_run(i)

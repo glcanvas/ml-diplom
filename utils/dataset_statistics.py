@@ -1,78 +1,64 @@
 import torch
 import sys
 import cv2
+import albumentations as A
+import numpy as np
 
 sys.path.insert(0, "/home/nduginec/ml3/ml-diplom")
 
 import utils.image_loader as il
 import utils.property as p
 
-def count_statistics():
+repeat_list = """10000 20
+01000 15
+00100 6
+01100 15
+10010 20
+01010 15
+11010 20
+10110 20
+01110 15
+10001 20
+01001 15
+10101 20
+10011 20
+11011 20"""
+
+IMG_AUG = A.Compose([A.GaussNoise(), A.RandomRotate90(), A.Blur(), A.RandomResizedCrop(767, 1022)])
+
+
+def aug_dataset():
     loader = il.DatasetLoader.initial()
     image_paths, tensors = loader.load_tensors(None, None, load_extend=True)
     tensors = il.prepare_data(tensors)
+
+    indexes = list(map(lambda x: int(x, 2), repeat_list.split()[::2]))
+    values = repeat_list.split()[1::2]
 
     for i in image_paths:
         i['input'] = i['input'].replace("/cached", "").replace(".torch", ".jpg")
         for j in p.labels_attributes:
             i[j] = i[j].replace("/cached", "").replace(".torch", ".png")
 
-    for paths, (_, _, labels) in zip(image_paths, tensors):
-        pass
-    """
     pows = torch.zeros(5)
     for i in range(5):
-        pows[i] = 2 ** i
+        pows[i] = i ** 2
 
-    stat_dict = {}
-    for _, _, l in all_data:
-        idx = int((l * pows).sum().data)
-        stat_dict.setdefault(idx, 0)
-        stat_dict[idx] += 1
+    for paths, (_, _, label) in zip(image_paths, tensors):
+        idx = int((pows * label).sum().data)
+        if idx not in indexes:
+            continue
+        input = cv2.imread(paths['input'])
+        masks = []
+        for j in p.labels_attributes:
+            masks.append(cv2.imread(paths[j], cv2.IMREAD_GRAYSCALE))
+        masks = np.array(masks).reshape((767, 1022, 5))
+        print("ok")
+        #IMG_AUG
 
-    for i in sorted(stat_dict.keys()):
-        print("".join(reversed(format(i, 'b').zfill(5))), stat_dict[i])
-    """
 
-
-a = """00000 514
-10000 15
-01000 36
-00100 229
-01100 16
-00010 160
-10010 16
-01010 18
-11010 4
-00110 44
-10110 3
-01110 16
-00001 817
-10001 24
-01001 52
-00101 259
-10101 5
-01101 24
-00011 206
-10011 31
-01011 17
-11011 2
-00111 81
-01111 5"""
 if __name__ == "__main__":
-    #count_statistics()
-    indexes = a.split()[::2]
-    values = a.split()[1::2]
-    print(indexes)
-    print(values)
-
-    sum_list = [0 for _ in range(5)]
-    for i, j in zip(indexes, values):
-        for idx, k in enumerate(i):
-            if k == '1':
-                sum_list[idx] += int(j)
-
-    print(sum_list)
+    aug_dataset()
 
 """
 00000 514
