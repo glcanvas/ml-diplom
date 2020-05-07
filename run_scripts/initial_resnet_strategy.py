@@ -53,9 +53,9 @@ def initial_strategy_queue_resnet(clr_idx: int = 0, resnet_type: str = None,
 
 
 """
-1e-5;resnet101;True 1e-5;resnet34;False 1e-5;resnet50;False
+'2;resnet101;True' '2;resnet34;False' '2;resnet50;False'
 
-1e-4;resnet101;True 1e-3;resnet152;True 1e-4;resnet152;False 
+1;resnet101;True 0;resnet152;True 1;resnet152;False 
 """
 
 def parse_resnet_args(args):

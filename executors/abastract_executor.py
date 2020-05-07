@@ -1,7 +1,7 @@
 import sys
 
 sys.path.insert(0, "/home/nduginec/ml3/ml-diplom")
-
+import traceback
 import os
 from utils import image_loader as il, property as P
 from torch.utils.data import DataLoader
@@ -97,7 +97,7 @@ class AbstractExecutor:
             print("EXCEPTION", e)
             print(type(e))
             P.write_to_log("EXCEPTION", e, type(e))
-            traceback.print_stack()
+            P.write_to_log(traceback.extract_tb(e.__traceback__))
 
             P.save_raised_model(self.model, self.strategy.current_epoch, self.model_identifier, self.run_name,
                                 self.algorithm_name)
