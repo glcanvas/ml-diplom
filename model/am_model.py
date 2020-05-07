@@ -92,9 +92,9 @@ class AttentionModuleModel(nn.Module):
         for c in range(0, sam_out.size(1)):
             sub_sam_out = sam_out[:, c:c + 1, :, :]
             if point_wise_out is None:
-                point_wise_out = classifier_out + sub_sam_out
+                point_wise_out = classifier_out * sub_sam_out
             else:
-                point_wise_out = torch.cat((point_wise_out, classifier_out + sub_sam_out), dim=1)
+                point_wise_out = torch.cat((point_wise_out, classifier_out * sub_sam_out), dim=1)
 
         merged_out = self.merged_branch(point_wise_out)
         avg_out = self.avg_pool(merged_out)
