@@ -122,13 +122,13 @@ class AlternateModuleTrain(at.AbstractTrain):
             P.write_to_log(text)
 
             if self.current_epoch % self.test_each_epoch == 0:
-                self.take_snapshot(self.train_segments_set, self.am_model, "TRAIN_{}".format(self.current_epoch))
-                self.take_snapshot(self.test_set, self.am_model, "TEST_{}".format(self.current_epoch))
                 test_loss, _ = self.test(self.am_model, self.test_set, self.l_loss, self.m_loss)
                 if best_test_loss is None or test_loss < best_test_loss:
                     best_test_loss = test_loss
                     self.best_test_weights = copy.deepcopy(self.am_model.state_dict())
-
+            if self.current_epoch % 10 == 0:
+                self.take_snapshot(self.train_segments_set, self.am_model, "TRAIN_{}".format(self.current_epoch))
+                self.take_snapshot(self.test_set, self.am_model, "TEST_{}".format(self.current_epoch))
             if best_loss is None or loss_total < best_loss:
                 best_loss = loss_total
                 self.best_weights = copy.deepcopy(self.am_model.state_dict())
