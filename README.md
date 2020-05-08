@@ -30,3 +30,5 @@ precision_global
 python on_server_executor.py '0;vgg16+100-50;False;softf1' '0;vgg16+AM;False;softf1' '0;vgg16+1-1;False;softf1' 
 
 df -h
+
+ssh -i key.pem ubuntu@176.99.131.118

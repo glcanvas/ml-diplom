@@ -60,8 +60,8 @@ def initial_strategy_queue_resnet(clr_idx: int = 0,
                 arguments = {
                     '--run_name': run_name,
                     '--algorithm_name': ALGORITHM_DATA[algo_index]['algorithm_name'],
-                    '--epochs': 150,
-                    '--pre_train': 150,
+                    '--epochs': EPOCHS_COUNT,
+                    '--pre_train': ALGORITHM_DATA[algo_index]['pre_train'],
                     '--train_set': 1800,
                     '--left_class_number': left_border,
                     '--right_class_number': right_border,
@@ -118,6 +118,6 @@ def parse_vgg_args(args):
 
 
 if __name__ == "__main__":
-    r = parse_vgg_args("0;vgg16;False;bceloss;softf1;30;20;product".split())
+    r = parse_vgg_args("0;vgg16;False;bceloss;softf1;40;20;product".split())
     for i in r:
         print(i)
