@@ -40,8 +40,13 @@ MEMORY_USAGE = [2000, 2000, 6000, 6000]
 TRUST_LR = [1e-3, 1e-4, 1e-5]
 
 
-def initial_strategy_queue_resnet(clr_idx: int = 0, vgg_type: str = None,
-                                  execute_from_model: str = "false", loss_function: str = "bceloss"):
+def initial_strategy_queue_resnet(clr_idx: int = 0,
+                                  vgg_type: str = None,
+                                  execute_from_model: str = "false",
+                                  classifier_loss_function: str = "bceloss",
+                                  am_loss_function: str = "bceloss",
+                                  batch_size: str = "5",
+                                  model_type: str = "sum"):
     result = []
     run_id = RUN_NAME_RANGE_FROM + clr_idx
     for left_border, right_border in CLASS_BORDER:
@@ -63,7 +68,12 @@ def initial_strategy_queue_resnet(clr_idx: int = 0, vgg_type: str = None,
                     '--attention_module_learning_rate': attention_learning_rate,
                     '--model_identifier': seed_id,
                     '--execute_from_model': execute_from_model,
-                    '--classifier_loss_function': loss_function
+                    '--classifier_loss_function': classifier_loss_function,
+                    '--am_loss_function': am_loss_function,
+                    '--am_model': model_type,
+                    '--train_batch_size': batch_size,
+                    '--test_batch_size': batch_size,
+
                 }
                 result.append((ALGORITHM_DATA[algo_index]['name'], MEMORY_USAGE[algo_index], arguments))
     return result
@@ -79,9 +89,22 @@ def parse_vgg_args(args):
             int(values[0])
             if values[1] not in TRUST_VGG_TYPES:
                 continue
-            if values[2] == "true" or values[2] == "false":
-                if values[3] == "bceloss" or values[3] == "softf1":
-                    commands.extend(initial_strategy_queue_resnet(int(values[0]), values[1], values[2], values[3]))
+            if values[2] != "true" and values[2] != "false":
+                continue
+            if values[3] != "bceloss" and values[3] != "softf1":
+                continue
+            if values[4] != "bceloss" and values[4] != "softf1":
+                continue
+            int(values[5])
+            if values[6] != "sum" and values[6] != "product":
+                continue
+            commands.extend(initial_strategy_queue_resnet(int(values[0]),
+                                                          values[1],
+                                                          values[2],
+                                                          values[3],
+                                                          values[4],
+                                                          values[5],
+                                                          values[6]))
         except BaseException as e:
             print(e)
             raise e
@@ -90,6 +113,6 @@ def parse_vgg_args(args):
 
 
 if __name__ == "__main__":
-    r = parse_vgg_args("0;vgg16;False;bceloss".split())
+    r = parse_vgg_args("0;vgg16;False;bceloss;softf1;10;product".split())
     for i in r:
         print(i)
