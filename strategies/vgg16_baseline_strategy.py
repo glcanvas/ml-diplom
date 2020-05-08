@@ -84,8 +84,9 @@ class Classifier(at.AbstractTrain):
 
             self.model.train(mode=True)
             for images, segments, labels in self.train_segments_set:
-                labels, segments = model_utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
-                                                                            segments)
+                labels, segments = model_utils.reduce_to_class_number(self.left_class_number, self.right_class_number,
+                                                                      labels,
+                                                                      segments)
                 images, labels, segments = self.convert_data_and_label(images, labels, segments)
                 segments = self.puller(segments)
 
@@ -150,8 +151,9 @@ class Classifier(at.AbstractTrain):
         batch_count = 0
         self.model.train(mode=False)
         for images, segments, labels in test_set:
-            labels, segments = model_utils.reduce_to_class_number(self.left_class_number, self.right_class_number, labels,
-                                                                        segments)
+            labels, segments = model_utils.reduce_to_class_number(self.left_class_number, self.right_class_number,
+                                                                  labels,
+                                                                  segments)
             images, labels, segments = self.convert_data_and_label(images, labels, segments)
             model_classification = model_utils.wait_while_can_execute_single(model, images)
 
@@ -177,11 +179,12 @@ class Classifier(at.AbstractTrain):
 
         loss_classification_sum /= batch_count + p.EPS
         accuracy_classification_sum /= batch_count + p.EPS
-        text = 'TEST Loss_CL={:.5f} Accuracy_CL={:.5f} {} {} {} '.format(loss_classification_sum,
-                                                                         accuracy_classification_sum,
-                                                                         f_1_score_text,
-                                                                         recall_score_text,
-                                                                         precision_score_text)
+        text = 'TEST={} Loss_CL={:.5f} Accuracy_CL={:.5f} {} {} {} '.format(self.current_epoch,
+                                                                            loss_classification_sum,
+                                                                            accuracy_classification_sum,
+                                                                            f_1_score_text,
+                                                                            recall_score_text,
+                                                                            precision_score_text)
         p.write_to_log(text)
 
         return loss_classification_sum, accuracy_classification_sum

@@ -1,5 +1,5 @@
 """
-Functions for register gradient for model builded with am_model.py
+Functions for register gradient for model builded with am_product_model.py
 """
 
 

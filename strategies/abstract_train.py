@@ -105,12 +105,13 @@ class AbstractTrain:
         loss_classification_sum /= batch_count + p.EPS
         accuracy_classification_sum /= batch_count + p.EPS
         loss_segmentation_sum /= batch_count + p.EPS
-        text = 'TEST Loss_CL={:.5f} Loss_M={:.5f} Accuracy_CL={:.5f} {} {} {} '.format(loss_classification_sum,
-                                                                                       loss_segmentation_sum,
-                                                                                       accuracy_classification_sum,
-                                                                                       f_1_score_text,
-                                                                                       recall_score_text,
-                                                                                       precision_score_text)
+        text = 'TEST={} Loss_CL={:.5f} Loss_M={:.5f} Accuracy_CL={:.5f} {} {} {} '.format(self.current_epoch,
+                                                                                          loss_classification_sum,
+                                                                                          loss_segmentation_sum,
+                                                                                          accuracy_classification_sum,
+                                                                                          f_1_score_text,
+                                                                                          recall_score_text,
+                                                                                          precision_score_text)
         p.write_to_log(text)
 
         return loss_classification_sum, accuracy_classification_sum
@@ -195,7 +196,7 @@ class AbstractTrain:
                        batch_count + p.EPS), loss_classification_sum / (batch_count + p.EPS)
 
     def save_model(self, weights):
-        name = self.description + "_date-" + datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S') + ".torch"
+        """name = self.description + "_date-" + datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S') + ".torch"
         try:
             saved_dir = os.path.join(p.base_data_dir, 'model_weights')
             os.makedirs(saved_dir, exist_ok=True)
@@ -206,6 +207,8 @@ class AbstractTrain:
         except Exception as e:
             print("Can't save model: {}".format(name), e)
             p.write_to_log("Can't save model: {}".format(name), e)
+        """
+        p.write_to_log("not needed save weights here")
 
     def save_train_data(self, labels, output_cl, output_probability):
         output_cl = output_cl.cpu()

@@ -5,6 +5,7 @@ import albumentations as A
 import numpy as np
 
 sys.path.insert(0, "/home/nduginec/ml3/ml-diplom")
+sys.path.insert(0, "/home/ubuntu/ml3/ml-diplom")
 
 import utils.image_loader as il
 import utils.property as p

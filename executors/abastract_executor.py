@@ -1,6 +1,7 @@
 import sys
 
 sys.path.insert(0, "/home/nduginec/ml3/ml-diplom")
+sys.path.insert(0, "/home/ubuntu/ml3/ml-diplom")
 import traceback
 import os
 from utils import image_loader as il, property as P
@@ -39,17 +40,27 @@ class AbstractExecutor:
         elif str(parsed.classifier_loss_function).lower() == "softf1":
             self.classifier_loss_function = f1loss.SoftF1Loss()
         else:
-            raise Exception("loss {} not found".format(parsed.classifier_loss_function))
+            raise Exception("classifier loss {} not found".format(parsed.classifier_loss_function))
+
+        if str(parsed.am_model).lower() == "sum":
+            self.am_model_type = parsed.am_model_type
+        elif str(parsed.am_model).lower() == "product":
+            self.am_model_type = parsed.am_model_type
+        else:
+            raise Exception("model {} not found".format(parsed.am_model_type))
 
         if str(parsed.am_loss_function).lower() == "bceloss":
             self.am_loss_function = nn.BCELoss()
         elif str(parsed.am_loss_function).lower() == "softf1":
             self.am_loss_function = f1loss.SoftF1Loss()
         else:
-            raise Exception("loss {} not found".format(parsed.am_loss_function))
+            raise Exception("am loss {} not found".format(parsed.am_loss_function))
 
         self.model_identifier = parsed.model_identifier
         self.execute_from_model = False if str(parsed.execute_from_model).lower() == "false" else True
+
+        self.train_batch_size = int(parsed.train_batch_size)
+        self.test_batch_size = int(parsed.test_batch_size)
 
         self.classes = self.right_class_number - self.left_class_number
 
@@ -76,6 +87,7 @@ class AbstractExecutor:
         self.model_state_dict = self.load_model_from_saves()
         self.model = self.create_model()
         self.strategy = self.create_strategy()
+        P.write_to_log("incoming args = {}".format(parsed))
 
     def create_model(self):
         pass
@@ -121,9 +133,10 @@ class AbstractExecutor:
     def load_dataset(self):
         segments_set, test_set = il.load_data(self.train_set_size, self.model_identifier, self.image_size)
 
-        self.train_segments_set = DataLoader(il.ImageDataset(segments_set), batch_size=4, shuffle=True)
+        self.train_segments_set = DataLoader(il.ImageDataset(segments_set), batch_size=self.train_batch_size,
+                                             shuffle=True)
         print("ok")
-        self.test_set = DataLoader(il.ImageDataset(test_set), batch_size=4)
+        self.test_set = DataLoader(il.ImageDataset(test_set), batch_size=self.test_batch_size)
         print("ok")
 
     def get_current_epoch(self) -> int:

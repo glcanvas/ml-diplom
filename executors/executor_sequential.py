@@ -1,11 +1,13 @@
 import sys
 
 sys.path.insert(0, "/home/nduginec/ml3/ml-diplom")
+sys.path.insert(0, "/home/ubuntu/ml3/ml-diplom")
 
 from strategies import sequential_train as amt
 from utils import property as P
 import sys
-from model import am_model as ss
+from model import am_product_model as product_am
+from model import am_sum_model as sum_am
 from executors.abastract_executor import AbstractExecutor
 
 
@@ -14,7 +16,12 @@ class SequentialExecutor(AbstractExecutor):
         super(SequentialExecutor, self).__init__(parsed)
 
     def create_model(self):
-        self.model = ss.build_attention_module_model(self.classes)
+
+        if self.am_model_type == "sum":
+            self.model = sum_am.build_attention_module_model(self.classes)
+        elif self.am_model_type == "product":
+            self.model = product_am.build_attention_module_model(self.classes)
+
         P.write_to_log(self.model)
         if self.execute_from_model:
             self.model.load_state_dict(self.model_state_dict)

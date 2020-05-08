@@ -5,6 +5,7 @@ Which can survive out of memory errors
 import sys
 
 sys.path.insert(0, "/home/nduginec/ml3/ml-diplom")
+sys.path.insert(0, "/home/ubuntu/ml3/ml-diplom")
 
 from collections import deque
 from datetime import datetime

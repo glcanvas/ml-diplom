@@ -268,6 +268,3 @@ def create_torch_tensors():
 if __name__ == "__main__":
     loader = DatasetLoader(P.data_inputs_path, P.data_labels_path)
     loader.save_images_to_tensors()
-    x = load_data_batch(0, 100)
-    print(len(x))
-    print(len(load_data_batch(100, 200)))

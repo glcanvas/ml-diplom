@@ -32,6 +32,8 @@ elif os.path.exists("/home/nikita/PycharmProjects"):
     base_data_dir = "/home/nikita/PycharmProjects"
 elif os.path.exists("D:/diplom-base-dir"):
     base_data_dir = "D:/diplom-base-dir"
+elif os.path.exists("/home/ubuntu/data"):
+    base_data_dir = "/home/ubuntu/data"
 else:
     raise Exception("NOT FOND BASE DIR")
 
@@ -140,6 +142,9 @@ def parse_input_commands():
     parser.add_argument("--execute_from_model", default="false")
     parser.add_argument("--classifier_loss_function", default="bceloss")
     parser.add_argument("--am_loss_function", default="bceloss")
+    parser.add_argument("--am_model", default="sum")
+    parser.add_argument("--train_batch_size", default="5")
+    parser.add_argument("--test_batch_size", default="5")
     return parser
 
 
