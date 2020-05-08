@@ -10,9 +10,11 @@ if os.path.exists("/home/nduginec/nduginec_evn3/bin/python"):
     MAPPER = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4}
 elif os.path.exists("/home/nduginec/nduginetc_env3/bin/python"):
     MAPPER = {1: 2, 2: 1, 3: 0}
+elif os.path.exists("/home/ubuntu/anaconda3/bin/python"):
+    MAPPER = {0: 0}
+    # raise Exception("Not found gpu mapper")
 else:
     pass
-    # raise Exception("Not found gpu mapper")
 
 
 def found_gpu(smi, max_algorithm_memory: int, banned_gpu: int, max_thread_on_gpu: int) -> int:

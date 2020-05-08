@@ -25,8 +25,9 @@ if os.path.exists("/home/nduginec/nduginec_evn3/bin/python"):
     PYTHON_EXECUTOR_NAME = "/home/nduginec/nduginec_evn3/bin/python"
 elif os.path.exists("/home/nduginec/nduginetc_env3/bin/python"):
     PYTHON_EXECUTOR_NAME = "/home/nduginec/nduginetc_env3/bin/python"
-else:
-    pass
+elif os.path.exists("/home/ubuntu/anaconda3/bin/python"):
+    PYTHON_EXECUTOR_NAME = "/home/ubuntu/anaconda3/bin/python"
+
     # raise Exception("Not known computer")
 SLEEP_SECONDS = 120
 DIPLOMA_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
