@@ -43,11 +43,11 @@ class AbstractExecutor:
             raise Exception("classifier loss {} not found".format(parsed.classifier_loss_function))
 
         if str(parsed.am_model).lower() == "sum":
-            self.am_model_type = parsed.am_model_type
+            self.am_model_type = parsed.am_model
         elif str(parsed.am_model).lower() == "product":
-            self.am_model_type = parsed.am_model_type
+            self.am_model_type = parsed.am_model
         else:
-            raise Exception("model {} not found".format(parsed.am_model_type))
+            raise Exception("model {} not found".format(parsed.am_model))
 
         if str(parsed.am_loss_function).lower() == "bceloss":
             self.am_loss_function = nn.BCELoss()
