@@ -45,7 +45,8 @@ def initial_strategy_queue_resnet(clr_idx: int = 0,
                                   execute_from_model: str = "false",
                                   classifier_loss_function: str = "bceloss",
                                   am_loss_function: str = "bceloss",
-                                  batch_size: str = "5",
+                                  train_batch_size: str = "5",
+                                  test_batch_size: str = "5",
                                   model_type: str = "sum"):
     result = []
     run_id = RUN_NAME_RANGE_FROM + clr_idx
@@ -71,8 +72,8 @@ def initial_strategy_queue_resnet(clr_idx: int = 0,
                     '--classifier_loss_function': classifier_loss_function,
                     '--am_loss_function': am_loss_function,
                     '--am_model': model_type,
-                    '--train_batch_size': batch_size,
-                    '--test_batch_size': batch_size,
+                    '--train_batch_size': train_batch_size,
+                    '--test_batch_size': test_batch_size,
 
                 }
                 result.append((ALGORITHM_DATA[algo_index]['name'], MEMORY_USAGE[algo_index], arguments))
@@ -95,8 +96,11 @@ def parse_vgg_args(args):
                 continue
             if values[4] != "bceloss" and values[4] != "softf1":
                 continue
+            # train
             int(values[5])
-            if values[6] != "sum" and values[6] != "product":
+            # test
+            int(values[6])
+            if values[7] != "sum" and values[7] != "product":
                 continue
             commands.extend(initial_strategy_queue_resnet(int(values[0]),
                                                           values[1],
@@ -104,7 +108,8 @@ def parse_vgg_args(args):
                                                           values[3],
                                                           values[4],
                                                           values[5],
-                                                          values[6]))
+                                                          values[6],
+                                                          values[7]))
         except BaseException as e:
             print(e)
             raise e
@@ -113,6 +118,6 @@ def parse_vgg_args(args):
 
 
 if __name__ == "__main__":
-    r = parse_vgg_args("0;vgg16;False;bceloss;softf1;10;product".split())
+    r = parse_vgg_args("0;vgg16;False;bceloss;softf1;30;20;product".split())
     for i in r:
         print(i)
