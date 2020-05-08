@@ -1,3 +1,7 @@
+import sys
+
+sys.path.insert(0, "/home/nduginec/ml3/ml-diplom")
+sys.path.insert(0, "/home/ubuntu/ml3/ml-diplom")
 import os
 import torch
 import torch.utils.data.dataset
@@ -6,6 +10,7 @@ from PIL import Image
 from utils import property as P
 import torch.nn.functional as F
 import random
+
 
 composite = transforms.Compose([
     #  transforms.ToTensor(),
