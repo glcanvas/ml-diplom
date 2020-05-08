@@ -95,8 +95,8 @@ class AbstractTrain:
             loss_classification_sum += model_utils.scalar(classification_loss.sum())
             loss_segmentation_sum += model_utils.scalar(segmentation_loss.sum())
             batch_count += 1
-            self.de_convert_data_and_label(images, labels)
-            torch.cuda.empty_cache()
+            #self.de_convert_data_and_label(images, labels)
+            #torch.cuda.empty_cache()
 
         f_1_score_text, recall_score_text, precision_score_text = metrics_processor.calculate_metric(self.classes,
                                                                                                      self.test_trust_answers,
@@ -135,7 +135,7 @@ class AbstractTrain:
             model_classification, model_segmentation = model_utils.wait_while_can_execute(model, images)
             segmentation_loss = m_loss(model_segmentation, segments)
             classification_loss = l_loss(model_classification, labels)
-            torch.cuda.empty_cache()
+            #torch.cuda.empty_cache()
             classification_loss.backward()
             optimizer.step()
 
@@ -149,8 +149,8 @@ class AbstractTrain:
             loss_classification_sum += model_utils.scalar(classification_loss.sum())
             loss_segmentation_sum += model_utils.scalar(segmentation_loss.sum())
             batch_count += 1
-            self.de_convert_data_and_label(images, segments, labels)
-            torch.cuda.empty_cache()
+            #self.de_convert_data_and_label(images, segments, labels)
+            #torch.cuda.empty_cache()
 
         return loss_classification_sum / (batch_count + p.EPS), accuracy_classification_sum / (
                 batch_count + p.EPS), loss_segmentation_sum / (batch_count + p.EPS)
@@ -174,7 +174,7 @@ class AbstractTrain:
             classification_loss = l_loss(model_classification, labels)
             segmentation_loss = m_loss(model_segmentation, segments)
 
-            torch.cuda.empty_cache()
+            #torch.cuda.empty_cache()
             segmentation_loss.backward()
             optimizer.step()
 
@@ -188,8 +188,8 @@ class AbstractTrain:
             loss_l1_sum += 0
             loss_classification_sum += model_utils.scalar(classification_loss.sum())
             batch_count += 1
-            self.de_convert_data_and_label(images, labels, segments)
-            torch.cuda.empty_cache()
+            #self.de_convert_data_and_label(images, labels, segments)
+            #torch.cuda.empty_cache()
 
         return accuracy_classification_sum / (batch_count + p.EPS), loss_m_sum / (
                 batch_count + p.EPS), loss_l1_sum / (

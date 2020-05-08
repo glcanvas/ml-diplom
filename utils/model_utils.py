@@ -34,7 +34,7 @@ def wait_while_can_execute(model, images):
             cnt += 1
             model_classification, model_segmentation = model(images)
             flag = False
-            torch.cuda.empty_cache()
+            #torch.cuda.empty_cache()
         except RuntimeError as e:
             time.sleep(5)
             p.write_to_log("Can't execute model, CUDA out of memory", e)
@@ -57,7 +57,7 @@ def wait_while_can_execute_single(model, images):
             cnt += 1
             model_classification = model(images)
             flag = False
-            torch.cuda.empty_cache()
+            #torch.cuda.empty_cache()
         except RuntimeError as e:
             time.sleep(5)
             p.write_to_log("Can't execute model, CUDA out of memory", e)
