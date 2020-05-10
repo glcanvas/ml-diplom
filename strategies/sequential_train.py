@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import copy
 from utils import metrics_processor
-from utils import property as p, gradient_registers as gr
+from utils import property as p, vgg16_gradient_registers as gr
 from strategies import abstract_train as at
 
 """
@@ -17,7 +17,7 @@ from strategies import abstract_train as at
 #           classifier
 
 
-class AttentionModule(at.AbstractTrain):
+class SequentialModelTrain(at.AbstractTrain):
     """
         implementation train where at first only am module train, then only classification
     """
@@ -44,7 +44,7 @@ class AttentionModule(at.AbstractTrain):
                  weight_decay: float = 0,
                  current_epoch: int = 1):
 
-        super(AttentionModule, self).__init__(classes, pre_train_epochs, train_epochs, save_train_logs_epochs,
+        super(SequentialModelTrain, self).__init__(classes, pre_train_epochs, train_epochs, save_train_logs_epochs,
                                               test_each_epoch, use_gpu,
                                               gpu_device, description, left_class_number, right_class_number,
                                               snapshot_elements_count, snapshot_dir,

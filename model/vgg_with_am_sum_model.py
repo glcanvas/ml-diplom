@@ -23,8 +23,7 @@ def build_attention_module_model(classes: int, pretrained=True):
     """
     sam_branch = nn.Sequential(
         *m.vgg16(pretrained=pretrained).features[2:15],
-        nn.Conv2d(256, classes, kernel_size=(3, 3), padding=(1, 1)),
-        nn.Sigmoid()
+        nn.Conv2d(256, classes, kernel_size=(3, 3), padding=(1, 1))
     )
     model = m.vgg16(pretrained=True)
     basis_branch = model.features[:4]
@@ -48,7 +47,7 @@ def build_attention_module_model(classes: int, pretrained=True):
                                      classifier_branch,
                                      merged_branch,
                                      avg_pool,
-                                     classifier)
+                                     classifier, True)
 
     return sam_model
 
@@ -69,7 +68,8 @@ class AttentionModuleModel(nn.Module):
                  classification_branch: nn.Module,
                  merged_branch: nn.Module,
                  avg_pool: nn.Module,
-                 classification_pool: nn.Module
+                 classification_pool: nn.Module,
+                 is_loss_sigmoid: bool
                  ):
         super(AttentionModuleModel, self).__init__()
         self.basis = basis_branch
@@ -81,22 +81,29 @@ class AttentionModuleModel(nn.Module):
         self.avg_pool = avg_pool
         self.classifier = classification_pool
 
+        self.sigmoid = nn.Sigmoid()
+        self.is_loss_sigmoid = is_loss_sigmoid
+
     def forward(self, input_images: torch.Tensor, segments=None) -> tuple:
         basis_out = self.basis(input_images)
         classifier_out = self.classifier_branch(basis_out)
         sam_out = self.sam_branch(basis_out)
+        if self.is_loss_sigmoid:
+            sam_out_sigmoid = self.sigmoid(sam_out)
+        else:
+            sam_out_sigmoid = sam_out
         # замечание -- sam_out -- небольшого размера...
         point_wise_out = None
 
         for c in range(0, sam_out.size(1)):
             sub_sam_out = sam_out[:, c:c + 1, :, :]
             if point_wise_out is None:
-                point_wise_out = classifier_out * sub_sam_out
+                point_wise_out = classifier_out + sub_sam_out
             else:
-                point_wise_out = torch.cat((point_wise_out, classifier_out * sub_sam_out), dim=1)
+                point_wise_out = torch.cat((point_wise_out, classifier_out + sub_sam_out), dim=1)
 
         merged_out = self.merged_branch(point_wise_out)
         avg_out = self.avg_pool(merged_out)
         flatten_out = torch.flatten(avg_out, 1)
         classifier_result = self.classifier(flatten_out)
-        return classifier_result, sam_out
+        return classifier_result, sam_out_sigmoid

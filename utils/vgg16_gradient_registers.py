@@ -1,9 +1,9 @@
 """
-Functions for register gradient for model builded with am_product_model.py
+Functions for register gradient for model built with vgg_with_am_product_model.py
 """
 
 
-def classifier_weights(model):
+def base_model_weights(model):
     a = list(model.classifier_branch.parameters())
     a.extend(list(model.merged_branch.parameters()))
     a.extend(list(model.avg_pool.parameters()))
@@ -19,7 +19,7 @@ def attention_module_weights(model):
 
 def register_weights(weight_class, model):
     if weight_class == "classifier":
-        return classifier_weights(model)
+        return base_model_weights(model)
     elif weight_class == "attention":
         return attention_module_weights(model)
     raise BaseException("unrecognized param: " + weight_class)
@@ -27,7 +27,7 @@ def register_weights(weight_class, model):
 
 def disable_gradient(weight_class, model):
     if weight_class == "classifier":
-        for param in classifier_weights(model):
+        for param in base_model_weights(model):
             param.requires_grad = False
         return
     elif weight_class == "attention":
@@ -39,7 +39,7 @@ def disable_gradient(weight_class, model):
 
 def enable_gradient(weight_class, model):
     if weight_class == "classifier":
-        for param in classifier_weights(model):
+        for param in base_model_weights(model):
             param.requires_grad = True
         return
     elif weight_class == "attention":

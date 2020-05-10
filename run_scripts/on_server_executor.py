@@ -14,8 +14,7 @@ from run_scripts import executor_nvsmi as nsmi, gpu_founder as ru
 from utils import property as p
 from utils import property_parser as pp
 import time
-from run_scripts import initial_resnet_strategy as init_resnet
-from run_scripts import initial_vgg_strategy as init_vgg
+from strategy_initialize import initial_resnet_strategy as init_resnet, initial_vgg_strategy as init_vgg
 
 from threading import Lock, Thread
 

@@ -6,8 +6,8 @@ sys.path.insert(0, "/home/ubuntu/ml3/ml-diplom")
 from strategies import sequential_train as amt
 from utils import property as P
 import sys
-from model import am_product_model as product_am
-from model import am_sum_model as sum_am
+from model import vgg_with_am_product_model as product_am
+from model import vgg_with_am_sum_model as sum_am
 from executors.abastract_executor import AbstractExecutor
 
 
@@ -29,7 +29,7 @@ class SequentialExecutor(AbstractExecutor):
         return self.model
 
     def create_strategy(self):
-        self.strategy = amt.AttentionModule(self.model, self.train_segments_set, self.test_set, classes=self.classes,
+        self.strategy = amt.SequentialModelTrain(self.model, self.train_segments_set, self.test_set, classes=self.classes,
                                             pre_train_epochs=self.pre_train,
                                             gpu_device=self.gpu,
                                             train_epochs=self.epochs,

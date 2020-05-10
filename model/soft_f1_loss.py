@@ -1,6 +1,5 @@
 import torch.nn as nn
 import torch
-from utils import property as p
 
 
 class SoftF1Loss(nn.Module):

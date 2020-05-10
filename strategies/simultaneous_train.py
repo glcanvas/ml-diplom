@@ -1,12 +1,12 @@
 import torch
 import torch.nn as nn
 import copy
-from utils import property as P, gradient_registers as gr
+from utils import property as P, vgg16_gradient_registers as gr
 from utils import metrics_processor
 from strategies import abstract_train as at
 
 
-class AlternateModuleTrain(at.AbstractTrain):
+class SimultaneousModelTrain(at.AbstractTrain):
     """
         implementation train where at first only am module train, then only classification
     """
@@ -33,7 +33,7 @@ class AlternateModuleTrain(at.AbstractTrain):
                  weight_decay: float = 0,
                  current_epoch: int = 1):
 
-        super(AlternateModuleTrain, self).__init__(classes, pre_train_epochs, train_epochs, save_train_logs_epochs,
+        super(SimultaneousModelTrain, self).__init__(classes, pre_train_epochs, train_epochs, save_train_logs_epochs,
                                                    test_each_epoch, use_gpu,
                                                    gpu_device, description, left_class_number, right_class_number,
                                                    snapshot_elements_count, snapshot_dir,
