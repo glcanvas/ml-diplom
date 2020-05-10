@@ -3,8 +3,12 @@ import sys
 sys.path.insert(0, "/home/nduginec/ml3/ml-diplom")
 sys.path.insert(0, "/home/ubuntu/ml3/ml-diplom")
 import traceback
+import torchvision.models as m
 import os
-from utils import image_loader as il, property as P
+from utils import image_loader as il, property as P, imbalansed_image_loader as imbalanced
+from model import vgg_with_am_model as am_model
+from model import resnet_with_am_model as resnet_am_model
+from model import connection_block as cb
 from torch.utils.data import DataLoader
 import traceback
 import torch.nn as nn
@@ -31,8 +35,9 @@ class AbstractExecutor:
         self.attention_module_learning_rate = float(parsed.attention_module_learning_rate)
         self.is_freezen = False if str(parsed.is_freezen).lower() == "false" else True
 
-        self.resnet_type = parsed.resnet_type
-        self.inceptionv_type = parsed.inceptionv_type
+        self.model_type = str(parsed.model_type).lower()
+        self.is_vgg16_model = True if "vgg" in self.model_type else False
+
         self.image_size = int(parsed.image_size)
 
         if str(parsed.classifier_loss_function).lower() == "bceloss":
@@ -56,6 +61,10 @@ class AbstractExecutor:
         else:
             raise Exception("am loss {} not found".format(parsed.am_loss_function))
 
+        if str(parsed.dataset_type).lower() == "balanced":
+            self.dataset_type = "balanced"
+        else:
+            self.dataset_type = "imbalanced"
         self.model_identifier = parsed.model_identifier
         self.execute_from_model = False if str(parsed.execute_from_model).lower() == "false" else True
 
@@ -78,6 +87,7 @@ class AbstractExecutor:
         self.train_segments_set = None
         self.test_set = None
         self.model = None
+        self.puller = None
         self.strategy = None
 
         self.initialize_logs()
@@ -131,8 +141,12 @@ class AbstractExecutor:
         os.makedirs(self.snapshots_path, exist_ok=True)
 
     def load_dataset(self):
-        segments_set, test_set = il.load_data(self.train_set_size, self.model_identifier, self.image_size)
 
+        if self.dataset_type != "balanced":
+            segments_set, test_set = il.load_data(self.train_set_size, self.model_identifier, self.image_size)
+        else:
+            segments_set, test_set = imbalanced.load_balanced_dataset(self.train_set_size, self.model_identifier,
+                                                                      self.image_size)
         self.train_segments_set = DataLoader(il.ImageDataset(segments_set), batch_size=self.train_batch_size,
                                              shuffle=True)
         print("ok")
@@ -162,3 +176,64 @@ class AbstractExecutor:
                 #        .format(self.model_identifier, self.run_name, self.algorithm_name))
             return model_state_dict
         return None
+
+    def build_model(self):
+        pass
+
+    def select_resnet_model(self):
+        if self.model_type == "resnet18":
+            model = m.resnet18(pretrained=True)
+        elif self.model_type == "resnet34":
+            model = m.resnet34(pretrained=True)
+        elif self.model_type == "resnet50":
+            model = m.resnet50(pretrained=True)
+        elif self.model_type == "resnet101":
+            model = m.resnet101(pretrained=True)
+        elif self.model_type == "resnet152":
+            model = m.resnet152(pretrained=True)
+        else:
+            raise Exception("Not exist model with name: {}".format(self.model))
+        return model
+
+    def build_baseline_resnet_model(self):
+        model = self.select_resnet_model()
+        num_features = model.fc.in_features
+        model.fc = nn.Linear(num_features, self.classes)
+        return model
+
+    def build_baseline_vgg_model(self):
+        model = m.vgg16(pretrained=True)
+        num_features = model.classifier[6].in_features
+        model.classifier[6] = nn.Linear(num_features, self.classes)
+        return model
+
+    def build_vgg16_with_am_model(self):
+        if self.am_model_type == "sum":
+            self.model, self.puller = am_model.build_attention_module_model(self.classes, cb.ConnectionSumBlock())
+        elif self.am_model_type == "product":
+            self.model, self.puller = am_model.build_attention_module_model(self.classes, cb.ConnectionProductBlock())
+        return self.model
+
+    def build_resnet_with_am_model(self):
+        if self.model_type != "resnet18" and self.model_type != "resnet34":
+            raise Exception("Model {} not supported".format(self.model_type))
+        model = self.select_resnet_model()
+        if self.am_model_type == "sum":
+            self.model, self.puller = resnet_am_model.build_attention_module_model(self.classes, model,
+                                                                                   cb.ConnectionSumBlock())
+        elif self.am_model_type == "product":
+            self.model, self.puller = resnet_am_model.build_attention_module_model(self.classes, model,
+                                                                                   cb.ConnectionProductBlock())
+        return self.model
+
+    def build_model_with_am(self):
+        if "vgg" in self.model_type:
+            return self.build_vgg16_with_am_model()
+        else:
+            return self.build_resnet_with_am_model()
+
+    def build_model_without_am(self):
+        if "vgg" in self.model_type:
+            return self.build_baseline_vgg_model()
+        else:
+            return self.build_baseline_resnet_model()

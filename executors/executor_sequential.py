@@ -6,8 +6,6 @@ sys.path.insert(0, "/home/ubuntu/ml3/ml-diplom")
 from strategies import sequential_train as amt
 from utils import property as P
 import sys
-from model import vgg_with_am_product_model as product_am
-from model import vgg_with_am_sum_model as sum_am
 from executors.abastract_executor import AbstractExecutor
 
 
@@ -16,12 +14,7 @@ class SequentialExecutor(AbstractExecutor):
         super(SequentialExecutor, self).__init__(parsed)
 
     def create_model(self):
-
-        if self.am_model_type == "sum":
-            self.model = sum_am.build_attention_module_model(self.classes)
-        elif self.am_model_type == "product":
-            self.model = product_am.build_attention_module_model(self.classes)
-
+        self.build_model_with_am()
         P.write_to_log(self.model)
         if self.execute_from_model:
             self.model.load_state_dict(self.model_state_dict)
@@ -29,22 +22,27 @@ class SequentialExecutor(AbstractExecutor):
         return self.model
 
     def create_strategy(self):
-        self.strategy = amt.SequentialModelTrain(self.model, self.train_segments_set, self.test_set, classes=self.classes,
-                                            pre_train_epochs=self.pre_train,
-                                            gpu_device=self.gpu,
-                                            train_epochs=self.epochs,
-                                            l_loss=self.classifier_loss_function,
-                                            m_loss=self.am_loss_function,
-                                            save_train_logs_epochs=4,
-                                            test_each_epoch=4,
-                                            left_class_number=self.left_class_number,
-                                            right_class_number=self.right_class_number,
-                                            description=self.run_name + "_" + self.description,
-                                            snapshot_elements_count=20,
-                                            snapshot_dir=self.snapshots_path,
-                                            classifier_learning_rate=self.classifier_learning_rate,
-                                            attention_module_learning_rate=self.attention_module_learning_rate,
-                                            current_epoch=self.current_epoch)
+        self.strategy = amt.SequentialModelTrain(self.model,
+                                                 self.is_vgg16_model,
+                                                 self.train_segments_set,
+                                                 self.test_set,
+                                                 classes=self.classes,
+                                                 pre_train_epochs=self.pre_train,
+                                                 gpu_device=self.gpu,
+                                                 train_epochs=self.epochs,
+                                                 l_loss=self.classifier_loss_function,
+                                                 m_loss=self.am_loss_function,
+                                                 save_train_logs_epochs=4,
+                                                 test_each_epoch=4,
+                                                 left_class_number=self.left_class_number,
+                                                 right_class_number=self.right_class_number,
+                                                 description=self.run_name + "_" + self.description,
+                                                 snapshot_elements_count=20,
+                                                 snapshot_dir=self.snapshots_path,
+                                                 classifier_learning_rate=self.classifier_learning_rate,
+                                                 attention_module_learning_rate=self.attention_module_learning_rate,
+                                                 current_epoch=self.current_epoch,
+                                                 puller=self.puller)
         return self.strategy
 
     def train_strategy(self):

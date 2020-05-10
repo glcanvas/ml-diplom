@@ -7,4 +7,4 @@ sys.path.insert(0, "/home/ubuntu/ml3/ml-diplom")
 from .abstract_train import *
 from .sequential_train import *
 from .simultaneous_train import *
-from .vgg16_baseline_strategy import *
+from .baseline_strategy import *

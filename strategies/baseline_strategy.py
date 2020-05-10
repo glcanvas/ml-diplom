@@ -66,12 +66,7 @@ class Classifier(at.AbstractTrain):
 
     def train(self):
 
-        if self.is_freezen:
-            print("YES ITS FREEZEN")
-            params = self.model.classifier.parameters()
-        else:
-            params = self.model.parameters()
-
+        params = self.model.parameters()
         optimizer = torch.optim.Adam(params, lr=self.classifier_learning_rate, weight_decay=self.weight_decay)
         best_loss = None
         best_test_loss = None
@@ -99,7 +94,7 @@ class Classifier(at.AbstractTrain):
 
                 # все дело в инцептион может быть
                 classification_loss = self.l_loss(model_classification, labels)
-                #torch.cuda.empty_cache()
+                # torch.cuda.empty_cache()
                 classification_loss.backward()
                 optimizer.step()
 
@@ -112,8 +107,8 @@ class Classifier(at.AbstractTrain):
                 accuracy_classification_sum += model_utils.scalar(cl_acc.sum())
                 loss_classification_sum += model_utils.scalar(classification_loss.sum())
                 batch_count += 1
-                #self.de_convert_data_and_label(images, segments, labels)
-                #torch.cuda.empty_cache()
+                # self.de_convert_data_and_label(images, segments, labels)
+                # torch.cuda.empty_cache()
 
             if best_loss is None or loss_classification_sum < best_loss:
                 best_loss = loss_classification_sum
@@ -170,8 +165,8 @@ class Classifier(at.AbstractTrain):
             accuracy_classification_sum += model_utils.scalar(cl_acc.sum())
             loss_classification_sum += model_utils.scalar(classification_loss.sum())
             batch_count += 1
-            #self.de_convert_data_and_label(images, labels)
-            #torch.cuda.empty_cache()
+            # self.de_convert_data_and_label(images, labels)
+            # torch.cuda.empty_cache()
 
         f_1_score_text, recall_score_text, precision_score_text = metrics_processor.calculate_metric(self.classes,
                                                                                                      self.test_trust_answers,

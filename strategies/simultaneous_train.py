@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import copy
-from utils import property as P, vgg16_gradient_registers as gr
+from utils import property as P, vgg16_gradient_registers as gr, resnet_gradient_registers as rgr
 from utils import metrics_processor
 from strategies import abstract_train as at
 
@@ -12,6 +12,7 @@ class SimultaneousModelTrain(at.AbstractTrain):
     """
 
     def __init__(self, am_model: nn.Module = None,
+                 is_vgg_model: bool = None,
                  train_segments_set=None,
                  test_set=None,
                  l_loss: nn.Module = nn.BCELoss(),
@@ -31,16 +32,18 @@ class SimultaneousModelTrain(at.AbstractTrain):
                  classifier_learning_rate: float = None,
                  attention_module_learning_rate: float = None,
                  weight_decay: float = 0,
-                 current_epoch: int = 1):
+                 current_epoch: int = 1,
+                 puller: nn.Module = None):
 
         super(SimultaneousModelTrain, self).__init__(classes, pre_train_epochs, train_epochs, save_train_logs_epochs,
-                                                   test_each_epoch, use_gpu,
-                                                   gpu_device, description, left_class_number, right_class_number,
-                                                   snapshot_elements_count, snapshot_dir,
-                                                   classifier_learning_rate,
-                                                   attention_module_learning_rate,
-                                                   weight_decay,
-                                                   current_epoch)
+                                                     test_each_epoch, use_gpu,
+                                                     gpu_device, description, left_class_number, right_class_number,
+                                                     snapshot_elements_count, snapshot_dir,
+                                                     classifier_learning_rate,
+                                                     attention_module_learning_rate,
+                                                     weight_decay,
+                                                     current_epoch,
+                                                     puller)
 
         self.train_segments_set = train_segments_set
         self.test_set = test_set
@@ -55,16 +58,26 @@ class SimultaneousModelTrain(at.AbstractTrain):
 
         self.l_loss = l_loss
         self.m_loss = m_loss
+        self.is_vgg_model = is_vgg_model
 
     def train(self, use_all_params: bool):
 
         if use_all_params:
             classifier_optimizer = torch.optim.Adam(self.am_model.parameters(), lr=self.classifier_learning_rate)
         else:
-            classifier_optimizer = torch.optim.Adam(gr.register_weights("classifier", self.am_model),
-                                                    self.classifier_learning_rate)
-        attention_module_optimizer = torch.optim.Adam(gr.register_weights("attention", self.am_model),
-                                                      lr=self.attention_module_learning_rate)
+            if self.is_vgg_model:
+                classifier_optimizer = torch.optim.Adam(gr.register_weights("classifier", self.am_model),
+                                                        self.classifier_learning_rate)
+            else:
+                classifier_optimizer = torch.optim.Adam(rgr.register_weights("classifier", self.am_model),
+                                                        self.classifier_learning_rate)
+
+        if self.is_vgg_model:
+            attention_module_optimizer = torch.optim.Adam(gr.register_weights("attention", self.am_model),
+                                                          lr=self.attention_module_learning_rate)
+        else:
+            attention_module_optimizer = torch.optim.Adam(rgr.register_weights("attention", self.am_model),
+                                                          lr=self.attention_module_learning_rate)
 
         self.best_weights = copy.deepcopy(self.am_model.state_dict())
         best_loss = None

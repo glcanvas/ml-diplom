@@ -135,8 +135,7 @@ def parse_input_commands():
     parser.add_argument("--freeze_list", default="for_alternate_only")
     parser.add_argument("--is_freezen", default="False")
     parser.add_argument("--weight_decay", default="0")
-    parser.add_argument("--resnet_type", default="<resnet50,resnet32,...>")
-    parser.add_argument("--inceptionv_type", default="<inceptionv1, inceptionv3>")
+    parser.add_argument("--model_type", default="<vgg16,resnet50,resnet32,...>") # require
     parser.add_argument("--image_size", default='224')
     parser.add_argument("--model_identifier")
     parser.add_argument("--execute_from_model", default="false")
@@ -145,6 +144,7 @@ def parse_input_commands():
     parser.add_argument("--am_model", default="sum")
     parser.add_argument("--train_batch_size", default="5")
     parser.add_argument("--test_batch_size", default="5")
+    parser.add_argument("--dataset_type", default="balanced")
     return parser
 
 

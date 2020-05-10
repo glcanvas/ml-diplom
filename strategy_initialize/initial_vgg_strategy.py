@@ -11,7 +11,7 @@ import strategy_initialize.initial_parser as common
 
 ALGORITHM_DATA = [
     {
-        'name': 'executor_baseline_vgg16.py',
+        'name': 'executor_baseline.py',
         'algorithm_name': 'VGG16',
         'pre_train': common.EPOCHS_COUNT
     },

@@ -2,6 +2,13 @@ import torch
 import torch.nn as nn
 import torchvision.models as m
 
+import sys
+
+sys.path.insert(0, "/home/nduginec/ml3/ml-diplom")
+sys.path.insert(0, "/home/ubuntu/ml3/ml-diplom")
+
+import model.connection_block as cb
+
 """
 Давайте разобьем модель на 4 + части
 1 -- та что до бранчевания
@@ -15,16 +22,27 @@ import torchvision.models as m
 """
 
 
-def build_attention_module_model(classes: int, pretrained=True):
+def build_attention_module_model(classes: int, connection_block: nn.Module, pretrained=True):
     """
     build model MAIN FUNCTION HERE!!!!
     :param classes:  class count
     :return: builded model
     """
-    sam_branch = nn.Sequential(
-        *m.vgg16(pretrained=pretrained).features[2:15],
-        nn.Conv2d(256, classes, kernel_size=(3, 3), padding=(1, 1))
-    )
+
+    if isinstance(connection_block, cb.ConnectionProductBlock):
+        sam_branch = nn.Sequential(
+            *m.vgg16(pretrained=pretrained).features[2:15],
+            nn.Conv2d(256, classes, kernel_size=(3, 3), padding=(1, 1)),
+            nn.Sigmoid()
+        )
+        sigmoid_out_flag = False
+    else:
+        sam_branch = nn.Sequential(
+            *m.vgg16(pretrained=pretrained).features[2:15],
+            nn.Conv2d(256, classes, kernel_size=(3, 3), padding=(1, 1))
+        )
+        sigmoid_out_flag = True
+
     model = m.vgg16(pretrained=True)
     basis_branch = model.features[:4]
 
@@ -46,10 +64,11 @@ def build_attention_module_model(classes: int, pretrained=True):
                                      sam_branch,
                                      classifier_branch,
                                      merged_branch,
+                                     connection_block,
                                      avg_pool,
-                                     classifier, True)
-
-    return sam_model
+                                     classifier, sigmoid_out_flag)
+    puller = nn.Sequential(nn.MaxPool2d(kernel_size=2, stride=2), nn.MaxPool2d(kernel_size=2, stride=2))
+    return sam_model, puller
 
 
 class AttentionModuleModel(nn.Module):
@@ -67,6 +86,7 @@ class AttentionModuleModel(nn.Module):
                  sam_branch: nn.Module,
                  classification_branch: nn.Module,
                  merged_branch: nn.Module,
+                 connection_block: nn.Module,
                  avg_pool: nn.Module,
                  classification_pool: nn.Module,
                  is_loss_sigmoid: bool
@@ -76,6 +96,7 @@ class AttentionModuleModel(nn.Module):
         # parallel
         self.classifier_branch = classification_branch
         self.sam_branch = sam_branch
+        self.connection_block = connection_block
 
         self.merged_branch = merged_branch
         self.avg_pool = avg_pool
@@ -84,24 +105,17 @@ class AttentionModuleModel(nn.Module):
         self.sigmoid = nn.Sigmoid()
         self.is_loss_sigmoid = is_loss_sigmoid
 
-    def forward(self, input_images: torch.Tensor, segments=None) -> tuple:
+    def forward(self, input_images: torch.Tensor) -> tuple:
         basis_out = self.basis(input_images)
         classifier_out = self.classifier_branch(basis_out)
         sam_out = self.sam_branch(basis_out)
+
         if self.is_loss_sigmoid:
             sam_out_sigmoid = self.sigmoid(sam_out)
         else:
             sam_out_sigmoid = sam_out
-        # замечание -- sam_out -- небольшого размера...
-        point_wise_out = None
 
-        for c in range(0, sam_out.size(1)):
-            sub_sam_out = sam_out[:, c:c + 1, :, :]
-            if point_wise_out is None:
-                point_wise_out = classifier_out + sub_sam_out
-            else:
-                point_wise_out = torch.cat((point_wise_out, classifier_out + sub_sam_out), dim=1)
-
+        point_wise_out = self.connection_block(sam_out, classifier_out)
         merged_out = self.merged_branch(point_wise_out)
         avg_out = self.avg_pool(merged_out)
         flatten_out = torch.flatten(avg_out, 1)

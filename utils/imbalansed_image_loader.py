@@ -109,4 +109,5 @@ def load_balanced_dataset(train_size: int, seed: int, image_size: int):
 
 if __name__ == "__main__":
     # 433, 198, 389
-    load_balanced_dataset(1800, 389, 224)
+    res1, _ = load_balanced_dataset(100, 389, 224)
+    print(res1)

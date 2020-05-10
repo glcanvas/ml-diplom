@@ -1,16 +1,16 @@
 def base_model_weights(model):
-    a = list(model.classifier_branch.parameters())
-    a.extend(list(model.basis.parameters()))
+    a = []
+    a.extend(list(model.basis_branch.parameters()))
+    a.extend(list(model.first_branch.parameters()))
     a.extend(list(model.merged_branch.parameters()))
-    a.extend(list(model.avg_pool.parameters()))
-    a.extend(list(model.classifier.parameters()))
+    a.extend(list(model.fc.parameters()))
     return a
 
 
 def attention_module_weights(model):
     a = []
-    a.extend(list(model.basis.parameters()))
-    a.extend(list(model.sam_branch.parameters()))
+    a.extend(list(model.basis_branch.parameters()))
+    a.extend(list(model.am_branch.parameters()))
     return a
 
 

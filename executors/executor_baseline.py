@@ -6,27 +6,19 @@ sys.path.insert(0, "/home/ubuntu/ml3/ml-diplom")
 from utils import property as P
 import sys
 import torchvision.models as m
-from strategies import vgg16_baseline_strategy as cl
+from strategies import baseline_strategy as cl
 import torch.nn as nn
-from executors.abastract_executor import AbstractExecutor
-from model import googlenet
-from model import inceptionv3
 
-class InceptionBaselineExecutor(AbstractExecutor):
+from executors.abastract_executor import AbstractExecutor
+
+
+class VGG16BaselineExecutor(AbstractExecutor):
     def __init__(self, parsed):
-        super(InceptionBaselineExecutor, self).__init__(parsed)
+        super(VGG16BaselineExecutor, self).__init__(parsed)
 
     def create_model(self):
-        if self.inceptionv_type == "inceptionv3":
-            self.model = inceptionv3.inception_v3(pretrained=True)
-        elif self.inceptionv_type == "inceptionv1":
-            self.model = googlenet.inceptionv1(pretrained=True)
-        else:
-            raise Exception("Not exist model with name: {}".format(self.resnet_type))
-        num_features = self.model.fc.in_features
-        self.model.fc = nn.Linear(num_features, self.classes)
+        self.model = self.build_model_without_am()
         P.write_to_log(self.model)
-
         if self.execute_from_model:
             self.model.load_state_dict(self.model_state_dict)
             P.write_to_log("recovery model:", self.model, "current epoch = {}".format(self.current_epoch))
@@ -57,7 +49,7 @@ class InceptionBaselineExecutor(AbstractExecutor):
 def execute(args=None):
     parsed = P.parse_input_commands().parse_args(sys.argv[1:]) if args is None else args
 
-    alternate = InceptionBaselineExecutor(parsed)
+    alternate = VGG16BaselineExecutor(parsed)
     alternate.safe_train()
 
 
