@@ -41,7 +41,7 @@ SUPPORTED_C_LR = [1e-3, 1e-4, 1e-5]
 SUPPORTED_AM_LR = [1e-3, 1e-4, 1e-5]
 
 MODEL_TYPES = ["resnet18", "resnet34", "resnet50", "resnet101", "resnet152", "vgg", "vgg16"]
-MEMORY_USAGE = [2000, 2000, 2000, 3000, 4000, 6000, 6000]
+MEMORY_USAGE = [2000, 2000, 2000, 3000, 3000, 3000, 3000] # 4000, 6000, 6000
 
 MODEL_STRATEGY = [x + y['algorithm_name'] for x in MODEL_TYPES for y in ALGORITHM_DATA]
 MODEL_STRATEGY_DATA = [(x, y) for x in MODEL_TYPES for y in ALGORITHM_DATA]

@@ -1,19 +1,36 @@
 
-1e-3
-clr=0;amlr=0;dataset=balanced;model=vgg16+baseline;clloss=bceloss;amloss=bceloss;train=5;test=5;execute=false
-clr=0;amlr=0;dataset=balanced;model=vgg16+100-50;clloss=bceloss;amloss=bceloss;train=30;test=30;execute=false
 
-clr=0;amlr=0;dataset=balanced;model=resnet18+baseline;clloss=bceloss;amloss=bceloss;train=5;test=5;execute=false
-clr=0;amlr=0;dataset=balanced;model=resnet18+100-50;clloss=bceloss;amloss=bceloss;train=5;test=5;execute=false
-clr=0;amlr=0;dataset=balanced;model=resnet34+baseline;clloss=bceloss;amloss=bceloss;train=5;test=5;execute=false
-clr=0;amlr=0;dataset=balanced;model=resnet34+100-50;clloss=bceloss;amloss=bceloss;train=5;test=5;execute=false
+'clr=0;amlr=0;dataset=balanced;model=vgg16+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false'
+'clr=0;amlr=0;dataset=balanced;model=resnet18+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false'
+'clr=0;amlr=0;dataset=balanced;model=resnet34+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false'
+
+'clr=0;amlr=0;dataset=disbalanced;model=vgg16+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false'
+'clr=0;amlr=0;dataset=disbalanced;model=resnet18+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false'
+'clr=0;amlr=0;dataset=disbalanced;model=resnet34+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false'
+
+'clr=1;amlr=0;dataset=balanced;model=vgg16+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false'
+'clr=1;amlr=0;dataset=balanced;model=resnet18+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false'
+'clr=1;amlr=0;dataset=balanced;model=resnet34+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false'
+
+'clr=1;amlr=0;dataset=disbalanced;model=vgg16+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false'
+'clr=1;amlr=0;dataset=disbalanced;model=resnet18+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false'
+'clr=1;amlr=0;dataset=disbalanced;model=resnet34+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false'
+
+====>>>
+'clr=0;amlr=0;dataset=balanced;model=vgg16+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false' 'clr=0;amlr=0;dataset=balanced;model=resnet18+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false' 'clr=0;amlr=0;dataset=balanced;model=resnet34+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false' 'clr=0;amlr=0;dataset=disbalanced;model=vgg16+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false' 'clr=0;amlr=0;dataset=disbalanced;model=resnet18+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false' 'clr=0;amlr=0;dataset=disbalanced;model=resnet34+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false' 'clr=1;amlr=0;dataset=balanced;model=vgg16+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false' 'clr=1;amlr=0;dataset=balanced;model=resnet18+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false' 'clr=1;amlr=0;dataset=balanced;model=resnet34+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false' 'clr=1;amlr=0;dataset=disbalanced;model=vgg16+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false' 'clr=1;amlr=0;dataset=disbalanced;model=resnet18+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false' 'clr=1;amlr=0;dataset=disbalanced;model=resnet34+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false'
+
+
+======================
+clr=0;amlr=0;dataset=balanced;model=vgg16+100-50;clloss=bceloss;amloss=bceloss;train=30;test=30;execute=false
+clr=0;amlr=0;dataset=balanced;model=resnet18+100-50;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false
+clr=0;amlr=0;dataset=balanced;model=resnet34+100-50;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false
 
 
 1e-4
-clr=1;amlr=0;dataset=balanced;model=vgg16+baseline;clloss=bceloss;amloss=bceloss;train=5;test=5;execute=false
+clr=1;amlr=0;dataset=balanced;model=vgg16+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false
 clr=1;amlr=0;dataset=balanced;model=vgg16+100-50;clloss=bceloss;amloss=bceloss;train=30;test=30;execute=false
 
-clr=1;amlr=0;dataset=balanced;model=resnet18+baseline;clloss=bceloss;amloss=bceloss;train=5;test=5;execute=false
-clr=1;amlr=0;dataset=balanced;model=resnet18+100-50;clloss=bceloss;amloss=bceloss;train=5;test=5;execute=false
-clr=1;amlr=0;dataset=balanced;model=resnet34+baseline;clloss=bceloss;amloss=bceloss;train=5;test=5;execute=false
-clr=1;amlr=0;dataset=balanced;model=resnet34+100-50;clloss=bceloss;amloss=bceloss;train=5;test=5;execute=false
+clr=1;amlr=0;dataset=balanced;model=resnet18+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false
+clr=1;amlr=0;dataset=balanced;model=resnet18+100-50;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false
+clr=1;amlr=0;dataset=balanced;model=resnet34+baseline;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false
+clr=1;amlr=0;dataset=balanced;model=resnet34+100-50;clloss=bceloss;amloss=bceloss;train=30;test=20;execute=false
