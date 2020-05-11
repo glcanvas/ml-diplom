@@ -99,7 +99,7 @@ def load_balanced_dataset(train_size: int, seed: int, image_size: int):
     train_set, test_set = il.load_data(train_size, seed, image_size)
 
     train_set = balance_dataset(train_set, train_size, train_size // 2)
-    test_set = balance_dataset(test_set, len(test_set), len(test_set) // 2)
+    # test_set = balance_dataset(test_set, len(test_set), len(test_set) // 2)
 
     P.write_to_log("========")
     P.write_to_log("balanced TRAIN size: ", calculate_stat(train_set), " full size: ", len(train_set))
