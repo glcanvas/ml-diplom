@@ -14,7 +14,7 @@ from run_scripts import executor_nvsmi as nsmi, gpu_founder as ru
 from utils import property as p
 from utils import property_parser as pp
 import time
-from strategy_initialize import initial_resnet_strategy as init_resnet, initial_vgg_strategy as init_vgg
+from run_scripts import initial_strategy as inits
 
 from threading import Lock, Thread
 
@@ -141,8 +141,7 @@ def infinity_server(q: list):
 if __name__ == "__main__":
     args = sys.argv[1:]
     q = []
-    q.extend(init_resnet.parse_resnet_args(args))
-    q.extend(init_vgg.parse_vgg_args(args))
+    q.extend(inits.parse_args(args))
     if len(q) == 0:
         print("nothing register")
 

@@ -20,7 +20,6 @@ def parse_incoming_args(args: list):
 
 RANDOM = random.Random(0)
 SEED_LIST = [RANDOM.randint(1, 500) for _ in range(3)]
-ATTENTION_MODULE_LEARNING_RATES = [1e-3]
 CLASS_BORDER = [(0, 5)]
 RUN_NAME_RANGE_FROM = 1010
 TRAIN_SIZE = 1800
