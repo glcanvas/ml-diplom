@@ -104,6 +104,8 @@ def load_latest_model(identifier, run_name, algorithm_name):
         break
 
     models = list(filter(lambda x: __parse_model_name(x)['id'] == identifier, models))
+    if len(models) == 0:
+        return None, None
     max_epoch = max(map(lambda x: int(__parse_model_name(x)['epoch']), models))
     last_model_file_name = None
     for model_file_name in models:
@@ -135,7 +137,7 @@ def parse_input_commands():
     parser.add_argument("--freeze_list", default="for_alternate_only")
     parser.add_argument("--is_freezen", default="False")
     parser.add_argument("--weight_decay", default="0")
-    parser.add_argument("--model_type", default="<vgg16,resnet50,resnet32,...>") # require
+    parser.add_argument("--model_type", default="<vgg16,resnet50,resnet32,...>")  # require
     parser.add_argument("--image_size", default='224')
     parser.add_argument("--model_identifier")
     parser.add_argument("--execute_from_model", default="false")
