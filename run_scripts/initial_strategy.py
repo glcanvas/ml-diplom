@@ -12,7 +12,7 @@ import run_scripts.initial_parser as common
 ALGORITHM_DATA = [
     {
         'name': 'executor_baseline.py',
-        'algorithm_name': 'BASELINE+',
+        'algorithm_name': '+baseline',
         'pre_train': common.EPOCHS_COUNT
     },
     {
@@ -147,9 +147,7 @@ def parse_args(args):
 
 if __name__ == "__main__":
     r = parse_args(
-        ["clr=0;amlr=0;dataset=balanced;model=vgg16+AM;clloss=bceloss;a"
-         "mloss=softf1;train=30;test=20;execute=false;am=sum",
-         "clr=0;amlr=0;dataset=balanced;model=resnet18+AM;clloss=bceloss;amloss=softf1;train=30;test=20;execute=false;",
+        ["clr=1;amlr=0;dataset=balanced;model=resnet34+100-50;clloss=bceloss;amloss=bceloss;train=5;test=5;execute=false",
          ])
     for i in r:
         print(i)
