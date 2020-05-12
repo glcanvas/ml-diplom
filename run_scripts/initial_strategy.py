@@ -125,7 +125,7 @@ def parse_args(args):
             test_batch_size = int(dct['test'])
 
         am_type = 'product'
-        if "am" in dct and (dct['am'] == "sum" or dct['am'] == 'product'):
+        if "am" in dct and (dct['am'] == "sum" or dct['am'] == 'product' or dct['am'] == 'product_shift' or dct['am'] == 'sum_shift'):
             am_type = dct['am']
 
         if "dataset" in dct:
@@ -147,7 +147,7 @@ def parse_args(args):
 
 if __name__ == "__main__":
     r = parse_args(
-        ["clr=1;amlr=0;dataset=balanced;model=resnet34+100-50;clloss=bceloss;amloss=bceloss;train=5;test=5;execute=false",
+        ["clr=1;amlr=0;dataset=balanced;model=vgg+100-50;clloss=bceloss;amloss=bceloss;train=5;test=5;execute=false;am=product_shift",
          ])
     for i in r:
         print(i)

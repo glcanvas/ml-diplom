@@ -1,17 +1,29 @@
 def base_model_weights(model):
-    a = list(model.classifier_branch.parameters())
-    a.extend(list(model.basis.parameters()))
-    a.extend(list(model.merged_branch.parameters()))
-    a.extend(list(model.avg_pool.parameters()))
-    a.extend(list(model.classifier.parameters()))
-    return a
+    try:
+        a = list(model.classifier_branch.parameters())
+        a.extend(list(model.basis.parameters()))
+        a.extend(list(model.merged_branch.parameters()))
+        a.extend(list(model.avg_pool.parameters()))
+        a.extend(list(model.classifier.parameters()))
+        return a
+    except BaseException as e:
+        a = list(model.classifier_branch.parameters())
+        a.extend(list(model.merged_branch.parameters()))
+        a.extend(list(model.avg_pool.parameters()))
+        a.extend(list(model.classifier.parameters()))
+        return a
 
 
 def attention_module_weights(model):
-    a = []
-    a.extend(list(model.basis.parameters()))
-    a.extend(list(model.sam_branch.parameters()))
-    return a
+    try:
+        a = []
+        a.extend(list(model.basis.parameters()))
+        a.extend(list(model.sam_branch.parameters()))
+        return a
+    except  BaseException as e:
+        a = []
+        a.extend(list(model.sam_branch.parameters()))
+        return a
 
 
 def register_weights(weight_class, model):

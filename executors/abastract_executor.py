@@ -7,6 +7,7 @@ import torchvision.models as m
 import os
 from utils import image_loader as il, property as P, imbalansed_image_loader as imbalanced
 from model import vgg_with_am_model as am_model
+from model import vgg_with_shifted_am_model as am_model_shift
 from model import resnet_with_am_model as resnet_am_model
 from model import connection_block as cb
 from torch.utils.data import DataLoader
@@ -50,6 +51,10 @@ class AbstractExecutor:
         if str(parsed.am_model).lower() == "sum":
             self.am_model_type = parsed.am_model
         elif str(parsed.am_model).lower() == "product":
+            self.am_model_type = parsed.am_model
+        elif str(parsed.am_model).lower() == "sum_shift":
+            self.am_model_type = parsed.am_model
+        elif str(parsed.am_model).lower() == "product_shift":
             self.am_model_type = parsed.am_model
         else:
             raise Exception("model {} not found".format(parsed.am_model))
@@ -212,6 +217,11 @@ class AbstractExecutor:
             self.model, self.puller = am_model.build_attention_module_model(self.classes, cb.ConnectionSumBlock())
         elif self.am_model_type == "product":
             self.model, self.puller = am_model.build_attention_module_model(self.classes, cb.ConnectionProductBlock())
+        elif self.am_model_type == "sum_shift":
+            self.model, self.puller = am_model_shift.build_attention_module_model(self.classes, cb.ConnectionSumBlock())
+        elif self.am_model_type == "product_shift":
+            self.model, self.puller = am_model_shift.build_attention_module_model(self.classes,
+                                                                                  cb.ConnectionProductBlock())
         return self.model
 
     def build_resnet_with_am_model(self):
