@@ -68,11 +68,11 @@ def initial_strategy_queue(clr_idx: int = 0,
 
     for left_border, right_border in common.CLASS_BORDER:
         for seed_id in common.SEED_LIST:
-            run_name = "RUN_{}_LEFT-{}_RIGHT-{}_TRAIN_SIZE-{}_CLR-{}_AMLR-{}_DATASET-{}" \
-                .format(run_id, left_border, right_border, common.TRAIN_SIZE, clr, amlr, dataset_type)
+            run_name = "RUN_{}_LEFT-{}_RIGHT-{}_TRAIN_SIZE-{}_CLR-{}_AMLR-{}" \
+                .format(run_id, left_border, right_border, common.TRAIN_SIZE, clr, amlr)
             arguments = {
                 '--run_name': run_name,
-                '--algorithm_name': model_strategy + "_" + am_type + "_" + classifier_loss_function + "_" + am_loss_function,
+                '--algorithm_name': model_strategy + "_" + am_type + "_" + classifier_loss_function + "_" + am_loss_function + "_" + dataset_type,
                 '--epochs': common.EPOCHS_COUNT,
                 '--pre_train': algo_data['pre_train'],
                 '--train_set': common.TRAIN_SIZE,

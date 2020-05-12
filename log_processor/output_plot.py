@@ -337,7 +337,7 @@ if __name__ == "__main__":
         #"RUN_1002",
         #"RUN_1005",
         #"RUN_1006",
-        "1e-3_vgg_disbalanced_vs_vgg_balanced"
+        "RUN_1010"
     ]
     for i in runs:
         a, r_n = parse_run(i)
