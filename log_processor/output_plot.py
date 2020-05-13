@@ -54,6 +54,20 @@ def __to_dict(input: str) -> dict:
     return dct
 
 
+def sam_parse_test(input: str, prev_train_epoch: int):
+    dct = __to_dict(input)
+    Loss_CL = float(dct['Loss_CL']) if 'Loss_CL' in dct else 0
+    Loss_M = float(dct['Loss_M']) if 'Loss_M' in dct else 0
+    Loss_L1 = float(dct['Loss_L1']) if 'Loss_L1' in dct else 0
+    Loss_Total = float(dct['Loss_Total']) if 'Loss_Total' in dct else 0
+    Accuracy_CL = float(dct['Accuracy_CL']) if 'Accuracy_CL' in dct else 0
+    f_measures, recall, precision = __load_statistics(dct)
+    test = int(dct['TEST']) if 'TEST' in dct else prev_train_epoch
+    return {'Loss_CL': Loss_CL, 'Loss_M': Loss_M, 'Loss_L1': Loss_L1,
+            'Loss_Total': Loss_Total, 'Accuracy_CL': Accuracy_CL, 'f_measures': f_measures, 'recall': recall,
+            'precision': precision, 'test': test}
+
+
 def sam_parse_train(input: str):
     dct = __to_dict(input)
     Loss_CL = float(dct['Loss_CL']) if 'Loss_CL' in dct else 0
@@ -62,26 +76,41 @@ def sam_parse_train(input: str):
     Loss_Total = float(dct['Loss_Total']) if 'Loss_Total' in dct else 0
     Accuracy_CL = float(dct['Accuracy_CL']) if 'Accuracy_CL' in dct else 0
     f_measures, recall, precision = __load_statistics(dct)
+    train = int(dct['PRETRAIN']) if 'PRETRAIN' in dct else int(dct['TRAIN']) if 'TRAIN' in dct else 0
     return {'Loss_CL': Loss_CL, 'Loss_M': Loss_M, 'Loss_L1': Loss_L1,
             'Loss_Total': Loss_Total, 'Accuracy_CL': Accuracy_CL, 'f_measures': f_measures, 'recall': recall,
-            'precision': precision}
+            'precision': precision, 'train': train}
+
+
+def to_list(dct: dict):
+    keys = sorted(dct.keys())
+    res = []
+    for k in keys:
+        res.append(dct[k])
+    return res
 
 
 def __load_file(file_path: str, train_parse, test_parse):
-    train = []
-    test = []
+    train = {}
+    test = {}
     train_index = 1
     test_index = 1
     with open(file_path) as f:
+        train_epoch = 0
         for l in f.readlines():
             if "TRAIN" in l:
-                train.append(train_parse(l))
+                train_dct = train_parse(l)
+                train_epoch = train_dct['train']
+                train[train_epoch] = train_dct
                 train_index += 1
             elif "TEST" in l:
-                test.append(test_parse(l))
+                test_dct = test_parse(l, train_epoch)
+                test_epoch = test_dct['test']
+                test[test_epoch] = test_dct
                 test_index += 1
         file_name = os.path.basename(f.name)
-    return train, test, file_name
+
+    return to_list(train), to_list(test), file_name
 
 
 def draw_plot_return_avg(ax, title, algo_name, algorithm_list: list, execute_measure_function, plot_color,
@@ -292,7 +321,7 @@ def parse_run(run_number="run_01", use_print: bool = False):
                     if use_print:
                         print('BEGIN READ ' + log_path)
                     train, test, _ = __load_file(log_path, sam_parse_train,
-                                                 sam_parse_train)
+                                                 sam_parse_test)
                     if use_print:
                         print('END READ ' + log_path)
                     algorithm_list_test.append(test)
@@ -323,23 +352,25 @@ def reduce_stat(algorithms: dict, run_number: str):
 
 if __name__ == "__main__":
     runs = [
-        # "RUN_500_no_pretrian",
-        #"RUN_500_pretained_default",
-        #"RUN_500_pretrain_sum",
-        # "RUN_501_no_pretrian",
-        #"RUN_501_pretained_default",
-        # "RUN_501_pretrain_sum",
-        # "RUN_502_pretained_default",
-        # "RUN_503_pretained_default"
-        # "vgg_vs_resnet50"
-        #"RUN_1000",
-        #"RUN_1001",
-        #"RUN_1002",
-        #"RUN_1005",
-        #"RUN_1006",
-        #"RUN_1010"
+        "RUN_500_no_pretrian",
+        "RUN_500_pretained_default",
+        "RUN_500_pretrain_sum",
+        "RUN_501_no_pretrian",
+        "RUN_501_pretained_default",
+        "RUN_501_pretrain_sum",
+        "RUN_502_pretained_default",
+        "RUN_503_pretained_default"
+        "vgg_vs_resnet50"
+        "RUN_1000",
+        "RUN_1001",
+        "RUN_1002",
+        "RUN_1005",
+        "RUN_1006",
+        "RUN_1010"
         "RUN_1010_balanced"
-        #"RUN_1011_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_CLR-0.0001_AMLR-0.001_DATASET-balanced"
+        "RUN_1011_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_CLR-0.0001_AMLR-0.001_DATASET-balanced"
+        "RUN_1010_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_CLR-0.001_AMLR-0.001_DATASET-disbalanced"
+        "RUN_1010_CLR-0.001_AMLR-0.001_DATASET-disbalanced_vgg_only"
     ]
     for i in runs:
         a, r_n = parse_run(i)
