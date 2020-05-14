@@ -84,7 +84,7 @@ class SingleSimultaneousModuleTrain(at.AbstractTrain):
             loss_segmentation_sum = 0
             accuracy_sum = 0
             batch_count = 0
-
+            self.am_model.train(mode=True)
             for images, segments, labels in self.train_segments_set:
                 labels, segments = model_utils.reduce_to_class_number(self.left_class_number, self.right_class_number,
                                                                       labels,
@@ -142,7 +142,7 @@ class SingleSimultaneousModuleTrain(at.AbstractTrain):
                                       precision_score_text)
 
             P.write_to_log(text)
-
+            self.am_model.train(mode=False)
             if self.current_epoch % self.test_each_epoch == 0:
                 test_loss, _ = self.test(self.am_model, self.test_set, self.l_loss, self.m_loss)
             if self.current_epoch % 10 == 0:

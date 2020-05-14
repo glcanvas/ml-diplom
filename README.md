@@ -31,4 +31,4 @@ python on_server_executor.py '0;vgg16+100-50;False;softf1' '0;vgg16+AM;False;sof
 
 df -h
 
-ssh -i key.pem ubuntu@176.99.131.118
+ssh -i key.pem ubuntu@176.99.130.202

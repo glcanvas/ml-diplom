@@ -34,6 +34,11 @@ ALGORITHM_DATA = [
         'name': 'executor_single_simultaneous.py',
         'algorithm_name': '*1-1',
         'pre_train': common.EPOCHS_COUNT
+    },
+    {
+        'name': 'executor_multiple_am_single_simultaneous.py',
+        'algorithm_name': '+cbam',
+        'pre_train': common.EPOCHS_COUNT
     }
 ]
 
@@ -41,7 +46,7 @@ SUPPORTED_C_LR = [1e-3, 1e-4, 1e-5]
 SUPPORTED_AM_LR = [1e-3, 1e-4, 1e-5]
 
 MODEL_TYPES = ["resnet18", "resnet34", "resnet50", "resnet101", "resnet152", "vgg", "vgg16"]
-MEMORY_USAGE = [2000, 2000, 2000, 3000, 3000, 3000, 3000] # 4000, 6000, 6000
+MEMORY_USAGE = [2000, 2000, 2000, 3000, 3000, 3000, 3000]  # 4000, 6000, 6000
 
 MODEL_STRATEGY = [x + y['algorithm_name'] for x in MODEL_TYPES for y in ALGORITHM_DATA]
 MODEL_STRATEGY_DATA = [(x, y) for x in MODEL_TYPES for y in ALGORITHM_DATA]
@@ -57,7 +62,7 @@ def initial_strategy_queue(clr_idx: int = 0,
                            test_batch_size: str = "5",
                            am_type: str = "sum",
                            dataset_type: str = None,
-                           ):
+                           cbam_use_mloss: bool = True):
     result = []
     run_id = common.RUN_NAME_RANGE_FROM + clr_idx + amlr_idx * len(SUPPORTED_C_LR)
 
@@ -70,9 +75,16 @@ def initial_strategy_queue(clr_idx: int = 0,
         for seed_id in common.SEED_LIST:
             run_name = "RUN_{}_LEFT-{}_RIGHT-{}_TRAIN_SIZE-{}_CLR-{}_AMLR-{}" \
                 .format(run_id, left_border, right_border, common.TRAIN_SIZE, clr, amlr)
+
+            algorithm_name = model_strategy + "_" + am_type + "_" + classifier_loss_function + "_" + am_loss_function
+            algorithm_name += "_" + dataset_type
+
+            if am_type == "cbam":
+                algorithm_name = algorithm_name + "_" + str(cbam_use_mloss)
+
             arguments = {
                 '--run_name': run_name,
-                '--algorithm_name': model_strategy + "_" + am_type + "_" + classifier_loss_function + "_" + am_loss_function + "_" + dataset_type,
+                '--algorithm_name': algorithm_name,
                 '--epochs': common.EPOCHS_COUNT,
                 '--pre_train': algo_data['pre_train'],
                 '--train_set': common.TRAIN_SIZE,
@@ -88,7 +100,8 @@ def initial_strategy_queue(clr_idx: int = 0,
                 '--am_model': am_type,
                 '--train_batch_size': train_batch_size,
                 '--test_batch_size': test_batch_size,
-                '--dataset_type': dataset_type
+                '--dataset_type': dataset_type,
+                '--cbam_use_mloss': cbam_use_mloss
             }
             result.append((algo_data['name'], memory_usage, arguments))
     return result
@@ -125,12 +138,17 @@ def parse_args(args):
             test_batch_size = int(dct['test'])
 
         am_type = 'product'
-        if "am" in dct and (dct['am'] == "sum" or dct['am'] == 'product' or dct['am'] == 'product_shift' or dct['am'] == 'sum_shift'):
+        if "am" in dct and (dct['am'] == "sum" or dct['am'] == 'product' or dct['am'] == 'product_shift' or dct[
+            'am'] == 'sum_shift' or dct['am'] == "cbam"):
             am_type = dct['am']
 
+        dataset = "balanced"
         if "dataset" in dct:
             dataset = dct["dataset"]
 
+        cbam_use_mloss = False
+        if "cbam_mloss" in dct:
+            cbam_use_mloss = dct["cbam_mloss"]
         commands.extend(initial_strategy_queue(clr_idx,
                                                am_idx,
                                                model_type,
@@ -140,15 +158,18 @@ def parse_args(args):
                                                train_batch_size,
                                                test_batch_size,
                                                am_type,
-                                               dataset))
+                                               dataset,
+                                               cbam_use_mloss))
 
     return commands
 
 
 if __name__ == "__main__":
     r = parse_args(
-        ["clr=1;amlr=0;dataset=balanced;model=vgg+100-50;clloss=bceloss;amloss=bceloss;train=5;test=5;execute=false;am=product_shift",
-         ])
+        [
+            "clr=1;amlr=0;dataset=balanced;model=resnet18+cbam;clloss=bceloss;amloss=bceloss;train=5;test=5;am=cbam;",
+            "clr=1;amlr=0;dataset=balanced;model=resnet18+cbam;clloss=bceloss;amloss=bceloss;train=5;test=5;am=cbam;cbam_mloss=True"
+        ])
     for i in r:
         print(i)
 """

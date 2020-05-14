@@ -147,6 +147,7 @@ def parse_input_commands():
     parser.add_argument("--train_batch_size", default="5")
     parser.add_argument("--test_batch_size", default="5")
     parser.add_argument("--dataset_type", default="balanced")
+    parser.add_argument("--cbam_use_mloss", default="true")
     return parser
 
 

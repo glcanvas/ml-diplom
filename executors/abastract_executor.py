@@ -9,6 +9,8 @@ from utils import image_loader as il, property as P, imbalansed_image_loader as 
 from model import vgg_with_am_model as am_model
 from model import vgg_with_shifted_am_model as am_model_shift
 from model import resnet_with_am_model as resnet_am_model
+from model import resnet18_cbam as resnet18cbam
+from model import resnet34_cbam as resnet34cbam
 from model import connection_block as cb
 from torch.utils.data import DataLoader
 import traceback
@@ -35,6 +37,7 @@ class AbstractExecutor:
         self.classifier_learning_rate = float(parsed.classifier_learning_rate)
         self.attention_module_learning_rate = float(parsed.attention_module_learning_rate)
         self.is_freezen = False if str(parsed.is_freezen).lower() == "false" else True
+        self.cbam_use_mloss = False if str(parsed.cbam_use_mloss).lower() == "false" else True
 
         self.model_type = str(parsed.model_type).lower()
         self.is_vgg16_model = True if "vgg" in self.model_type else False
@@ -55,6 +58,8 @@ class AbstractExecutor:
         elif str(parsed.am_model).lower() == "sum_shift":
             self.am_model_type = parsed.am_model
         elif str(parsed.am_model).lower() == "product_shift":
+            self.am_model_type = parsed.am_model
+        elif str(parsed.am_model).lower() == "cbam":
             self.am_model_type = parsed.am_model
         else:
             raise Exception("model {} not found".format(parsed.am_model))
@@ -247,3 +252,9 @@ class AbstractExecutor:
             return self.build_baseline_vgg_model()
         else:
             return self.build_baseline_resnet_model()
+
+    def build_resnet_with_cbam(self):
+        if "resnet34" in self.model_type:
+            self.model, self.puller = resnet34cbam.build_resnet34_with_cbam(self.classes)
+        if "resnet18" in self.model_type:
+            self.model, self.puller = resnet18cbam.build_resnet18_with_cbam(self.classes)

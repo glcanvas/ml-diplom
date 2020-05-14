@@ -352,25 +352,34 @@ def reduce_stat(algorithms: dict, run_number: str):
 
 if __name__ == "__main__":
     runs = [
-        "RUN_500_no_pretrian",
-        "RUN_500_pretained_default",
-        "RUN_500_pretrain_sum",
-        "RUN_501_no_pretrian",
-        "RUN_501_pretained_default",
-        "RUN_501_pretrain_sum",
-        "RUN_502_pretained_default",
-        "RUN_503_pretained_default"
-        "vgg_vs_resnet50"
-        "RUN_1000",
-        "RUN_1001",
-        "RUN_1002",
-        "RUN_1005",
-        "RUN_1006",
-        "RUN_1010"
-        "RUN_1010_balanced"
-        "RUN_1011_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_CLR-0.0001_AMLR-0.001_DATASET-balanced"
-        "RUN_1010_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_CLR-0.001_AMLR-0.001_DATASET-disbalanced"
-        "RUN_1010_CLR-0.001_AMLR-0.001_DATASET-disbalanced_vgg_only"
+        #"RUN_500_no_pretrian",
+        #"RUN_500_pretained_default",
+        #"RUN_500_pretrain_sum",
+        #"RUN_501_no_pretrian",
+        #"RUN_501_pretained_default",
+        #"RUN_501_pretrain_sum",
+        #"RUN_502_pretained_default",
+        #"RUN_503_pretained_default",
+        #"vgg_vs_resnet50",
+        #"RUN_1000",
+        #"RUN_1001",
+        #"RUN_1002",
+        #"RUN_1005",
+        #"RUN_1006",
+        #"RUN_1010",
+        #"RUN_1010_balanced",
+        #"RUN_1011_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_CLR-0.0001_AMLR-0.001_DATASET-balanced",
+        #"RUN_1010_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_CLR-0.001_AMLR-0.001_DATASET-disbalanced",
+        #"RUN_1010_CLR-0.001_AMLR-0.001_DATASET-disbalanced_vgg_only",
+
+        #"RUN_1010_clr=1e-3_softf1_bceloss_balanced",
+        #"RUN_1011_clr=1e-4_softf1_bceloss_balanced",
+        #"RUN_1011_clr=1e-4_bceloss_softf1_balanced",
+        #"resnet18+baseline_different_lr_balanced",
+        #"resnet18+baseline_different_lr_disbalanced",
+        #"resnet34+baseline_different_lr_balanced",
+        #"RUN_1012_clr=1e-5_bceloss_bceloss_balanced_resnet34",
+        #"RUN_1012_clr=1e-5_bceloss_bceloss_balanced_resnet18",
     ]
     for i in runs:
         a, r_n = parse_run(i)

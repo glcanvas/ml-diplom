@@ -78,8 +78,8 @@ def start_strategy(executor_name: str, memory_usage: int, gpu: int, algorithms_p
     current_time = datetime.today().strftime('%Y-%m-%d-_-%H_%M_%S')
     p.write_to_log("time = {} END execute: {}, status = {}".format(current_time, cmd, status))
 
+    strategy_lock.acquire()
     try:
-        strategy_lock.acquire()
         if status != 0:
             p.write_to_log("Failed algorithm execution: {}, status={}".format(cmd, status))
 
@@ -102,8 +102,8 @@ def infinity_server(q: list):
     actual_property_context = None
     while True:
         property_context, actual_property_index = pp.process_property_file(PROPERTY_FILE, actual_property_index)
+        strategy_lock.acquire()
         try:
-            strategy_lock.acquire()
             if property_context != actual_property_context:
                 # update
                 actual_property_context = property_context
@@ -135,7 +135,7 @@ def infinity_server(q: list):
             p.write_to_log("-" * 20)
         finally:
             strategy_lock.release()
-            time.sleep(SLEEP_SECONDS)
+        time.sleep(SLEEP_SECONDS)
 
 
 if __name__ == "__main__":

@@ -70,6 +70,7 @@ class AbstractTrain:
         self.test_probabilities = [[] for _ in range(self.classes)]
 
     def test(self, model, test_set, l_loss, m_loss):
+        model.train(mode=False)
         loss_classification_sum = 0
         loss_segmentation_sum = 0
         accuracy_classification_sum = 0
@@ -113,10 +114,11 @@ class AbstractTrain:
                                                                                           recall_score_text,
                                                                                           precision_score_text)
         p.write_to_log(text)
-
+        model.train(mode=True)
         return loss_classification_sum, accuracy_classification_sum
 
     def train_classifier(self, model, l_loss, m_loss, optimizer, train_set):
+        model.train(mode=True)
         loss_classification_sum = 0
         loss_segmentation_sum = 0
         accuracy_classification_sum = 0
@@ -151,11 +153,12 @@ class AbstractTrain:
             batch_count += 1
             #self.de_convert_data_and_label(images, segments, labels)
             #torch.cuda.empty_cache()
-
+        model.train(mode=False)
         return loss_classification_sum / (batch_count + p.EPS), accuracy_classification_sum / (
                 batch_count + p.EPS), loss_segmentation_sum / (batch_count + p.EPS)
 
     def train_segments(self, model, l_loss, m_loss, optimizer: torch.optim.Adam, train_set):
+        model.train(mode=True)
         accuracy_classification_sum = 0
         loss_m_sum = 0
         loss_l1_sum = 0
@@ -190,7 +193,7 @@ class AbstractTrain:
             batch_count += 1
             #self.de_convert_data_and_label(images, labels, segments)
             #torch.cuda.empty_cache()
-
+        model.train(mode=False)
         return accuracy_classification_sum / (batch_count + p.EPS), loss_m_sum / (
                 batch_count + p.EPS), loss_l1_sum / (
                        batch_count + p.EPS), loss_classification_sum / (batch_count + p.EPS)
