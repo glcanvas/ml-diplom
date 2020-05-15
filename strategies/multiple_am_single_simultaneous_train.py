@@ -58,7 +58,7 @@ class MultipleAMSingleSimultaneousTrain(at.AbstractTrain):
         self.use_mloss = use_mloss
 
     def train(self):
-        classifier_optimizer = torch.optim.Adam(self.am_model.parameters(), self.classifier_learning_rate)
+        optimizer = torch.optim.Adam(self.am_model.parameters(), self.classifier_learning_rate)
 
         while self.current_epoch <= self.train_epochs:
 
@@ -80,27 +80,28 @@ class MultipleAMSingleSimultaneousTrain(at.AbstractTrain):
                     segments_list.append(puller(segments))
 
                 # calculate and optimize model
-                classifier_optimizer.zero_grad()
+                optimizer.zero_grad()
 
                 model_classification, model_segmentation = model_utils.wait_while_can_execute(self.am_model, images)
                 classification_loss = self.l_loss(model_classification, labels)
-                classification_loss.backward(retain_graph=True)
+                total_loss = classification_loss
 
                 if self.use_mloss:
                     sum_segm_loss = None
                     for ms, sl in zip(model_segmentation, segments_list):
                         segmentation_loss = self.m_loss(ms, sl)
-                        segmentation_loss.backward(retain_graph=True)
+                        total_loss += segmentation_loss
                         if sum_segm_loss is None:
                             sum_segm_loss = segmentation_loss
                         else:
                             sum_segm_loss += segmentation_loss
-                classifier_optimizer.step()
+                total_loss.backward()
+                optimizer.step()
 
                 output_probability, output_cl, cl_acc = self.calculate_accuracy(labels, model_classification,
                                                                                 labels.size(0))
 
-                classifier_optimizer.zero_grad()
+                optimizer.zero_grad()
 
                 self.save_train_data(labels, output_cl, output_probability)
 
