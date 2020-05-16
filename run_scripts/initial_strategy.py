@@ -46,11 +46,12 @@ SUPPORTED_C_LR = [1e-3, 1e-4, 1e-5]
 SUPPORTED_AM_LR = [1e-3, 1e-4, 1e-5]
 
 MODEL_TYPES = ["resnet18", "resnet34", "resnet50", "resnet101", "resnet152", "vgg", "vgg16"]
-MEMORY_USAGE = [2000, 2000, 2000, 3000, 3000, 3000, 3000]  # 4000, 6000, 6000
+MEMORY_USAGE = [2000, 3000, 2000, 3000, 3000, 3000, 3000]  # 4000, 6000, 6000
 
 MODEL_STRATEGY = [x + y['algorithm_name'] for x in MODEL_TYPES for y in ALGORITHM_DATA]
 MODEL_STRATEGY_DATA = [(x, y) for x in MODEL_TYPES for y in ALGORITHM_DATA]
 
+RUN_NAME_RANGE_FROM = 1020
 
 def initial_strategy_queue(clr_idx: int = 0,
                            amlr_idx: int = 0,
@@ -66,7 +67,7 @@ def initial_strategy_queue(clr_idx: int = 0,
                            alpha: float = 0.5,
                            gamma: float = 0):
     result = []
-    run_id = common.RUN_NAME_RANGE_FROM + clr_idx + amlr_idx * len(SUPPORTED_C_LR)
+    run_id = RUN_NAME_RANGE_FROM + clr_idx + amlr_idx * len(SUPPORTED_C_LR)
 
     clr = SUPPORTED_C_LR[clr_idx]
     amlr = SUPPORTED_AM_LR[amlr_idx]
@@ -113,6 +114,10 @@ def initial_strategy_queue(clr_idx: int = 0,
 
 
 def parse_args(args):
+    if args[0].isdecimal():
+        global RUN_NAME_RANGE_FROM
+        RUN_NAME_RANGE_FROM = int(args[0])
+    args = args[1:]
     args_dict = common.parse_incoming_args(args)
     commands = []
     for dct in args_dict:
@@ -180,6 +185,7 @@ def parse_args(args):
 if __name__ == "__main__":
     r = parse_args(
         [
+            '1488',
             'clr=1;amlr=0;dataset=balanced;model=resnet18+cbam;clloss=focal;amloss=bceloss;train=30;test=30;am=product;alpha=0.5;gamma=0'
         ])
     for i in r:
