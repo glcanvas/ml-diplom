@@ -62,7 +62,9 @@ def initial_strategy_queue(clr_idx: int = 0,
                            test_batch_size: str = "5",
                            am_type: str = "sum",
                            dataset_type: str = None,
-                           cbam_use_mloss: bool = True):
+                           cbam_use_mloss: bool = True,
+                           alpha: float = 0.5,
+                           gamma: float = 0):
     result = []
     run_id = common.RUN_NAME_RANGE_FROM + clr_idx + amlr_idx * len(SUPPORTED_C_LR)
 
@@ -81,7 +83,8 @@ def initial_strategy_queue(clr_idx: int = 0,
 
             if am_type == "cbam":
                 algorithm_name = algorithm_name + "_" + str(cbam_use_mloss)
-
+            if classifier_loss_function == "focal" or am_loss_function == "focal":
+                algorithm_name = algorithm_name + "_" + "alpha_{}_gamma_{}".format(alpha, gamma)
             arguments = {
                 '--run_name': run_name,
                 '--algorithm_name': algorithm_name,
@@ -101,7 +104,9 @@ def initial_strategy_queue(clr_idx: int = 0,
                 '--train_batch_size': train_batch_size,
                 '--test_batch_size': test_batch_size,
                 '--dataset_type': dataset_type,
-                '--cbam_use_mloss': cbam_use_mloss
+                '--cbam_use_mloss': cbam_use_mloss,
+                '--alpha': alpha,
+                '--gamma': gamma
             }
             result.append((algo_data['name'], memory_usage, arguments))
     return result
@@ -125,10 +130,10 @@ def parse_args(args):
         if 'execute' in dct and (dct['execute'] == 'true' or dct['execute'] == 'false'):
             execute_from_model = dct['execute']
 
-        if "clloss" in dct and (dct['clloss'] == 'bceloss' or dct['clloss'] == 'softf1'):
+        if "clloss" in dct and (dct['clloss'] == 'bceloss' or dct['clloss'] == 'softf1' or dct['clloss'] == 'focal'):
             classifier_loss = dct['clloss']
 
-        if "amloss" in dct and (dct['amloss'] == 'bceloss' or dct['amloss'] == 'softf1'):
+        if "amloss" in dct and (dct['amloss'] == 'bceloss' or dct['amloss'] == 'softf1' or dct['amloss'] == 'focal'):
             am_loss = dct['amloss']
 
         if "train" in dct:
@@ -149,6 +154,12 @@ def parse_args(args):
         cbam_use_mloss = False
         if "cbam_mloss" in dct:
             cbam_use_mloss = dct["cbam_mloss"]
+        alpha = 0.5
+        gamma = 0
+        if "alpha" in dct:
+            alpha = dct['alpha']
+        if 'gamma' in dct:
+            gamma = dct['gamma']
         commands.extend(initial_strategy_queue(clr_idx,
                                                am_idx,
                                                model_type,
@@ -159,7 +170,9 @@ def parse_args(args):
                                                test_batch_size,
                                                am_type,
                                                dataset,
-                                               cbam_use_mloss))
+                                               cbam_use_mloss,
+                                               alpha,
+                                               gamma))
 
     return commands
 
@@ -167,8 +180,7 @@ def parse_args(args):
 if __name__ == "__main__":
     r = parse_args(
         [
-            "clr=1;amlr=0;dataset=balanced;model=resnet18+cbam;clloss=bceloss;amloss=bceloss;train=5;test=5;am=cbam;",
-            "clr=1;amlr=0;dataset=balanced;model=resnet18+cbam;clloss=bceloss;amloss=bceloss;train=5;test=5;am=cbam;cbam_mloss=True"
+            'clr=1;amlr=0;dataset=balanced;model=resnet18+cbam;clloss=focal;amloss=bceloss;train=30;test=30;am=product;alpha=0.5;gamma=0'
         ])
     for i in r:
         print(i)

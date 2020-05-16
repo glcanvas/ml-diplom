@@ -15,6 +15,7 @@ from torch.utils.data import DataLoader
 import traceback
 import torch.nn as nn
 import losses.soft_f1_loss as f1loss
+import losses.focal_loss as focal_loss
 
 
 class AbstractExecutor:
@@ -47,6 +48,10 @@ class AbstractExecutor:
             self.classifier_loss_function = nn.BCELoss()
         elif str(parsed.classifier_loss_function).lower() == "softf1":
             self.classifier_loss_function = f1loss.SoftF1Loss()
+        elif str(parsed.classifier_loss_function).lower() == "focal":
+            alpha = float(parsed.alpha)
+            gamma = float(parsed.gamma)
+            self.classifier_loss_function = focal_loss.FocalLoss(alpha, gamma)
         else:
             raise Exception("classifier loss {} not found".format(parsed.classifier_loss_function))
 
@@ -67,6 +72,10 @@ class AbstractExecutor:
             self.am_loss_function = nn.BCELoss()
         elif str(parsed.am_loss_function).lower() == "softf1":
             self.am_loss_function = f1loss.SoftF1Loss()
+        elif str(parsed.classifier_loss_function).lower() == "focal":
+            alpha = float(parsed.alpha)
+            gamma = float(parsed.gamma)
+            self.am_loss_function = focal_loss.FocalLoss(alpha, gamma)
         else:
             raise Exception("am loss {} not found".format(parsed.am_loss_function))
 

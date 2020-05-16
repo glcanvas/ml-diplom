@@ -148,6 +148,8 @@ def parse_input_commands():
     parser.add_argument("--test_batch_size", default="5")
     parser.add_argument("--dataset_type", default="balanced")
     parser.add_argument("--cbam_use_mloss", default="true")
+    parser.add_argument("--alpha", default="0.5")
+    parser.add_argument("--gamma", default="0.0")
     return parser
 
 
