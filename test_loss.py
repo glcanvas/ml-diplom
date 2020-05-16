@@ -1,5 +1,5 @@
 import torch
-from model import am_loss_function as amlf
+from losses import am_loss_function as amlf
 
 if __name__ == "__main__":
     """

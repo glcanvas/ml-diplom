@@ -2,7 +2,6 @@ import sys
 
 sys.path.insert(0, "/home/nduginec/ml3/ml-diplom")
 sys.path.insert(0, "/home/ubuntu/ml3/ml-diplom")
-import traceback
 import torchvision.models as m
 import os
 from utils import image_loader as il, property as P, imbalansed_image_loader as imbalanced
@@ -15,7 +14,7 @@ from model import connection_block as cb
 from torch.utils.data import DataLoader
 import traceback
 import torch.nn as nn
-import model.soft_f1_loss as f1loss
+import losses.soft_f1_loss as f1loss
 
 
 class AbstractExecutor:
