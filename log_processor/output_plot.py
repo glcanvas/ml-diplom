@@ -407,9 +407,10 @@ if __name__ == "__main__":
         #"resnet18_lr=1e-4_balanced_CBAM",
         #"resnet18_lr=1e-4_disbalanced_CBAM",
 
+        # FOCAL LOSS
         "RUN_1020_CLR-0.001_AMLR-0.001",
-        "RUN_1020_CLR-0.0001_AMLR-0.001",
-        "RUN_1020_CLR-1e-5_AMLR-0.001",
+        #"RUN_1021_CLR-0.0001_AMLR-0.001",
+        #"RUN_1022_CLR-1e-05_AMLR-0.001",
     ]
     for i in runs:
         a, r_n = parse_run(i)
