@@ -3,6 +3,7 @@ import torch
 import math
 import torch.nn.functional as F
 
+EPS = 1e-15
 
 # losses
 
@@ -36,7 +37,7 @@ class FocalLoss(nn.Module):
         # equivalent
         # p if y == 1
         # 1 - p if y == 0
-        p_t = (output * target + inverse_target * inverse_output)
+        p_t = (output * target + inverse_target * inverse_output) + EPS
 
         # equivalent
         # -log(p), if y = 1
@@ -72,7 +73,7 @@ class FocalLoss(nn.Module):
         # equivalent
         # p if y == 1
         # 1 - p if y == 0
-        p_t = (output * target + inverse_target * inverse_output)
+        p_t = (output * target + inverse_target * inverse_output) + EPS
 
         # equivalent
         # -log(p), if y = 1
@@ -99,7 +100,7 @@ class FocalLoss(nn.Module):
 if __name__ == "__main__":
     y = torch.tensor([[1.0, 0.0, 1.0], [1.0, 1.0, 0.0]])
     # y_m = torch.tensor([[1, 0.0, 1], [1, 1, 0.0]])
-    y_m = torch.tensor([[0.5, 0.3, 0.8], [0.1, 0.6, 0.9]], requires_grad=True)
+    y_m = torch.tensor([[0.000000000001, 0.3, 0.8], [0.1, 0.6, 0.9]], requires_grad=True)
 
     loss = FocalLoss(1, 2)
     loss_v = loss.forward(y_m, y)
