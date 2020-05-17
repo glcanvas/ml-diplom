@@ -49,7 +49,7 @@ class FocalLoss(nn.Module):
         # alpha -- frequency for 0 values in target
         # inverse_alpha -- frequency for 1 values in target
         alpha = (1 - self.alpha_list) * target
-        inverse_alpha = self.alpha * inverse_target
+        inverse_alpha = self.alpha_list * inverse_target
         # equivalent
         # a if y == 1
         # 1 - a if y == 0
