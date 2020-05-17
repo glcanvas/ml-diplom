@@ -139,7 +139,7 @@ class SimultaneousModelTrain(at.AbstractTrain):
                 if best_test_loss is None or test_loss < best_test_loss:
                     best_test_loss = test_loss
                     self.best_test_weights = copy.deepcopy(self.am_model.state_dict())
-            if self.current_epoch % 30 == 0:
+            if self.current_epoch % 200 == 0:
                 self.take_snapshot(self.train_segments_set, self.am_model, "TRAIN_{}".format(self.current_epoch))
                 self.take_snapshot(self.test_set, self.am_model, "TEST_{}".format(self.current_epoch))
             if best_loss is None or loss_total < best_loss:

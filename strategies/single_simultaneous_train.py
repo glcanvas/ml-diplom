@@ -145,7 +145,7 @@ class SingleSimultaneousModuleTrain(at.AbstractTrain):
             self.am_model.train(mode=False)
             if self.current_epoch % self.test_each_epoch == 0:
                 test_loss, _ = self.test(self.am_model, self.test_set, self.l_loss, self.m_loss)
-            if self.current_epoch % 30 == 0:
+            if self.current_epoch % 200 == 0:
                 self.take_snapshot(self.train_segments_set, self.am_model, "TRAIN_{}".format(self.current_epoch))
                 self.take_snapshot(self.test_set, self.am_model, "TEST_{}".format(self.current_epoch))
 
