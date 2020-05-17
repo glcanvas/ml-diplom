@@ -91,16 +91,7 @@ class AbstractExecutor:
 
         self.classes = self.right_class_number - self.left_class_number
 
-        self.description = "description-{},train_set-{},epochs-{},l-{},r-{},clr-{},amlr-{},model_identifier-{}".format(
-            self.parsed_description,
-            self.train_set_size,
-            self.epochs,
-            self.left_class_number,
-            self.right_class_number,
-            self.classifier_learning_rate,
-            self.attention_module_learning_rate,
-            self.model_identifier
-        )
+        self.description = "mi-{}".format(self.model_identifier)
         self.snapshots_path = None
         self.train_segments_set = None
         self.test_set = None
