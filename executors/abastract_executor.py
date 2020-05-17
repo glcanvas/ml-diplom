@@ -44,14 +44,16 @@ class AbstractExecutor:
 
         self.image_size = int(parsed.image_size)
 
+        self.alpha = None
+        self.gamma = None
         if str(parsed.classifier_loss_function).lower() == "bceloss":
             self.classifier_loss_function = nn.BCELoss()
         elif str(parsed.classifier_loss_function).lower() == "softf1":
             self.classifier_loss_function = f1loss.SoftF1Loss()
         elif str(parsed.classifier_loss_function).lower() == "focal":
-            alpha = float(parsed.alpha)
-            gamma = float(parsed.gamma)
-            self.classifier_loss_function = focal_loss.FocalLoss(alpha, gamma)
+            self.alpha = float(parsed.alpha)
+            self.gamma = float(parsed.gamma)
+            self.classifier_loss_function = focal_loss.FocalLoss(self.alpha, self.gamma)
         else:
             raise Exception("classifier loss {} not found".format(parsed.classifier_loss_function))
 
@@ -73,9 +75,9 @@ class AbstractExecutor:
         elif str(parsed.am_loss_function).lower() == "softf1":
             self.am_loss_function = f1loss.SoftF1Loss()
         elif str(parsed.classifier_loss_function).lower() == "focal":
-            alpha = float(parsed.alpha)
-            gamma = float(parsed.gamma)
-            self.am_loss_function = focal_loss.FocalLoss(alpha, gamma)
+            self.alpha = float(parsed.alpha)
+            self.gamma = float(parsed.gamma)
+            self.am_loss_function = focal_loss.FocalLoss(self.alpha, self.gamma)
         else:
             raise Exception("am loss {} not found".format(parsed.am_loss_function))
 
@@ -98,6 +100,7 @@ class AbstractExecutor:
         self.model = None
         self.puller = None
         self.strategy = None
+        self.train_count = None
 
         self.initialize_logs()
         self.initialize_snapshots_dir()
@@ -152,15 +155,23 @@ class AbstractExecutor:
     def load_dataset(self):
 
         if self.dataset_type != "balanced":
-            segments_set, test_set = il.load_data(self.train_set_size, self.model_identifier, self.image_size)
+            segments_set, test_set, train_count = il.load_data(self.train_set_size, self.model_identifier,
+                                                               self.image_size)
         else:
-            segments_set, test_set = imbalanced.load_balanced_dataset(self.train_set_size, self.model_identifier,
-                                                                      self.image_size)
+            segments_set, test_set, train_count = imbalanced.load_balanced_dataset(self.train_set_size,
+                                                                                   self.model_identifier,
+                                                                                   self.image_size)
         self.train_segments_set = DataLoader(il.ImageDataset(segments_set), batch_size=self.train_batch_size,
                                              shuffle=True)
         print("ok")
         self.test_set = DataLoader(il.ImageDataset(test_set), batch_size=self.test_batch_size)
+        self.train_count = train_count.cuda(self.gpu)
         print("ok")
+
+        if isinstance(self.am_loss_function, focal_loss.FocalLoss) and self.alpha < 0:
+            self.am_loss_function.apply_alpha_list(self.train_count, self.train_set_size)
+        if isinstance(self.classifier_loss_function, focal_loss.FocalLoss) and self.alpha < 0:
+            self.classifier_loss_function.apply_alpha_list(self.train_count, self.train_set_size)
 
     def get_current_epoch(self) -> int:
         if self.execute_from_model:

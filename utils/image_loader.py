@@ -231,10 +231,11 @@ def load_data(train_size: int, seed: int, image_size: int):
     log = "TEST set size: {}, test set by classes: {}".format(len(test_set), count_size(test_set))
     P.write_to_log(log)
 
-    log = "TRAIN set size: {}, train set by classes: {}".format(len(train_set), count_size(train_set))
+    train_count = count_size(train_set)
+    log = "TRAIN set size: {}, train set by classes: {}".format(len(train_set), train_count)
     P.write_to_log(log)
 
-    return train_set, test_set
+    return train_set, test_set, train_count
 
 
 def load_data_batch(offset: int, size: int) -> list:
