@@ -74,7 +74,7 @@ class AbstractExecutor:
             self.am_loss_function = nn.BCELoss()
         elif str(parsed.am_loss_function).lower() == "softf1":
             self.am_loss_function = f1loss.SoftF1Loss()
-        elif str(parsed.classifier_loss_function).lower() == "focal":
+        elif str(parsed.am_loss_function).lower() == "focal":
             self.alpha = float(parsed.alpha)
             self.gamma = float(parsed.gamma)
             self.am_loss_function = focal_loss.FocalLoss(self.alpha, self.gamma)
