@@ -16,7 +16,7 @@ import traceback
 import torch.nn as nn
 import losses.soft_f1_loss as f1loss
 import losses.focal_loss as focal_loss
-
+import losses.focal_loss_am as focal_loss_am
 
 class AbstractExecutor:
 
@@ -77,7 +77,7 @@ class AbstractExecutor:
         elif str(parsed.am_loss_function).lower() == "focal":
             self.alpha = float(parsed.alpha)
             self.gamma = float(parsed.gamma)
-            self.am_loss_function = focal_loss.FocalLoss(self.alpha, self.gamma)
+            self.am_loss_function = focal_loss_am.FocalLoss(self.alpha, self.gamma)
         else:
             raise Exception("am loss {} not found".format(parsed.am_loss_function))
 
@@ -168,7 +168,7 @@ class AbstractExecutor:
         self.train_count = train_count.cuda(self.gpu)
         print("ok")
 
-        if isinstance(self.am_loss_function, focal_loss.FocalLoss) and self.alpha < 0:
+        if isinstance(self.am_loss_function, focal_loss_am.FocalLoss) and self.alpha < 0:
             self.am_loss_function.apply_alpha_list(self.train_count, self.train_set_size)
         if isinstance(self.classifier_loss_function, focal_loss.FocalLoss) and self.alpha < 0:
             self.classifier_loss_function.apply_alpha_list(self.train_count, self.train_set_size)
