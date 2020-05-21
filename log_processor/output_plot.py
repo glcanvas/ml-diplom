@@ -16,9 +16,12 @@ elif os.path.exists("/media/disk2/nduginec"):
 base_data_dir += "/ml-data" if stupid_flag else ""
 """
 base_data_dir = "D://diplom-base-dir"
-logs_path = base_data_dir + "/trust_logs"
-plot_images_path = base_data_dir + "/images"
+# logs_path = base_data_dir + "/trust_logs_2"
+logs_path = base_data_dir + "/tethis"
+plot_images_path = base_data_dir + "/images_3"
+count_path = base_data_dir + "/count"
 os.makedirs(plot_images_path, exist_ok=True)
+os.makedirs(count_path, exist_ok=True)
 
 
 def __load_statistics(dct: dict) -> tuple:
@@ -124,7 +127,7 @@ def draw_plot_return_avg(ax, title, algo_name, algorithm_list: list, execute_mea
         datas = execute_measure_function(algo)
 
         if len(datas) > 0:
-            max_value.append((max(datas), algo_name + "_" + str(idx), title.replace(" ", "_")))
+            max_value.append((max(datas), algo_name + "_|" + str(idx), title.replace(" ", "_")))
 
         indexes = [i * mull_index for i, _ in enumerate(datas)]
         if use_legend:
@@ -159,7 +162,7 @@ def draw_plot_avg(ax, title: str, algo_name, algorithm_list: list, color: list, 
     indexes = [i * mull_index for i, _ in enumerate(algorithm_list)]
 
     max_values = [max(algorithm_list) for _ in algorithm_list]
-    ax.plot(indexes, max_values, label=legend + " max", linestyle=':',
+    ax.plot(indexes, max_values, linestyle=':',
             linewidth=2,
             color=(abs(color[0] - 0.4), abs(color[1] - 0.4), abs(color[2] - 0.4)))
 
@@ -189,16 +192,35 @@ def get_hard_measure_by_name(name1, name2):
     return inner
 
 
+color_list = [[0, 0, 0],
+              [0, 0, 1],
+              [0, 1, 0],
+              [0, 1, 1],
+              [1, 0, 0],
+              [1, 0, 1],
+              [1, 1, 0],
+              [0.5, 0.5, 0.5],
+              [1, 0.5, 0],
+              [1, 0, 0.5],
+              [0, 0.5, 1],
+              [0.5, 0, 1],
+              [0, 1, 0.5],
+              [0.5, 1, 0],
+
+              [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0],
+              [1, 1, 0], [1, 1, 0], [1, 1, 0], ]
+
+
 def to_color_array(color_idx) -> list:
-    color = [0, 0, 0]
-    for i in range(0, 3):
-        if (1 << i) & color_idx:
-            color[i] = 1
-    return color
+    """
+        TODO
+        extend it!!!!!!!
+        """
+    return color_list[color_idx]
 
 
-def draw_simple_metrics(axes, algorithms: dict):
-    for algo_name, color_idx in zip(algorithms, [0, 1, 2, 3, 4, 5, 6]):
+def draw_simple_metrics(dir_name: str, axes, algorithms: dict):
+    for color_idx, algo_name in enumerate(algorithms):
         metrics = [
             'Loss_CL',
             'Loss_M',
@@ -226,12 +248,14 @@ def draw_simple_metrics(axes, algorithms: dict):
             res.extend(x)
             res.append(draw_plot_avg(axes[m_idx][3], m + ' AVG', algo_name, loss_cl_avg, to_color_array(color_idx),
                                      mull_index=4))
+        f = open(count_path + "/" + dir_name + ".txt", "a")
         for i, j, k in res:
-            print(i, j, k)
+            print(i, j, k, file=f)
+        f.close()
 
 
-def draw_hard_metrics(axes, algorithms: dict):
-    for algo_name, color_idx in zip(algorithms, [0, 1, 2, 3, 4, 5, 6, 7]):
+def draw_hard_metrics(dir_name: str, axes, algorithms: dict):
+    for color_idx, algo_name in enumerate(algorithms):
         metrics = {
             'f_measures': [
                 'f_1_0',
@@ -282,25 +306,28 @@ def draw_hard_metrics(axes, algorithms: dict):
                 res.extend(x)
                 res.append(draw_plot_avg(axes[m_idx_1 + 5][3], sub_metrics + ' AVG', algo_name, loss_cl_avg,
                                          to_color_array(color_idx), mull_index=4))
+        f = open(count_path + "/" + dir_name + ".txt", "a")
         for i, j, k in res:
-            print(i, j, k)
+            print(i, j, k, file=f)
+        f.close()
 
 
-def visualize_algorithms(algorithms: dict, run_name: str):
+def visualize_algorithms(dir_name: str, algorithms: dict, run_name: str, save=True):
     fig, axes = plt.subplots(23, 4, figsize=(50, 100))
     fig.tight_layout()
     plt.subplots_adjust(bottom=0.5, top=2)
 
-    draw_simple_metrics(axes, algorithms)
-    draw_hard_metrics(axes, algorithms)
+    draw_simple_metrics(dir_name, axes, algorithms)
+    draw_hard_metrics(dir_name, axes, algorithms)
     for ax in axes.flat:
         ax.set(xlabel='epoch', ylabel='value')
         ax.legend(loc='upper right')
 
     for ax in axes.flat[12:]:
         ax.set_ylim((0, 1))
-    plt.savefig(os.path.join(plot_images_path, run_name.replace(".", "_")), bbox_inches='tight')
-    plt.show()
+    if save:
+        plt.savefig(os.path.join(plot_images_path, run_name.replace(".", "_")), bbox_inches='tight')
+        plt.show()
 
 
 def parse_run(run_number="run_01", use_print: bool = False):
@@ -350,8 +377,56 @@ def reduce_stat(algorithms: dict, run_number: str):
     print("=" * 50)
 
 
+from log_processor import output_logs_printer as olp
+from log_processor import var_counter as vc
+
 if __name__ == "__main__":
     runs = [
+        # "all nets 1e-3 baseline",
+        # "all nets 1e-4 baseline",
+        # "all nets 1e-5 baseline",
+
+        # "balanced 1e-3 baseline",
+        # "balanced 1e-4 baseline",
+        # "balanced 1e-5 baseline",
+
+        # "CBAM_resnet18_1e-3_1e-3_disbalanced",
+        # "CBAM_resnet18_1e-4_1e-3_balanced",
+        # "CBAM_resnet18_1e-4_1e-3_disbalanced",
+        # "CBAM_resnet18_1e-4_1e-4_disbalanced",
+        # "CBAM_resnet18_1e-4_1e-5_disbalanced",
+        # "CBAM_resnet18_1e-5_1e-3_disbalanced"
+        # "CBAM_resnet18_1e-3_1e-3_balanced"
+
+        "resnet18_1e-3_1e-3_bce_bce_disb",
+        "resnet18_1e-4_1e-3_bce_bce_disb",
+        "resnet34_1e-3_1e-3_bce_bce",
+
+        # MUST HAVE FULL
+        #"resnet18_1e-3_1e-3_softf1_bce_disb",
+        # "resnet18_1e-4_1e-3_softf1_bce_disb"
+        # "resnet34_baselines_disbalanced_focal"
+
+        # FAIL
+        "resnet34_1e-3_1e-3_focal_bce",
+        "resnet34_1e-4_1e-3_focal_bce",
+        "resnet34_1e-5_1e-3_focal_bce",
+
+    ]
+    for i in runs:
+        a, r_n = parse_run(i)
+        try:
+            os.remove(count_path + "/" + i + ".txt")
+        except FileNotFoundError:
+            pass
+        visualize_algorithms(i, a, r_n, True)
+        print(i)
+        olp.process_values(count_path + "/" + i + ".txt")
+        vc.process_values(count_path + "/" + i + ".txt")
+        print("=" * 20)
+        # reduce_stat(a, r_n)
+
+"""
         # "RUN_500_no_pretrian",
         # "RUN_500_pretained_default",
         # "RUN_500_pretrain_sum",
@@ -391,30 +466,42 @@ if __name__ == "__main__":
         # "resnet18_lr=1e-4_bce_bce_balanced",
 
         # need additional runs
-        #"!!!resnet18_lr=1e-3_softf1_bce_disb",
-        #"!!!resnet18_lr=1e-4_softf1_bce_disb",
+        # "!!!resnet18_lr=1e-3_softf1_bce_disb",
+        # "!!!resnet18_lr=1e-4_softf1_bce_disb",
 
         # not more as want
-        #"!!!resnet34_lr=1e-3_bce_bce_balanced",
-        #"!!!resnet34_lr=1e-4_bce_bce_balanced",
-        #"!!!resnet34_lr=1e-3_bce_bce_disbalanced",
-        #"!!!resnet34_lr=1e-4_bce_bce_disbalanced",
+        # "!!!resnet34_lr=1e-3_bce_bce_balanced",
+        # "!!!resnet34_lr=1e-4_bce_bce_balanced",
+        # "!!!resnet34_lr=1e-3_bce_bce_disbalanced",
+        # "!!!resnet34_lr=1e-4_bce_bce_disbalanced",
 
-
-        #CBAM
-        #"resnet18_lr=1e-3_balanced_CBAM",
-        #"resnet18_lr=1e-3_disbalanced_CBAM",
-        #"resnet18_lr=1e-4_balanced_CBAM",
-        #"resnet18_lr=1e-4_disbalanced_CBAM",
+        # CBAM
+        # "resnet18_lr=1e-3_balanced_CBAM",
+        # "resnet18_lr=1e-3_disbalanced_CBAM",
+        # "resnet18_lr=1e-4_balanced_CBAM",
+        # "resnet18_lr=1e-4_disbalanced_CBAM",
 
         # FOCAL LOSS
-        #"RUN_1020_CLR-0.001_AMLR-0.001",
-        #"RUN_1021_CLR-0.0001_AMLR-0.001",
-        #"RUN_1022_CLR-1e-05_AMLR-0.001",
+        # "RUN_1020_CLR-0.001_AMLR-0.001",
+        # "RUN_1021_CLR-0.0001_AMLR-0.001",
+        # "RUN_1022_CLR-1e-05_AMLR-0.001",
 
-        "!!!resnet34_lr=1e-4_bce_bce_disbalanced"
-    ]
-    for i in runs:
-        a, r_n = parse_run(i)
-        visualize_algorithms(a, r_n)
-        # reduce_stat(a, r_n)
+        # "!!!resnet34_lr=1e-4_bce_bce_disbalanced"
+
+        ######## trust_logs_2
+        # "!resnet34_1e-4_1e-4_bce_bce",
+        # "!resnet34_1e-4_1e-4_bce_softf1",
+        # "!resnet34_1e-4_1e-5_bce_bce",
+        # "!resnet34_1e-4_1e-5_bce_softf1",
+        # "CBAM_CLR-1e-3_AMLR-1e-3",
+        # "CBAM_CLR-1e-4_AMLR-1e-3",
+        # "CBAM_CLR-1e-4_AMLR-1e-4",
+        # "CBAM_CLR-1e-4_AMLR-1e-5",
+        # "CBAM_CLR-1e-05_AMLR-1e-3",
+
+        # "resnet34_1e-3_1e-3_bce_bce",
+        # "resnet34_1e-3_1e-3_focal_bce",
+        # "resnet34_1e-4_1e-3_focal_bce",
+        "resnet34_1e-5_1e-3_focal_bce"
+
+"""
