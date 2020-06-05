@@ -53,6 +53,7 @@ MODEL_STRATEGY_DATA = [(x, y) for x in MODEL_TYPES for y in ALGORITHM_DATA]
 
 RUN_NAME_RANGE_FROM = 1020
 
+
 def initial_strategy_queue(clr_idx: int = 0,
                            amlr_idx: int = 0,
                            model_strategy: str = None,
@@ -149,7 +150,7 @@ def parse_args(args):
 
         am_type = 'product'
         if "am" in dct and (dct['am'] == "sum" or dct['am'] == 'product' or dct['am'] == 'product_shift' or dct[
-            'am'] == 'sum_shift' or dct['am'] == "cbam"):
+            'am'] == 'sum_shift' or dct['am'] == "cbam" or dct['am'] == "conv_product" or dct['am'] == "conv_sum"):
             am_type = dct['am']
 
         dataset = "balanced"

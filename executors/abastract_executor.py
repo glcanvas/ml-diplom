@@ -18,6 +18,7 @@ import losses.soft_f1_loss as f1loss
 import losses.focal_loss as focal_loss
 import losses.focal_loss_am as focal_loss_am
 
+
 class AbstractExecutor:
 
     def __init__(self, parsed):
@@ -66,6 +67,10 @@ class AbstractExecutor:
         elif str(parsed.am_model).lower() == "product_shift":
             self.am_model_type = parsed.am_model
         elif str(parsed.am_model).lower() == "cbam":
+            self.am_model_type = parsed.am_model
+        elif str(parsed.am_model).lower() == "conv_product":
+            self.am_model_type = parsed.am_model
+        elif str(parsed.am_model).lower() == "conv_sum":
             self.am_model_type = parsed.am_model
         else:
             raise Exception("model {} not found".format(parsed.am_model))
@@ -237,6 +242,8 @@ class AbstractExecutor:
         elif self.am_model_type == "product_shift":
             self.model, self.puller = am_model_shift.build_attention_module_model(self.classes,
                                                                                   cb.ConnectionProductBlock())
+        else:
+            raise Exception("Not Valid am model type {}".format(self.am_model_type))
         return self.model
 
     def build_resnet_with_am_model(self):
@@ -249,6 +256,13 @@ class AbstractExecutor:
         elif self.am_model_type == "product":
             self.model, self.puller = resnet_am_model.build_attention_module_model(self.classes, model,
                                                                                    cb.ConnectionProductBlock())
+        elif self.am_model_type == "conv_product":
+            self.model, self.puller = resnet_am_model.build_attention_module_model(self.classes, model,
+                                                                                   cb.ConvConnectionProductBlock(1, 1))
+        elif self.am_model_type == "conv_sum":
+            self.model, self.puller = resnet_am_model.build_attention_module_model(self.classes, model,
+                                                                                   cb.ConvConnectionSumBlock(1, 1))
+
         return self.model
 
     def build_model_with_am(self):

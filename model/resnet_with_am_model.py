@@ -51,25 +51,44 @@ def build_attention_module_model(classes: int, resnet_model: nn.Module, connecti
         layer3
     )
 
+    am_branch = nn.Sequential(
+        *m.vgg16(pretrained=pretrained).features[2:15],
+        nn.Conv2d(256, classes, kernel_size=(3, 3), padding=(1, 1))
+    )
     if isinstance(connection_block, cb.ConnectionProductBlock):
-        am_branch = nn.Sequential(
-            *m.vgg16(pretrained=pretrained).features[2:15],
-            nn.Conv2d(256, classes, kernel_size=(3, 3), padding=(1, 1)),
-            nn.Sigmoid()
-        )
         sigmoid_out_flag = False
-    else:
-        am_branch = nn.Sequential(
-            *m.vgg16(pretrained=pretrained).features[2:15],
-            nn.Conv2d(256, classes, kernel_size=(3, 3), padding=(1, 1))
+    elif isinstance(connection_block, cb.ConvConnectionProductBlock):
+        xx = nn.Sequential(
+            *basis_branch,
+            *first_branch
         )
+        output_size = cb.determine_output_size(xx)
+        connection_block = cb.ConvConnectionProductBlock(output_size, classes)
+        sigmoid_out_flag = False
+    elif isinstance(connection_block, cb.ConvConnectionSumBlock):
+        xx = nn.Sequential(
+            *basis_branch,
+            *first_branch
+        )
+        output_size = cb.determine_output_size(xx)
+        connection_block = cb.ConvConnectionSumBlock(output_size, classes)
+        sigmoid_out_flag = True
+    else:
         sigmoid_out_flag = True
 
-    merged_branch = nn.Sequential(
-        nn.Conv2d(256 * classes, 256, kernel_size=(1, 1), stride=(1, 1), padding=(1, 1)),
-        layer4,
-        avgpool
-    )
+    if isinstance(connection_block, cb.ConvConnectionProductBlock) or isinstance(connection_block,
+                                                                                 cb.ConvConnectionSumBlock):
+        merged_branch = nn.Sequential(
+            nn.Conv2d(classes, 256, kernel_size=(1, 1), stride=(1, 1), padding=(1, 1)),
+            layer4,
+            avgpool
+        )
+    else:
+        merged_branch = nn.Sequential(
+            nn.Conv2d(256 * classes, 256, kernel_size=(1, 1), stride=(1, 1), padding=(1, 1)),
+            layer4,
+            avgpool
+        )
     puller = nn.Sequential(nn.MaxPool2d(kernel_size=2, stride=2), nn.MaxPool2d(kernel_size=2, stride=2),
                            nn.MaxPool2d(kernel_size=4, stride=4))
 
@@ -110,9 +129,10 @@ class AttentionModuleModel(nn.Module):
         first_out = self.first_branch(basis_out)
         am_out = self.am_branch(basis_out)
         if self.is_loss_sigmoid:
-            am_out_sigmoid = self.sigmoid(am_out)
-        else:
+            am_out = self.sigmoid(am_out)
             am_out_sigmoid = am_out
+        else:
+            am_out_sigmoid = self.sigmoid(am_out)
 
         connection_out = self.cb(am_out, first_out)
 
@@ -124,10 +144,11 @@ class AttentionModuleModel(nn.Module):
 
 
 if __name__ == "__main__":
-    model, puller = build_attention_module_model(5, m.resnet34(pretrained=True), cb.ConnectionSumBlock())
+    model, puller = build_attention_module_model(5, m.resnet34(pretrained=True), cb.ConvConnectionSumBlock(1, 1))
     image = torch.ones((4, 3, 224, 224))
     segments = torch.ones((4, 5, 224, 224))
     print(model)
     loss = nn.BCELoss()
     c, s = model(image)
+    print(c, s)
     print(loss(s, puller(segments)))
