@@ -15,11 +15,15 @@ elif os.path.exists("/media/disk2/nduginec"):
 
 base_data_dir += "/ml-data" if stupid_flag else ""
 """
-base_data_dir = "D://diplom-base-dir"
+# base_data_dir = "D://diplom-base-dir"
 # logs_path = base_data_dir + "/trust_logs_2"
-logs_path = base_data_dir + "/tethis"
-plot_images_path = base_data_dir + "/images_3"
-count_path = base_data_dir + "/count"
+# logs_path = base_data_dir + "/tethis"
+# plot_images_path = base_data_dir + "/images_3"
+# count_path = base_data_dir + "/count"
+base_data_dir = "/home/nikita/pycharms"
+logs_path = base_data_dir + "/logs"
+plot_images_path = base_data_dir + "/images_cbam"
+count_path = base_data_dir + "/vars"
 os.makedirs(plot_images_path, exist_ok=True)
 os.makedirs(count_path, exist_ok=True)
 
@@ -207,8 +211,12 @@ color_list = [[0, 0, 0],
               [0, 1, 0.5],
               [0.5, 1, 0],
 
-              [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0],
-              [1, 1, 0], [1, 1, 0], [1, 1, 0], ]
+              [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0],
+              [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0],
+              [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0],
+              [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0],
+              [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0], [1, 1, 0],
+              ]
 
 
 def to_color_array(color_idx) -> list:
@@ -327,7 +335,7 @@ def visualize_algorithms(dir_name: str, algorithms: dict, run_name: str, save=Tr
         ax.set_ylim((0, 1))
     if save:
         plt.savefig(os.path.join(plot_images_path, run_name.replace(".", "_")), bbox_inches='tight')
-        plt.show()
+        # plt.show()
 
 
 def parse_run(run_number="run_01", use_print: bool = False):
@@ -398,20 +406,84 @@ if __name__ == "__main__":
         # "CBAM_resnet18_1e-5_1e-3_disbalanced"
         # "CBAM_resnet18_1e-3_1e-3_balanced"
 
-        "resnet18_1e-3_1e-3_bce_bce_disb",
-        "resnet18_1e-4_1e-3_bce_bce_disb",
-        "resnet34_1e-3_1e-3_bce_bce",
+        # "resnet18_1e-3_1e-3_bce_bce_disb",
+        # "resnet18_1e-4_1e-3_bce_bce_disb",
+        # "resnet34_1e-3_1e-3_bce_bce",
 
         # MUST HAVE FULL
-        #"resnet18_1e-3_1e-3_softf1_bce_disb",
+        # "resnet18_1e-3_1e-3_softf1_bce_disb",
         # "resnet18_1e-4_1e-3_softf1_bce_disb"
         # "resnet34_baselines_disbalanced_focal"
 
         # FAIL
-        "resnet34_1e-3_1e-3_focal_bce",
-        "resnet34_1e-4_1e-3_focal_bce",
-        "resnet34_1e-5_1e-3_focal_bce",
+        # "resnet34_1e-3_1e-3_focal_bce",
+        # "resnet34_1e-4_1e-3_focal_bce",
+        # "resnet34_1e-5_1e-3_focal_bce",
 
+        # "resnet_18_bce_bce_product_-3",
+        # "resnet_18_bce_bce_sum_-3",
+        # "resnet_18_soft_soft_sum_-3",
+        # "resnet_18_soft_soft_product_-3",
+
+        # "resnet_34_bce_bce_product_-3",
+        # "resnet_34_bce_bce_sum_-3",
+        # "resnet_34_focal0.5-0_bce_product_-3",
+
+        # all 1e-4
+        # "resnet_18_bce_bce_product_-4",
+        # "resnet_18_bce_bce_sum_-4",
+        # "resnet_18_soft_soft_sum_-4",
+        # "resnet_18_soft_soft_product_-4",
+
+        # "resnet_34_bce_bce_product_-4",
+        # "resnet_34_bce_bce_sum_-4",
+        # "resnet_34_focal0.5-0_bce_product_-4",
+
+        # "resnet_34_bce_bce_am_only_1e-4",
+
+        # "resnet18_cbam_bce_softf1_1e-3",
+        # "resnet18_cbam_softf1_bce_1e-3",
+        # "resnet18_cbam_softf1_softf1_1e-3",
+        # "resnet34_cbam_bce_softf1_1e-3",
+        # "resnet34_cbam_softf1_bce_1e-3",
+        # "resnet34_cbam_softf1_softf1_1e-3",
+
+        # "resnet18_cbam_bce_softf1_1e-3",
+        # "resnet18_cbam_softf1_bce_1e-3",
+        # "resnet18_cbam_softf1_softf1_1e-3",
+        # "resnet34_cbam_softf1_bce_1e-3",
+        # "resnet34_cbam_softf1_softf1_1e-3",
+
+        # "resnet34_conv_prod_soft_soft_1e-3",
+        # "resnet34_conv_sum_soft_soft_1e-3",
+        # "resnet34_product_soft_soft_1e-3",
+        # "resnet34_sum_soft_soft_1e-3",
+
+        # "resnet18_conv_prouct_softf1_softf1_1e-4",
+        # "resnet18_conv_sum_softf1_softf1_1e-4",
+        # "resnet18_sum_bce_bce_1e-4",
+        # "resnet18_sum_softf1_softf1_1e-4"
+
+        # ARRGH
+        # "resnet34_conv_prod_bce_bce_1e-4",
+        # "resnet34_conv_sum_bce_bce_1e-4",
+        # "resnet34_prod_bce_bce_1e-4",
+        # "resnet34_sum_bce_bce_1e-4",
+
+        # "resnet34_conv_prod_soft_soft_1e-4",
+        # "resnet34_conv_sum_soft_soft_1e-4",
+        # "resnet34_prod_soft_soft_1e-4",
+        # "resnet34_sum_soft_soft_1e-4",
+
+        # "RUN_2054_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_CLR-0.0001_AMLR-0.0001",
+        # "RUN_2051_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_CLR-0.0001_AMLR-0.001",
+
+        # "RUN_2061_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_CLR-0.0001_AMLR-0.001",
+        # "RUN_2064_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_CLR-0.0001_AMLR-0.0001",
+
+        # "RUN_2074_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_CLR-0.0001_AMLR-0.0001",
+
+        "RUN_2078_LEFT-0_RIGHT-5_TRAIN_SIZE-1800_CLR-1e-05_AMLR-1e-05",
     ]
     for i in runs:
         a, r_n = parse_run(i)

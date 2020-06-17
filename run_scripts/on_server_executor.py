@@ -122,6 +122,7 @@ def infinity_server(q: list):
                 strategy_queue.appendleft((strategy_name, strategy_memory, strategy_arguments))
                 continue
             if alive_process >= actual_property_context.max_alive_threads:
+                strategy_queue.appendleft((strategy_name, strategy_memory, strategy_arguments))
                 continue
 
             thread = Thread(target=start_strategy, args=(strategy_name, strategy_memory, gpu, strategy_arguments))

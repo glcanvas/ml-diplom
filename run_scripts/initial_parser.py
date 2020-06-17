@@ -19,7 +19,7 @@ def parse_incoming_args(args: list):
 
 
 RANDOM = random.Random(0)
-SEED_LIST = [RANDOM.randint(1, 500) for _ in range(3)]
+SEED_LIST = [RANDOM.randint(1, 500) for _ in range(10)]
 CLASS_BORDER = [(0, 5)]
 TRAIN_SIZE = 1800
 EPOCHS_COUNT = 150

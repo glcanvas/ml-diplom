@@ -144,7 +144,7 @@ class AttentionModuleModel(nn.Module):
 
 
 if __name__ == "__main__":
-    model, puller = build_attention_module_model(5, m.resnet34(pretrained=True), cb.ConvConnectionSumBlock(1, 1))
+    """model, puller = build_attention_module_model(5, m.resnet34(pretrained=True), cb.ConvConnectionSumBlock(1, 1))
     image = torch.ones((4, 3, 224, 224))
     segments = torch.ones((4, 5, 224, 224))
     print(model)
@@ -152,3 +152,8 @@ if __name__ == "__main__":
     c, s = model(image)
     print(c, s)
     print(loss(s, puller(segments)))
+    """
+    model = m.vgg16(pretrained=True)
+    r = sum(p.numel() for p in model.parameters())
+    a = 138_357_544
+    print(r)
